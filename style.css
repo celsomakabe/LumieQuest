@@ -1,0 +1,21 @@
+/* style.css — Reset e fullscreen para LumieQuest */
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* sem barras de rolagem */
+  /* Preto como fallback enquanto a cena Three.js não inicializa */
+  background: #000;
+}
+
+#game-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

@@ -1,0 +1,142 @@
+/**
+ * scene.js — Cena 3D principal do LumieQuest.
+ * Responsável por: THREE.Scene, câmera, luzes, chão e renderer.
+ * Não importa entities nem systems (R8 — acoplamento zero com camadas superiores).
+ */
+
+import * as THREE from 'three';
+import * as events from '../core/events.js';
+
+/** @type {THREE.Scene} */
+let _scene;
+
+/** @type {THREE.PerspectiveCamera} */
+let _camera;
+
+/** @type {THREE.WebGLRenderer} */
+let _renderer;
+
+/**
+ * Inicializa cena, câmera, luzes, chão e renderer.
+ * Deve ser chamado uma única vez em main.js durante o boot.
+ * Emite 'sceneReady' ao concluir.
+ * @param {HTMLCanvasElement} canvas - Elemento canvas do DOM
+ */
+export function init(canvas) {
+  // --- Renderer ---
+  _renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  _renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Máx 2x para poupar GPU (R6)
+  _renderer.setSize(window.innerWidth, window.innerHeight);
+  _renderer.shadowMap.enabled = true;
+  _renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Sombras suaves sem custo excessivo
+  _renderer.setClearColor(0x87CEEB); // Azul céu
+
+  // --- Cena ---
+  _scene = new THREE.Scene();
+  _scene.fog = new THREE.Fog(0x87CEEB, 60, 200); // Névoa distante combina com céu
+
+  // --- Câmera perspectiva ---
+  _camera = new THREE.PerspectiveCamera(
+    75,                                     // FOV: 75°
+    window.innerWidth / window.innerHeight, // Aspect ratio
+    0.1,                                    // Near plane
+    1000                                    // Far plane
+  );
+  _camera.position.set(0, 5, 10);
+  _camera.lookAt(0, 0, 0);
+
+  // --- Luz ambiente (HemisphereLight) ---
+  // Céu azul de cima, reflexo verde do chão de baixo — mais natural que AmbientLight puro
+  const hemiLight = new THREE.HemisphereLight(
+    0xb0d8ff, // skyColor: azul claro
+    0x4a7c3a, // groundColor: verde grama
+    0.4       // intensidade baixa — o sol faz o trabalho principal
+  );
+  _scene.add(hemiLight);
+
+  // --- Sol (DirectionalLight com shadow map limitado a 30m) ---
+  const sun = new THREE.DirectionalLight(0xfff4e0, 1.0); // Luz solar levemente quente
+  sun.position.set(10, 20, 10);
+  sun.castShadow = true;
+
+  // Shadow map de 1024x1024 — boa qualidade sem explodir a VRAM (R6)
+  sun.shadow.mapSize.width = 1024;
+  sun.shadow.mapSize.height = 1024;
+
+  // Raio de sombra de 30m centrado na origem (conforme blueprint R6)
+  sun.shadow.camera.left   = -30;
+  sun.shadow.camera.right  =  30;
+  sun.shadow.camera.top    =  30;
+  sun.shadow.camera.bottom = -30;
+  sun.shadow.camera.near   = 0.5;
+  sun.shadow.camera.far    = 100;
+  sun.shadow.bias = -0.001; // Elimina shadow acne no chão
+
+  _scene.add(sun);
+  _scene.add(sun.target); // Target padrão na origem (0,0,0)
+
+  // --- Chão verde (PlaneGeometry 20×20) ---
+  const groundGeo = new THREE.PlaneGeometry(20, 20);
+  const groundMat = new THREE.MeshStandardMaterial({
+    color: 0x4a7c3a, // Verde grama
+    roughness: 0.9,
+    metalness: 0.0,
+  });
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI / 2; // Rotaciona para horizontal (XZ)
+  ground.receiveShadow = true;
+  _scene.add(ground);
+
+  // --- Resize handler ---
+  window.addEventListener('resize', _onResize);
+
+  events.emit('sceneReady');
+}
+
+/**
+ * Atualiza câmera e renderer quando a janela é redimensionada.
+ * @private
+ */
+function _onResize() {
+  _camera.aspect = window.innerWidth / window.innerHeight;
+  _camera.updateProjectionMatrix();
+  _renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+/**
+ * Executa um frame de render. Chamado pelo game loop a cada requestAnimationFrame.
+ * @param {number} delta - Tempo desde o último frame em ms (não usado aqui ainda)
+ */
+export function render(delta) {
+  _renderer.render(_scene, _camera);
+}
+
+/**
+ * Retorna a instância da THREE.Scene.
+ * @returns {THREE.Scene}
+ */
+export function getScene() { return _scene; }
+
+/**
+ * Retorna a câmera perspectiva ativa.
+ * @returns {THREE.PerspectiveCamera}
+ */
+export function getCamera() { return _camera; }
+
+/**
+ * Retorna o WebGLRenderer.
+ * @returns {THREE.WebGLRenderer}
+ */
+export function getRenderer() { return _renderer; }
+
+/**
+ * Adiciona um Object3D à cena.
+ * @param {THREE.Object3D} obj - Objeto a adicionar
+ */
+export function add(obj) { _scene.add(obj); }
+
+/**
+ * Remove um Object3D da cena.
+ * @param {THREE.Object3D} obj - Objeto a remover
+ */
+export function remove(obj) { _scene.remove(obj); }

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LumieQuest</title>
+  <link rel="stylesheet" href="style.css">
+
+  <!--
+    CDN: jsdelivr.net — escolhido pelos seguintes motivos:
+    1. Suporte nativo a CORS: necessário para ES modules via importmap (sem CORS o browser rejeita)
+    2. URL estável por versão semântica (three@0.169.0): sem risco de breaking change silencioso
+    3. Cache global com edge nodes na América do Sul (menor latência no Brasil)
+    4. Zero build step: importmap resolve "three" e "three/addons/" diretamente no browser
+    5. three@0.169.0: última minor com API WebGL estável e PCFSoftShadowMap sem bugs conhecidos
+  -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <canvas id="game-canvas"></canvas>
+  <!-- main.js importado como módulo ES6 — auto-executa init() ao carregar -->
+  <script type="module" src="js/core/main.js"></script>
+</body>
+</html>
