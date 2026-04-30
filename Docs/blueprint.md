@@ -1,6 +1,6 @@
 # BLUEPRINT TÉCNICO — LumieQuest v3.0
 
-**Status:** Aprovado em [DATA]
+**Status:** Aprovado em [29/04/2026]
 **Versão:** 1.0 — Consolidada após revisão crítica
 **Próximo prompt:** PROMPT 1 — Engine Base e Cena 3D
 
