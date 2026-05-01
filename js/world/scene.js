@@ -17,6 +17,13 @@ let _camera;
 let _renderer;
 
 /**
+ * Mesh do chão. Mantido em escopo de módulo para permitir aplicação de textura
+ * via setGroundTexture() após o pipeline de assets ficar pronto (PROMPT 2).
+ * @type {THREE.Mesh|null}
+ */
+let _ground = null;
+
+/**
  * Inicializa cena, câmera, luzes, chão e renderer.
  * Deve ser chamado uma única vez em main.js durante o boot.
  * Emite 'sceneReady' ao concluir.
@@ -76,16 +83,17 @@ export function init(canvas) {
   _scene.add(sun.target); // Target padrão na origem (0,0,0)
 
   // --- Chão verde (PlaneGeometry 20×20) ---
+  // Atribuído a _ground (escopo de módulo) para permitir setGroundTexture() depois.
   const groundGeo = new THREE.PlaneGeometry(20, 20);
   const groundMat = new THREE.MeshStandardMaterial({
-    color: 0x4a7c3a, // Verde grama
+    color: 0x4a7c3a, // Verde grama (será resetado para branco quando textura for aplicada)
     roughness: 0.9,
     metalness: 0.0,
   });
-  const ground = new THREE.Mesh(groundGeo, groundMat);
-  ground.rotation.x = -Math.PI / 2; // Rotaciona para horizontal (XZ)
-  ground.receiveShadow = true;
-  _scene.add(ground);
+  _ground = new THREE.Mesh(groundGeo, groundMat);
+  _ground.rotation.x = -Math.PI / 2; // Rotaciona para horizontal (XZ)
+  _ground.receiveShadow = true;
+  _scene.add(_ground);
 
   // --- Resize handler ---
   window.addEventListener('resize', _onResize);
@@ -140,3 +148,31 @@ export function add(obj) { _scene.add(obj); }
  * @param {THREE.Object3D} obj - Objeto a remover
  */
 export function remove(obj) { _scene.remove(obj); }
+
+/**
+ * Retorna o mesh do chão para inspeção externa (usado por physics e debug).
+ * @returns {THREE.Mesh|null} Retorna null se init() ainda não foi chamado.
+ */
+export function getGround() {
+  return _ground;
+}
+
+/**
+ * Aplica uma textura ao material do chão.
+ * Configura repeat e wrapping para tile correto em terrenos grandes.
+ * Chamado por main.js após o pipeline de assets emitir 'assetsReady'.
+ * @param {THREE.Texture} texture - Textura carregada via assets.loadTexture()
+ * @returns {void}
+ */
+export function setGroundTexture(texture) {
+  if (!_ground) {
+    console.warn('[scene] setGroundTexture: mesh do chão não encontrado (init() chamado?)');
+    return;
+  }
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(8, 8); // Tile 8x8 sobre o plano de 20×20 unidades
+  _ground.material.map = texture;
+  _ground.material.color.set(0xffffff); // Reseta cor para branco para não tingir a textura
+  _ground.material.needsUpdate = true;
+}

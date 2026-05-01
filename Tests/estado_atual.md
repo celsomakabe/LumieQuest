@@ -1,69 +1,60 @@
 # Estado Atual do Projeto LumieQuest
 
 ## Última atualização
-- **Data:** 29/04/2026
-- **Último prompt aprovado:** PROMPT 0 — Blueprint Arquitetural
-- **saveVersion atual:** nenhuma (projeto sem código ainda)
-- **Próximo prompt previsto:** PROMPT 1 — Engine Base e Cena 3D
+- Data: 01/05/2026
+- Último prompt aprovado: PROMPT 2 — Loader de Assets e Input Centralizado
+- saveVersion atual: 1
+- Próximo prompt previsto: PROMPT 3 — Player Controller e Movimento
 
 ## Arquivos por camada
 
 ### core/
-- (nenhum ainda — serão criados no PROMPT 1)
+- main.js ✅ completo — bootstrap, loop com delta cap, assets+input integrados, textura procedural no chão, fluxo assetsReady→gameReady→loop
+- events.js ✅ completo — event bus (on, off, emit, once)
+- save.js ✅ completo — CURRENT_SAVE_VERSION=1, MIGRATIONS={}, save/load/migrateSave
+- input.js ✅ completo — keydown/up, mousemove (throttle 16ms), click, wheel, bindings configuráveis, getState()
+- assets.js ✅ completo — LoadingManager, GLTFLoader, TextureLoader, Web Audio API, cache por URL, preloadAll com progress/error, único dono do cache AudioBuffer
+- audio.js ❌ não implementado (PROMPT 4.5)
 
 ### world/
-- (nenhum ainda — scene.js e physics.js no PROMPT 1)
+- scene.js ✅ completo — THREE.Scene, câmera, HemisphereLight, sol com sombra 30m, chão verde, fog; getGround() e setGroundTexture() adicionados
+- physics.js ✅ stub — getGroundHeight retorna 0, demais funções são stubs
+- world.js ❌ não implementado
 
-### entities/
-- (nenhum ainda — primeiro será player.js no PROMPT 3)
-
-### systems/
-- (nenhum ainda — primeiro será combat.js no PROMPT 5)
-
-### ui/
-- (nenhum ainda — ui.js no PROMPT 4)
+### entities/, systems/, ui/ — todas vazias
 
 ## Eventos do bus em uso
-- (nenhum ainda — events.js será criado no PROMPT 1)
+- gameReady        — emitido por main após assetsReady
+- sceneReady       — emitido por scene (sem listeners ainda)
+- saveLoaded       — emitido por save (sem listeners ainda)
+- gamePaused       — emitido por main
+- gameResumed      — emitido por main
+- assetsProgress   — emitido por assets { loaded, total }; escutado por main (log)
+- assetsReady      — emitido por assets; escutado por main (once)
+- assetLoadError   — emitido por assets { url, error }; escutado por main (log)
+- keyPressed       — emitido por input { code, action } — VALIDADO via debug
+- keyReleased      — emitido por input { code, action } — VALIDADO via debug
+- mouseMoved       — emitido por input { x, y, dx, dy } (throttle 16ms) — VALIDADO via debug
+- mouseClicked     — emitido por input { button, x, y, action }
+- mouseScrolled    — emitido por input { deltaY }
 
 ## Schema do save em uso
-- saveVersion alvo: 1 (será criado e usado no PROMPT 3 quando o player for instanciado)
-- MIGRATIONS registradas: nenhuma ainda
+- saveVersion: 1
+- MIGRATIONS: {} vazio
+- STORAGE_KEY: "lumiequest_save"
 
-## Estado de implementação por módulo
+## Dependências
+- Three.js 0.169.0 via jsdelivr CDN + importmap
+- importmap inclui "three/addons/" para GLTFLoader
 
-| Módulo | Status |
-|---|---|
-| main.js | ausente |
-| events.js | ausente |
-| input.js | ausente |
-| assets.js | ausente |
-| audio.js | ausente |
-| save.js | ausente |
-| scene.js | ausente |
-| world.js | ausente |
-| physics.js | ausente |
-| player.js | ausente |
-| monsters.js | ausente |
-| npcs.js | ausente |
-| pets.js | ausente |
-| combat.js | ausente |
-| inventory.js | ausente |
-| classes.js | ausente |
-| equipment.js | ausente |
-| refine.js | ausente |
-| cards.js | ausente |
-| quests.js | ausente |
-| ui.js | ausente |
+## Notas técnicas e correções
+- main.js: auto-bootstrap adicionado manualmente ao final do arquivo, pois o agente do Perplexity entregou init() exportada sem chamada de execução. O bloco usa DOMContentLoaded check para garantir DOM pronto antes de init().
 
-## Dependências confirmadas (Prompt 0)
-- Three.js (CDN ou via npm — definir no PROMPT 1)
-- Nenhuma outra biblioteca externa por enquanto
-
-## Performance Budget
-- Status: definido no blueprint, não testado ainda (ainda não há código)
-
-## Notas
-- Blueprint final consolidado em docs/blueprint.md
-- Documento mestre versão 3.0 referenciado externamente
-- Fluxo de trabalho: Perplexity Pro com Claude Sonnet 4.6 + reasoning toggle ativo
+## Observações de teste manual (Prompt 2)
+- WASD: keyPressed/keyReleased validados via listener de debug no console
+- Mouse: mouseMoved com throttle funcionando, dx/dy coerentes
+- Pipeline de assets: 1/1 carregado, gameReady emitido após assetsReady
+- Textura procedural visível no chão (ruído verde 64x64)
+- FPS: 60 estável
+- DOMContentLoaded: 353ms, Load: 515ms (dentro do budget)
+- Aviso conhecido: "Violation: requestAnimationFrame handler took ~100ms" no primeiro frame, provavelmente devido à compilação de shader inicial. Não bloqueia. Investigar no PROMPT 20 (Otimização).
