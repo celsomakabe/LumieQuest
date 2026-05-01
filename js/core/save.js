@@ -1,115 +1,137 @@
 /**
- * save.js — Persistência do estado do jogo via localStorage.
- * Gerencia serialização, versionamento e migração de saves.
+ * @module save
+ * @description Serializa/deserializa estado do jogo no LocalStorage com versionamento.
+ * Dependências: events.js
  */
 
-import * as events from './events.js';
+import { emit } from './events.js';
 
-/** Versão atual do schema de save. Incrementar a cada mudança de schema. */
-export const CURRENT_SAVE_VERSION = 1;
-
-/**
- * Mapa de funções de migração. Chave = versão DESTINO.
- * Vazio agora — salvo inicial é v1 e não precisa migrar para si mesmo.
- * Primeira entrada real será MIGRATIONS[2], adicionada no PROMPT 13.
- * @type {Object.<number, function(Object): Object>}
- */
-export const MIGRATIONS = {};
-
-/** Chave usada no localStorage para persistência */
 const STORAGE_KEY = 'lumiequest_save';
 
 /**
- * Inicializa o módulo de save.
- * Se houver save existente no localStorage, emite 'saveLoaded'.
+ * v1 — PROMPT 0: schema base
+ * v2 — PROMPT 3: adiciona bloco "player"
+ * @type {number}
+ */
+const CURRENT_SAVE_VERSION = 2;
+
+/** @type {Record<number, (data: Object) => Object>} */
+const MIGRATIONS = {
+    /**
+     * v1 → v2: injeta bloco player padrão (swordman nível 1).
+     * HP = 100 + vit(12)*5 = 160 | MP = 50 + int(5)*3 = 65
+     */
+    2: (data) => ({
+        ...data,
+        player: {
+            name: 'Hero', class: 'swordman', level: 1, jobLevel: 1,
+            exp: 0, jobExp: 0, hp: 160, maxHp: 160, mp: 65, maxMp: 65,
+            baseStats: { str: 10, agi: 8, vit: 12, int: 5, dex: 7, luk: 5 },
+            statPoints: 0, skillPoints: 0, learnedSkills: [],
+            position: { x: 0, y: 0, z: 0 },
+            currentMap: 'city01', zeny: 0, playtime: 0,
+        },
+    }),
+    // v3 — PROMPT 13: setId e grade nos equipamentos
+    // v4 — PROMPT 14: refineLevel nos equipamentos
+    // v5 — PROMPT 15: cards[] e sockets nos equipamentos
+    // v6 — PROMPT 16: bloco pets
+};
+
+/**
+ * Carrega save existente, migra se necessário e emite saveLoaded.
+ * @returns {void}
  */
 export function init() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw) {
-    try {
-      const data = migrateSave(JSON.parse(raw));
-      events.emit('saveLoaded', data);
-    } catch (err) {
-      console.warn('[save] Save corrompido ou ilegível. Ignorando.', err);
+    const raw = _readRaw();
+    if (!raw) {
+        emit('saveLoaded', null);
+        return;
     }
-  }
+    try {
+        const migrated = migrateSave(raw);
+        emit('saveLoaded', migrated);
+        console.log(`[save] v${raw.saveVersion} carregado (atual: v${CURRENT_SAVE_VERSION})`);
+    } catch (err) {
+        console.error('[save] Falha ao migrar — resetando:', err);
+        emit('saveFailed', { error: err });
+    }
 }
 
 /**
- * Serializa e persiste o estado completo no localStorage.
- * Adiciona saveVersion e lastSaved automaticamente.
- * @param {Object} data - Estado completo do jogo (estrutura SavedGame)
+ * Persiste SavedGame no LocalStorage.
+ * @param {Object} data
+ * @returns {void}
  */
 export function save(data) {
-  const payload = {
-    ...data,
-    saveVersion: CURRENT_SAVE_VERSION,
-    lastSaved: new Date().toISOString(),
-  };
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  } catch (err) {
-    console.error('[save] Falha ao salvar (localStorage cheio?).', err);
-  }
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            ...data,
+            saveVersion: CURRENT_SAVE_VERSION,
+            lastSaved:   new Date().toISOString(),
+        }));
+    } catch (err) {
+        console.error('[save] Falha ao salvar:', err);
+        emit('saveFailed', { error: err });
+    }
 }
 
 /**
- * Carrega o save do localStorage, aplica migração e retorna o objeto.
- * @returns {Object|null} Estado migrado, ou null se não houver save
+ * Carrega e retorna save migrado, ou null.
+ * @returns {Object|null}
  */
 export function load() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
-  try {
-    return migrateSave(JSON.parse(raw));
-  } catch (err) {
-    console.warn('[save] Falha ao carregar save.', err);
-    return null;
-  }
+    const raw = _readRaw();
+    if (!raw) return null;
+    try { return migrateSave(raw); }
+    catch (err) { console.error('[save] Falha ao carregar:', err); return null; }
 }
 
 /**
- * Remove o save do localStorage permanentemente.
+ * Remove save do LocalStorage.
+ * @returns {void}
  */
 export function deleteSave() {
-  localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_KEY);
+    console.log('[save] Save deletado');
 }
 
 /**
- * Migra dados de versão anterior até CURRENT_SAVE_VERSION.
- * Loop encadeado: aplica MIGRATIONS[nextVersion] até atingir a versão atual.
- * Se MIGRATIONS[nextVersion] não existir, interrompe com erro (não silencia bugs).
- * @param {Object} rawData - Objeto do save em qualquer versão
- * @returns {Object} Objeto migrado para CURRENT_SAVE_VERSION
+ * Aplica migrações sequenciais até CURRENT_SAVE_VERSION.
+ * Indexa sempre pelo nextVersion (destino) — nunca pela versão atual.
+ * @param {Object} data
+ * @returns {Object}
  */
-export function migrateSave(rawData) {
-  let current = { ...rawData };
-
-  // Garante que saveVersion existe (segurança para saves muito antigos)
-  if (typeof current.saveVersion !== 'number') {
-    current.saveVersion = 1;
-  }
-
-  while (current.saveVersion < CURRENT_SAVE_VERSION) {
-    const nextVersion = current.saveVersion + 1;
-    if (typeof MIGRATIONS[nextVersion] !== 'function') {
-      console.error(
-        `[save] Migração v${current.saveVersion}→v${nextVersion} não encontrada. ` +
-        `Verifique MIGRATIONS[${nextVersion}] em save.js.`
-      );
-      break;
+export function migrateSave(data) {
+    let current = { ...data };
+    while (current.saveVersion < CURRENT_SAVE_VERSION) {
+        const nextVersion = current.saveVersion + 1;
+        const fn          = MIGRATIONS[nextVersion];
+        if (!fn) throw new Error(
+            `[save] MIGRATIONS[${nextVersion}] não encontrada. Adicione antes de incrementar CURRENT_SAVE_VERSION.`
+        );
+        console.log(`[save] Migrando v${current.saveVersion} → v${nextVersion}…`);
+        current             = fn(current);
+        current.saveVersion = nextVersion;
     }
-    current = MIGRATIONS[nextVersion](current);
-    current.saveVersion = nextVersion;
-  }
-
-  return current;
+    return current;
 }
 
 /**
- * Retorna a constante CURRENT_SAVE_VERSION.
+ * Retorna CURRENT_SAVE_VERSION.
  * @returns {number}
  */
 export function getCurrentVersion() {
-  return CURRENT_SAVE_VERSION;
+    return CURRENT_SAVE_VERSION;
+}
+
+/** @returns {Object|null} */
+function _readRaw() {
+    try {
+        const json = localStorage.getItem(STORAGE_KEY);
+        return json ? JSON.parse(json) : null;
+    } catch (err) {
+        console.error('[save] JSON inválido no LocalStorage:', err);
+        return null;
+    }
 }
