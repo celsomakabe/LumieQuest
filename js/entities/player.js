@@ -21,7 +21,7 @@ const CAM_OFFSET        = new THREE.Vector3(0, 5, 8);
 
 /** @type {THREE.Mesh|null} */
 let _mesh = null;
-
+let _isDead = false;
 /** @type {Object|null} */
 let _data = null;
 
@@ -85,13 +85,14 @@ export function getPosition() {
  * @returns {void}
  */
 export function takeDamage(amount, source) {
-    if (!_data || _data.hp <= 0) return;
-    _data.hp = Math.max(0, _data.hp - amount);
-    emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
-    if (_data.hp === 0) {
-        console.log(`[player] Morreu (fonte: ${source})`);
-        emit('playerDied', {});
-    }
+  if (_isDead) return;
+  _playerState.hp = Math.max(0, _playerState.hp - amount);
+  emit('playerHpChanged', { current: _playerState.hp, max: _playerState.maxHp });
+  if (_playerState.hp <= 0) {
+    _isDead = true;
+    emit('playerDied');
+    console.log(`[player] Morreu (fonte: ${source})`);
+  }
 }
 
 /**
@@ -100,6 +101,7 @@ export function takeDamage(amount, source) {
  * @returns {void}
  */
 export function heal(amount) {
+    if (_isDead) return;
     if (!_data) return;
     _data.hp = Math.min(_data.maxHp, _data.hp + amount);
     emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
@@ -134,6 +136,7 @@ export function addExp(amount) {
  * @returns {void}
  */
 export function update(delta, inputState) {
+    if (_isDead) return;
     if (!_mesh || !_data) return;
 
     _prevPosition.copy(_mesh.position);

@@ -2,56 +2,53 @@
 
 ## Última atualização
 - Data: 01/05/2026
-- Último prompt aprovado: PROMPT 3 — Player e Movimentação
+- Último prompt aprovado: PROMPT 4 — Sistema de UI/HUD
 - saveVersion atual: 2
-- Próximo prompt previsto: PROMPT 4 — Mundo e Mapa
+- Próximo prompt previsto: PROMPT 4.5 — Sistema de Áudio Base
 
 ## Arquivos por camada
 
 ### core/
-- main.js ✅ — bootstrap, loop, classes+player integrados, auto-save 30s
-- events.js ✅ — event bus (on, off, emit, once)
-- save.js ✅ — CURRENT_SAVE_VERSION=2, MIGRATIONS={2}, save/load/migrateSave
-- input.js ✅ — teclado/mouse, throttle 16ms, bindings configuráveis
+- main.js ✅ — bootstrap, loop, FPS média móvel → UI.setFPS(), auto-save 30s
+- events.js ✅ — event bus
+- save.js ✅ — CURRENT_SAVE_VERSION=2, MIGRATIONS={2}
+- input.js ✅ — teclado/mouse, throttle 16ms, bindings
 - assets.js ✅ — cache por URL, GLTFLoader, TextureLoader, Web Audio API
 - audio.js ❌ — PROMPT 4.5
 
 ### world/
 - scene.js ✅ — Scene, câmera, luzes, chão, fog, setGroundTexture(), getGround()
-- physics.js ✅ stub — getGroundHeight retorna 0
-- world.js ❌ — PROMPT 4
+- physics.js ✅ stub
+- world.js ❌
 
 ### entities/
-- player.js ✅ — cápsula azul, WASD, rotação por mouse, câmera orbit follow,
-  takeDamage, heal, addExp, getState(), auto-save via main.js
+- player.js ✅ — cápsula azul, WASD, rotação por mouse, câmera orbit follow
 
 ### systems/
-- classes.js ✅ stub — getBaseStats() funcional (12 jobs), demais no PROMPT 10
+- classes.js ✅ stub — getBaseStats() funcional (12 jobs)
 
-### ui/ — vazia
+### ui/
+- ui.js ✅ — HUD HP/MP, nome, level, FPS, notificações toast, mensagens centrais, hotbar placeholder
 
 ## Eventos do bus em uso
 - gameReady, sceneReady, saveLoaded, saveFailed, gamePaused, gameResumed
-- assetsProgress { loaded, total }, assetsReady, assetLoadError { url, error }
-- keyPressed { code, action }, keyReleased { code, action }
-- mouseMoved { x, y, dx, dy }, mouseClicked { button, x, y, action }, mouseScrolled { deltaY }
-- playerSpawned { position }, playerMoved { position, mapId }
-- playerHpChanged { current, max }, playerMpChanged { current, max }
-- playerDied {}, levelUp { newLevel }
+- assetsProgress, assetsReady, assetLoadError
+- keyPressed, keyReleased, mouseMoved, mouseClicked, mouseScrolled
+- playerSpawned, playerMoved, playerHpChanged, playerMpChanged, playerDied, levelUp
+- uiWindowOpened, uiWindowClosed, dialogueOptionSelected
 
-## Schema do save (v2)
+## Schema do save em uso
 - saveVersion: 2
-- player: { name, class, level, jobLevel, exp, jobExp, hp, maxHp, mp, maxMp,
-            baseStats, statPoints, skillPoints, learnedSkills,
-            position, currentMap, zeny, playtime }
-- MIGRATIONS[2]: injeta bloco player padrão em saves v1
+- player: { name, class, level, hp, maxHp, mp, maxMp, ... }
+- MIGRATIONS[2]: injeta player default em saves v1
 
 ## Dependências
-- Three.js 0.169.0 via jsdelivr CDN
-- importmap com "three/addons/" para GLTFLoader
+- Three.js 0.169.0 via jsdelivr CDN + importmap (com three/addons/)
 
 ## Notas técnicas
-- main.js: auto-bootstrap no final (DOMContentLoaded) — não remover
-- player.js: _lastMouseX rastreia posição absoluta do mouse para evitar
-  rotação contínua quando input.mouse.dx persiste entre frames
-- Auto-save a cada 30s via _doSave() no loop
+- main.js: FPS counter migrado para ui.js; main.js calcula média móvel 30 frames e chama UI.setFPS()
+- ui.js: dirty flag — só redesenha elemento se valor mudou
+- ui.js: notificações via DOM puro, sem libs externas
+- player.js: _lastMouseX para rotação correta
+- Pastas js/entities/ e js/systems/ em minúsculas (case-sensitive)
+- js/ui/ criada (nova pasta)

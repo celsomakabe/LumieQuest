@@ -1,21 +1,242 @@
-/* style.css — Reset e fullscreen para LumieQuest */
-
+/* ─── Reset & Base ────────────────────────────────────────────────────────── */
 *, *::before, *::after {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
 html, body {
   width: 100%;
   height: 100%;
-  overflow: hidden; /* sem barras de rolagem */
-  /* Preto como fallback enquanto a cena Three.js não inicializa */
+  overflow: hidden;
   background: #000;
+  font-family: sans-serif;
 }
 
-#game-canvas {
+canvas {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+/* ─── HUD Root ────────────────────────────────────────────────────────────── */
+.hud-root {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+  user-select: none;
+}
+
+/* ─── Top-left: Nome, Level, HP, MP ──────────────────────────────────────── */
+.hud-topleft {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.hud-nameline {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.hud-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f0f0f0;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.85);
+  letter-spacing: 0.03em;
+}
+
+.hud-level {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffd700;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.85);
+}
+
+/* ─── Barras HP / MP ─────────────────────────────────────────────────────── */
+.hud-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hud-bar-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ccc;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.hud-bar {
+  position: relative;
+  width: 160px;
+  height: 14px;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 7px;
+  border: 1px solid rgba(255,255,255,0.12);
+  overflow: hidden;
+}
+
+.hud-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 7px;
+  transition: width 0.15s ease-out;
+}
+
+.hud-bar-hp {
+  background: linear-gradient(90deg, #991a1a 0%, #cc2222 60%, #e84040 100%);
+  box-shadow: 0 0 6px rgba(204, 34, 34, 0.5);
+}
+
+.hud-bar-mp {
+  background: linear-gradient(90deg, #14408a 0%, #2266cc 60%, #3d88f0 100%);
+  box-shadow: 0 0 6px rgba(34, 102, 204, 0.5);
+}
+
+.hud-bar-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+  letter-spacing: 0.02em;
+}
+
+/* ─── Top-right: FPS ─────────────────────────────────────────────────────── */
+.hud-fps {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #a0ffb0;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+  letter-spacing: 0.04em;
+}
+
+/* ─── Center-top: Mensagens centrais ─────────────────────────────────────── */
+.hud-message {
+  position: absolute;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow:
+    0 0 12px rgba(0,0,0,0.95),
+    0 2px 4px rgba(0,0,0,0.9);
+  letter-spacing: 0.06em;
+  pointer-events: none;
+  white-space: nowrap;
+  /* opacity controlado via JS */
+}
+
+/* ─── Bottom-center: Hotbar placeholder ──────────────────────────────────── */
+.hud-hotbar {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.hud-hotbar-slot {
+  width: 48px;
+  height: 48px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 6px;
+  position: relative;
+}
+
+/* Número do slot no canto inferior direito */
+.hud-hotbar-slot::after {
+  content: attr(data-index);
+  position: absolute;
+  bottom: 3px;
+  right: 5px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.45);
+  font-weight: 600;
+}
+
+/* ─── Área de notificações ────────────────────────────────────────────────── */
+.hud-notif-area {
+  position: absolute;
+  bottom: 84px;
+  right: 16px;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 6px;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+/* ─── Toast de notificação ───────────────────────────────────────────────── */
+.hud-notification {
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+  max-width: 260px;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.hud-notification.hud-notif-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.hud-notification.hud-notif-hiding {
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* Variantes por tipo */
+.hud-notif-info {
+  background: rgba(20, 60, 120, 0.88);
+  border-color: rgba(60, 130, 220, 0.4);
+}
+
+.hud-notif-warn {
+  background: rgba(120, 80, 10, 0.88);
+  border-color: rgba(220, 160, 30, 0.4);
+  color: #ffe080;
+}
+
+.hud-notif-error {
+  background: rgba(120, 20, 20, 0.88);
+  border-color: rgba(220, 60, 60, 0.4);
+  color: #ffaaaa;
 }
