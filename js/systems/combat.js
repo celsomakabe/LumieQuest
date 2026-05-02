@@ -77,7 +77,8 @@ function findNearestTarget(position, range = ATTACK_RANGE) {
   let minDist = Infinity;
   const fakeAttacker = { position };
   for (const t of _targets) {
-    if (t.hp <= 0) continue;
+  if (t.hp <= 0) continue;
+    if (t.type === 'player') continue;
     const d = _distXZ(fakeAttacker, t);
     if (d <= range && d < minDist) {
       minDist = d;
@@ -133,6 +134,9 @@ function attack(attacker, target) {
   amount = Math.floor(amount);
 
   target.hp = Math.max(0, target.hp - amount);
+if (target.type === 'player') {
+    emit('playerHpChanged', { current: target.hp, max: target.maxHp });
+  }
 
   playSFX(isCritical ? SFX.critical : SFX.hit);
 

@@ -76,6 +76,7 @@ on('itemEquipped', _onItemEquipped);
     // Auto-attack no clique esquerdo
     on('mouseClicked', (e) => {
       if (e.button !== 0) return;
+      if (_data.hp <= 0) return;
 
       const pos    = _data.position;
       const target = findNearestTarget(pos, 3);
@@ -206,7 +207,14 @@ export function update(delta, inputState) {
 });
     }
 }
-
+/**
+ * Retorna referência direta ao objeto interno _data.
+ * Usado por combat.js e main.js para registrar o player como alvo.
+ * @returns {Object}
+ */
+export function getInstance() {
+    return _data;
+}
 // ─── Helpers privados ─────────────────────────────────────────────────────────
 
 /**

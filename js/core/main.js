@@ -15,6 +15,7 @@ import * as Classes from '../systems/classes.js';
 import * as UI      from '../ui/ui.js';
 import * as THREE  from 'three';
 import * as Combat from '../systems/combat.js';
+import * as Monsters from '../entities/monsters.js';
 
 // ─── Estado interno ───────────────────────────────────────────────────────────
 
@@ -104,7 +105,7 @@ function _loop(timestamp) {
 
     // Entities
     Player.update(delta, inputState);
-
+    Monsters.updateAll(delta, Player.getPosition());    
     // Render
     Scene.render(delta);
 
@@ -118,7 +119,7 @@ function _loop(timestamp) {
 function _doAutoSave() {
     const playerData = Player.getState();
     const current    = Save.load() ?? {};
-    Save.save({ ...current, player: playerData });
+Save.save({ ...current, player: playerData });
 }
 
 // ─── Assets Ready ─────────────────────────────────────────────────────────────
@@ -139,7 +140,13 @@ function _onAssetsReady() {
 
     // Spawna player com dados do save (capturado via Events.once abaixo)
     Player.init(_saveData?.player ?? null);
+    Combat.registerTarget(Player.getInstance());
 
+  Events.on('monsterAttackRequest', ({ attacker }) => {
+      const player = Player.getInstance();
+      if (player.hp <= 0) return;
+      Combat.attack(attacker, player);
+    });
     _gameState = 'playing';
     _lastTime  = performance.now();
     Events.emit('gameReady');
@@ -150,7 +157,7 @@ function _onAssetsReady() {
 /**
  * Inicializa todos os módulos na ordem correta e inicia o game loop.
  */
-export function init() {
+export async function init() {
     const canvas = document.getElementById('game-canvas');
     if (!canvas) {
         console.error('[Main] #game-canvas não encontrado.');
@@ -169,32 +176,10 @@ export function init() {
     Classes.init();
     UI.init();
 
-// ── Monstro placeholder (Sessão 8 — remover quando monsters.js existir) ──
-    const _placeholderGeo  = new THREE.BoxGeometry(1, 1, 1);
-    const _placeholderMat  = new THREE.MeshLambertMaterial({ color: 0xcc2222 });
-    const _placeholderMesh = new THREE.Mesh(_placeholderGeo, _placeholderMat);
-    _placeholderMesh.position.set(3, 0.5, 3);
-    Scene.add(_placeholderMesh);
-
-    const _monster01 = {
-      id:        'placeholder_01',
-      mesh:      _placeholderMesh,
-      hp:        50,
-      maxHp:     50,
-      def:       0,
-      baseStats: { str: 5 },
-      position:  _placeholderMesh.position,
-    };
-
-    Combat.registerTarget(_monster01);
-
-    Events.once('entityDied', ({ entity }) => {
-      if (entity.id !== 'placeholder_01') return;
-      console.log('[combat] entityDied:', entity.id);
-      Scene.remove(_placeholderMesh);
-      _placeholderGeo.dispose();
-      _placeholderMat.dispose();
-    });
+// SESSÃO 24: mover para world.js (mapsConfig['map_inicial'].monsters)
+    await Monsters.init();
+    Monsters.spawnGroup('slime',  5, { center: { x:  5, z:  5 }, radius: 4 });
+    Monsters.spawnGroup('goblin', 3, { center: { x: -5, z:  5 }, radius: 3 });
 
     // Captura save antes de tudo (one-shot)
     Events.once('saveLoaded', (data) => {
