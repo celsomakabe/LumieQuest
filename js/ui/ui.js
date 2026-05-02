@@ -213,6 +213,7 @@ export function init() {
     });
     Events.on('damageDealt', ({ target, amount, isCritical }) => {
         if (!target?.position) return;
+        if (target.type === 'player') return;
         showDamagePopup(target.position, amount, isCritical);
     });
 }

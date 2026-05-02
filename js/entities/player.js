@@ -294,6 +294,7 @@ function _buildData(saveData) {
     const stats = getBaseStats(job, level);
 
     return {
+        type:          'player',
         name:          saveData?.name          ?? 'Hero',
         class:         job,
         level:         level,
