@@ -9,13 +9,15 @@ import { emit, on }      from '../core/events.js';
 import { getState as getInput } from '../core/input.js';
 import { getScene, getCamera, add } from '../world/scene.js';
 import { getGroundHeight }          from '../world/physics.js';
-import { getBaseStats }             from '../Systems/classes.js';
+import { getBaseStats }             from '../systems/classes.js';
+import * as Audio from '../core/audio.js';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
 const MOVE_SPEED        = 5;
 const MOUSE_SENSITIVITY = 0.003;
 const CAM_OFFSET        = new THREE.Vector3(0, 5, 8);
+
 
 // ─── Estado interno ───────────────────────────────────────────────────────────
 
@@ -31,6 +33,17 @@ let _hasMoved    = false;
 
 const _prevPosition = new THREE.Vector3();
 
+// ─── BUG-05: Footsteps ────────────────────────────────────────────────────────
+let _footstepIndex    = 0;
+let _lastFootstepTime = 0;
+
+const FOOTSTEP_COOLDOWN_MS = 350;
+const FOOTSTEP_VOLUME      = 0.4;
+const FOOTSTEP_THRESHOLD   = 0.01;
+const FOOTSTEP_SFXS = [
+    'assets/audio/sfx/sfx_footstep_grass1.ogg',
+    'assets/audio/sfx/sfx_footstep_grass2.ogg'
+];
 // ─── API pública ──────────────────────────────────────────────────────────────
 
 /**
@@ -53,7 +66,7 @@ export function init(saveData = null) {
 
     // Bônus de equipamento via bus — sem import direto de equipment.js (R8)
     on('itemEquipped', _onItemEquipped);
-
+    on('playerMoved', _onPlayerMoved);
     emit('playerSpawned', { position: _mesh.position.clone() });
     console.log('[player] Spawnou em', _mesh.position);
 }
@@ -85,14 +98,15 @@ export function getPosition() {
  * @returns {void}
  */
 export function takeDamage(amount, source) {
-  if (_isDead) return;
-  _playerState.hp = Math.max(0, _playerState.hp - amount);
-  emit('playerHpChanged', { current: _playerState.hp, max: _playerState.maxHp });
-  if (_playerState.hp <= 0) {
-    _isDead = true;
-    emit('playerDied');
-    console.log(`[player] Morreu (fonte: ${source})`);
-  }
+    if (_isDead) return;
+    if (!_data) return;
+    _data.hp = Math.max(0, _data.hp - amount);
+    emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+    if (_data.hp <= 0) {
+        _isDead = true;
+        emit('playerDied');
+        console.log(`[player] Morreu (fonte: ${source})`);
+    }
 }
 
 /**
@@ -149,10 +163,17 @@ export function update(delta, inputState) {
         _data.position.x = _mesh.position.x;
         _data.position.y = _mesh.position.y;
         _data.position.z = _mesh.position.z;
+       /**
+        *@event playerMoved
+        *@property {THREE.Vector3} position         - posição atual
+        *@property {THREE.Vector3} previousPosition - posição no frame anterior
+        *@property {string} mapId
+        */
         emit('playerMoved', {
-            position: _mesh.position.clone(),
-            mapId:    _data.currentMap,
-        });
+            position:         _mesh.position.clone(),
+            previousPosition: _prevPosition.clone(),
+            mapId:            _data.currentMap,
+});
     }
 }
 
@@ -271,4 +292,24 @@ function _buildData(saveData) {
 function _onItemEquipped(_payload) {
     // PROMPT 11: aplicar bônus de stats ao player
     console.log('[player] itemEquipped recebido — bônus aplicado no PROMPT 11');
+}
+
+/**
+ * Toca SFX de footstep alternado ao detectar deslocamento real no plano XZ.
+ * @param {{ position: THREE.Vector3, previousPosition: THREE.Vector3, mapId: string }} data
+ */
+function _onPlayerMoved(data) {
+    if (!data.previousPosition) return;
+
+    const dx   = data.position.x - data.previousPosition.x;
+    const dz   = data.position.z - data.previousPosition.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+    if (dist < FOOTSTEP_THRESHOLD) return;
+
+    const now = performance.now();
+    if (now - _lastFootstepTime < FOOTSTEP_COOLDOWN_MS) return;
+
+    _lastFootstepTime = now;
+    Audio.playSFX(FOOTSTEP_SFXS[_footstepIndex], FOOTSTEP_VOLUME);
+    _footstepIndex = (_footstepIndex + 1) % FOOTSTEP_SFXS.length;
 }
