@@ -1,189 +1,244 @@
-import * as Scene   from '../world/scene.js';
-import * as Physics from '../world/physics.js';
+/**
+ * @file main.js
+ * @description Bootstrap do jogo. Inicializa módulos na ordem correta e
+ * gerencia o game loop via requestAnimationFrame.
+ */
+
 import * as Events  from './events.js';
 import * as Input   from './input.js';
 import * as Assets  from './assets.js';
+import * as Audio   from './audio.js';
 import * as Save    from './save.js';
+import * as Scene   from '../world/scene.js';
 import * as Player  from '../entities/player.js';
 import * as Classes from '../systems/classes.js';
 import * as UI      from '../ui/ui.js';
 
-// ─── Constantes ───────────────────────────────────────────────────────────────
-const DELTA_CAP  = 0.1;
-const FPS_SAMPLE = 30;
+// ─── Estado interno ───────────────────────────────────────────────────────────
 
-// ─── Estado ───────────────────────────────────────────────────────────────────
-let _state     = 'loading';
-let _lastTime  = 0;
-let _rafId     = null;
-let _saveData  = null;
+let _gameState     = 'loading';
+let _lastTime      = 0;
+let _rafId         = null;
+let _saveData      = null;
+let _autoSaveTimer = 0;
+const AUTO_SAVE_INTERVAL = 30000; // 30s
 
-// ─── FPS média móvel ──────────────────────────────────────────────────────────
-let _fpsAccum      = 0;
-let _fpsFrameCount = 0;
+// ─── FPS — média móvel de 30 frames ──────────────────────────────────────────
 
-// ─── Textura procedural de grama ─────────────────────────────────────────────
+const FPS_SAMPLES   = 30;
+const _fpsBuf       = new Float32Array(FPS_SAMPLES);
+let   _fpsBufIdx    = 0;
+let   _fpsSum       = 0;
+
 /**
- * Gera um data URI de textura de grama 64×64 via Canvas 2D.
- * @returns {string} Data URI PNG.
+ * Atualiza buffer circular de FPS e retorna média arredondada.
+ * @param {number} delta  segundos
+ * @returns {number}
  */
-function _makeProceduralGrassDataURI() {
-  const size   = 64;
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = size;
-  const ctx = canvas.getContext('2d');
-
-  // Base verde
-  ctx.fillStyle = '#4a7c3f';
-  ctx.fillRect(0, 0, size, size);
-
-  // Variação de tom
-  const rng = (min, max) => min + Math.random() * (max - min);
-  for (let i = 0; i < 120; i++) {
-    const x = rng(0, size);
-    const y = rng(0, size);
-    const r = rng(1, 3);
-    ctx.fillStyle = `rgba(${Math.floor(rng(40,90))},${Math.floor(rng(100,160))},${Math.floor(rng(30,70))},0.35)`;
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  return canvas.toDataURL('image/png');
+function _calcFPS(delta) {
+    const sample = delta > 0 ? 1 / delta : 0;
+    _fpsSum -= _fpsBuf[_fpsBufIdx];
+    _fpsBuf[_fpsBufIdx] = sample;
+    _fpsSum += sample;
+    _fpsBufIdx = (_fpsBufIdx + 1) % FPS_SAMPLES;
+    return Math.round(_fpsSum / FPS_SAMPLES);
 }
 
-// ─── Callback assetsReady ─────────────────────────────────────────────────────
-function _onAssetsReady() {
-  Assets.loadTexture(_makeProceduralGrassDataURI()).then(tex => {
-    Scene.setGroundTexture(tex);
-  });
+// ─── Textura procedural de grama ─────────────────────────────────────────────
 
-  // Inicia o loop apenas após assets prontos (padrão PROMPT 3)
-  _state    = 'playing';
-  _lastTime = performance.now();
-  _rafId    = requestAnimationFrame(_loop);
+/**
+ * Gera um Data URI de textura de grama 64×64 via Canvas 2D.
+ * Evita dependência de arquivo externo.
+ * @returns {string} Data URI PNG
+ */
+function _makeProceduralGrassDataURI() {
+    const size   = 64;
+    const canvas = document.createElement('canvas');
+    canvas.width  = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
 
-  Events.emit('gameReady');
+    // Base verde
+    ctx.fillStyle = '#4a7c3f';
+    ctx.fillRect(0, 0, size, size);
+
+    // Variação de tons para simular grama
+    const shades = ['#3d6b35', '#52883f', '#436e38', '#5a9147', '#3a6030'];
+    for (let i = 0; i < 200; i++) {
+        ctx.fillStyle = shades[Math.floor(Math.random() * shades.length)];
+        const x = Math.random() * size;
+        const y = Math.random() * size;
+        const w = 1 + Math.random() * 3;
+        const h = 1 + Math.random() * 3;
+        ctx.fillRect(x, y, w, h);
+    }
+
+    return canvas.toDataURL('image/png');
 }
 
 // ─── Game Loop ────────────────────────────────────────────────────────────────
+
+/**
+ * Loop principal via requestAnimationFrame.
+ * @param {number} timestamp
+ */
 function _loop(timestamp) {
-  _rafId = requestAnimationFrame(_loop);
+    _rafId = requestAnimationFrame(_loop);
 
-  if (_state !== 'playing') return;
+    let delta = (timestamp - _lastTime) / 1000;
+    _lastTime = timestamp;
+    if (delta > 0.1) delta = 0.1; // cap 100ms — evita spiral of death
 
-  const rawDelta = (timestamp - _lastTime) / 1000;
-  _lastTime      = timestamp;
-  const delta    = Math.min(rawDelta, DELTA_CAP);
+    if (_gameState !== 'playing') return;
 
-  // FPS — média móvel, atualiza UI a cada FPS_SAMPLE frames (R2: adição do PROMPT 4)
-  if (rawDelta > 0) {
-    _fpsAccum += 1 / rawDelta;
-    _fpsFrameCount++;
-    if (_fpsFrameCount >= FPS_SAMPLE) {
-      UI.setFPS(_fpsAccum / _fpsFrameCount);
-      _fpsAccum      = 0;
-      _fpsFrameCount = 0;
+    // Auto-save a cada 30s
+    _autoSaveTimer += delta * 1000;
+    if (_autoSaveTimer >= AUTO_SAVE_INTERVAL) {
+        _autoSaveTimer = 0;
+        _doAutoSave();
     }
-  }
 
-  // Physics
-  Physics.update(delta);
+    const inputState = Input.getState();
 
-  // Entities
-  const inputState = Input.getState();
-  Player.update(delta, inputState);
+    // Entities
+    Player.update(delta, inputState);
 
-  // Render
-  Scene.render(delta);
+    // Render
+    Scene.render(delta);
 
-  // UI — dirty flag garante que só redesenha o que mudou (R2: adição do PROMPT 4)
-  UI.update(delta);
+    // UI
+    UI.update(delta);
+    UI.setFPS(_calcFPS(delta));
 }
 
 // ─── Auto-save ────────────────────────────────────────────────────────────────
-function _startAutoSave() {
-  setInterval(() => {
-    if (_state !== 'playing') return;
-    Save.save({
-      saveVersion: Save.getCurrentVersion(),
-      player: Player.getState(),
-    });
-  }, 30_000);
+
+function _doAutoSave() {
+    const playerData = Player.getState();
+    const current    = Save.load() ?? {};
+    Save.save({ ...current, player: playerData });
 }
 
-// ─── API pública ──────────────────────────────────────────────────────────────
+// ─── Assets Ready ─────────────────────────────────────────────────────────────
+
+function _onAssetsReady() {
+    // Textura procedural — sem dependência de arquivo externo
+    const dataURI = _makeProceduralGrassDataURI();
+    Assets.loadTexture(dataURI).then(tex => {
+        tex.wrapS = tex.wrapT = 1000; // THREE.RepeatWrapping
+        tex.repeat.set(4, 4);
+        Scene.setGroundTexture(tex);
+    }).catch(() => {
+        // graceful — chão fica sem textura
+    });
+
+    // Inicia BGM da cidade com fade in
+    Audio.playBGM('assets/audio/bgm/bgm_city.ogg', 0.6);
+
+    // Spawna player com dados do save (capturado via Events.once abaixo)
+    Player.init(_saveData?.player ?? null);
+
+    _gameState = 'playing';
+    _lastTime  = performance.now();
+    Events.emit('gameReady');
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
 
 /**
  * Inicializa todos os módulos na ordem correta e inicia o game loop.
- * @returns {void}
  */
 export function init() {
-  console.log('LumieQuest booted');
+    const canvas = document.getElementById('game-canvas');
+    if (!canvas) {
+        console.error('[Main] #game-canvas não encontrado.');
+        return;
+    }
 
-  // Captura save antes que Player.init() precise dele
-  Events.once('saveLoaded', (data) => { _saveData = data; });
-  Events.on('assetsReady', _onAssetsReady);
+    // Infraestrutura
+    Input.init();
+    Assets.init();
+    Scene.init(canvas);
 
-  // Infraestrutura
-  Assets.init();
-  Input.init();
+    // Áudio após cena (precisa da câmera)
+    Audio.init(Scene.getCamera());
 
-  const canvas = document.getElementById('game-canvas');
-  Scene.init(canvas);
+    // Sistemas e UI
+    Classes.init();
+    UI.init();
 
-  // UI — após Scene, antes de Save (R2: adição do PROMPT 4)
-  UI.init();
+    // Captura save antes de tudo (one-shot)
+    Events.once('saveLoaded', (data) => {
+        _saveData = data;
+    });
+    Events.once('saveFailed', () => {
+        _saveData = null;
+    });
 
-  Physics.init();
-  Classes.init();
+    // Tenta carregar save existente
+    Save.init();
 
-  // Save emite saveLoaded → _saveData preenchido
-  Save.init();
+    // Quando assets prontos, inicializa jogo
+    Events.on('assetsReady', _onAssetsReady);
 
-  // Player usa _saveData capturado acima
-  Player.init(_saveData?.player ?? null);
+    Events.on('gamePaused', () => {
+        _gameState = 'paused';
+    });
 
-  _startAutoSave();
+    Events.on('gameResumed', () => {
+        _gameState = 'playing';
+        _lastTime  = performance.now();
+    });
 
-  // Preload da textura de grama — dispara assetsReady ao concluir
-  Assets.preloadAll([
-    { type: 'texture', url: _makeProceduralGrassDataURI() },
-  ]);
+    // Preload — texturas procedurais não precisam de entry aqui;
+    // áudios são pré-carregados para cache imediato
+    Assets.preloadAll([
+        { type: 'audio', url: 'assets/audio/bgm/bgm_city.ogg'     },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_ui_click.ogg' },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_ui_hover.ogg' },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_levelup.ogg'  },
+    ]);
+
+    // Inicia loop (roda em 'loading' para exibir progresso na UI)
+    _lastTime = performance.now();
+    _rafId    = requestAnimationFrame(_loop);
+
+    console.log('[Main] LumieQuest booted.');
 }
+
+// ─── Controles de estado ──────────────────────────────────────────────────────
 
 /**
  * Retorna o estado atual do jogo.
- * @returns {'loading'|'playing'|'paused'} Estado atual.
+ * @returns {'loading'|'playing'|'paused'}
  */
 export function getGameState() {
-  return _state;
+    return _gameState;
 }
 
 /**
  * Pausa o game loop.
- * @returns {void}
  */
 export function pause() {
-  if (_state !== 'playing') return;
-  _state = 'paused';
-  Events.emit('gamePaused');
+    if (_gameState !== 'playing') return;
+    _gameState = 'paused';
+    Events.emit('gamePaused');
 }
 
 /**
- * Retoma o game loop após pausa.
- * @returns {void}
+ * Retoma o game loop.
  */
 export function resume() {
-  if (_state !== 'paused') return;
-  _state    = 'playing';
-  _lastTime = performance.now();
-  Events.emit('gameResumed');
+    if (_gameState !== 'paused') return;
+    _gameState = 'playing';
+    _lastTime  = performance.now();
+    Events.emit('gameResumed');
 }
 
-// ─── Auto-bootstrap com check de readyState (padrão PROMPT 3) ────────────────
+// ─── Auto-bootstrap ───────────────────────────────────────────────────────────
+
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', init);
 } else {
-  init();
+    init();
 }

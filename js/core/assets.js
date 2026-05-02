@@ -177,4 +177,11 @@ function _warnIfNotPow2(texture, url) {
     if (!isPow2(img.width) || !isPow2(img.height)) {
         console.warn(`[assets] Textura não é potência de 2: ${url} (${img.width}x${img.height}) — pode causar artefatos de mipmap`);
     }
+}/**
+ * Retorna o AudioContext interno para compartilhamento com audio.js.
+ * Evita criação de dois contextos paralelos (R6 — performance budget).
+ * @returns {AudioContext|null}
+ */
+export function getAudioContext() {
+    return _audioCtx;
 }

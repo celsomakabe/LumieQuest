@@ -1,308 +1,264 @@
-import { on, emit } from '../core/events.js';
+/**
+ * @file ui.js
+ * @description Renderiza e atualiza toda a interface: HUD HP/MP/XP,
+ * notificações toast, mensagens centrais e FPS counter.
+ */
 
-// ─── Estado interno ───────────────────────────────────────────────────────────
-const _state = {
-  hp: 100, maxHp: 100,
-  mp: 50,  maxMp: 50,
-  level: 1, name: 'Herói',
-  fps: 0,
+import * as Events from '../core/events.js';
+import * as Audio  from '../core/audio.js';
+
+// ─── Referências DOM ──────────────────────────────────────────────────────────
+
+let _elHP        = null;
+let _elMP        = null;
+let _elHPBar     = null;
+let _elMPBar     = null;
+let _elName      = null;
+let _elLevel     = null;
+let _elFPS       = null;
+let _elNotifWrap = null;
+let _elCenter    = null;
+
+// ─── Estado ───────────────────────────────────────────────────────────────────
+
+let _dirty = {
+    hp: false,
+    mp: false,
 };
 
-const _dirty = {
-  hp: true, mp: true, level: true, name: true, fps: true,
-};
+let _hp    = { current: 100, max: 100 };
+let _mp    = { current:  50, max:  50 };
+let _name  = 'Herói';
+let _level = 1;
 
-// ─── Refs DOM ─────────────────────────────────────────────────────────────────
-let _els = {};
-
-// ─── Construção DOM ───────────────────────────────────────────────────────────
-function _buildDOM() {
-  const root = document.createElement('div');
-  root.className = 'hud-root';
-  root.id = 'hud-root';
-
-  // ── Top-left ────────────────────────────────────────────────────────────────
-  const topLeft = document.createElement('div');
-  topLeft.className = 'hud-topleft';
-
-  // Nome + Level
-  const nameRow = document.createElement('div');
-  nameRow.className = 'hud-nameline';
-
-  const nameEl = document.createElement('span');
-  nameEl.className = 'hud-name';
-  nameEl.textContent = _state.name;
-
-  const levelEl = document.createElement('span');
-  levelEl.className = 'hud-level';
-  levelEl.textContent = `Lv.${_state.level}`;
-
-  nameRow.appendChild(nameEl);
-  nameRow.appendChild(levelEl);
-
-  // Barra HP
-  const hpWrap = document.createElement('div');
-  hpWrap.className = 'hud-bar-wrap';
-
-  const hpLabel = document.createElement('span');
-  hpLabel.className = 'hud-bar-label';
-  hpLabel.textContent = 'HP';
-
-  const hpBar = document.createElement('div');
-  hpBar.className = 'hud-bar';
-
-  const hpFill = document.createElement('div');
-  hpFill.className = 'hud-bar-fill hud-bar-hp';
-
-  const hpText = document.createElement('span');
-  hpText.className = 'hud-bar-text';
-
-  hpBar.appendChild(hpFill);
-  hpBar.appendChild(hpText);
-  hpWrap.appendChild(hpLabel);
-  hpWrap.appendChild(hpBar);
-
-  // Barra MP
-  const mpWrap = document.createElement('div');
-  mpWrap.className = 'hud-bar-wrap';
-
-  const mpLabel = document.createElement('span');
-  mpLabel.className = 'hud-bar-label';
-  mpLabel.textContent = 'MP';
-
-  const mpBar = document.createElement('div');
-  mpBar.className = 'hud-bar';
-
-  const mpFill = document.createElement('div');
-  mpFill.className = 'hud-bar-fill hud-bar-mp';
-
-  const mpText = document.createElement('span');
-  mpText.className = 'hud-bar-text';
-
-  mpBar.appendChild(mpFill);
-  mpBar.appendChild(mpText);
-  mpWrap.appendChild(mpLabel);
-  mpWrap.appendChild(mpBar);
-
-  topLeft.appendChild(nameRow);
-  topLeft.appendChild(hpWrap);
-  topLeft.appendChild(mpWrap);
-
-  // ── Top-right: FPS ──────────────────────────────────────────────────────────
-  const fpsEl = document.createElement('div');
-  fpsEl.className = 'hud-fps';
-  fpsEl.textContent = 'FPS: --';
-
-  // ── Center-top: mensagens centrais ─────────────────────────────────────────
-  const msgEl = document.createElement('div');
-  msgEl.className = 'hud-message';
-  msgEl.style.opacity = '0';
-
-  // ── Bottom-center: hotbar placeholder ──────────────────────────────────────
-  const hotbar = document.createElement('div');
-  hotbar.className = 'hud-hotbar';
-  for (let i = 0; i < 8; i++) {
-    const slot = document.createElement('div');
-    slot.className = 'hud-hotbar-slot';
-    slot.dataset.index = i + 1;
-    hotbar.appendChild(slot);
-  }
-
-  // ── Área de notificações ────────────────────────────────────────────────────
-  const notifArea = document.createElement('div');
-  notifArea.className = 'hud-notif-area';
-
-  root.appendChild(topLeft);
-  root.appendChild(fpsEl);
-  root.appendChild(msgEl);
-  root.appendChild(hotbar);
-  root.appendChild(notifArea);
-
-  document.body.appendChild(root);
-
-  _els = {
-    root, topLeft, fpsEl, msgEl, hotbar, notifArea,
-    nameEl, levelEl,
-    hpFill, hpText,
-    mpFill, mpText,
-  };
-}
-
-// ─── Render helpers ───────────────────────────────────────────────────────────
-function _renderHP() {
-  const pct = _state.maxHp > 0 ? (_state.hp / _state.maxHp) * 100 : 0;
-  _els.hpFill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
-  _els.hpText.textContent = `${_state.hp}/${_state.maxHp}`;
-}
-
-function _renderMP() {
-  const pct = _state.maxMp > 0 ? (_state.mp / _state.maxMp) * 100 : 0;
-  _els.mpFill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
-  _els.mpText.textContent = `${_state.mp}/${_state.maxMp}`;
-}
-
-function _renderName() {
-  _els.nameEl.textContent = _state.name;
-}
-
-function _renderLevel() {
-  _els.levelEl.textContent = `Lv.${_state.level}`;
-}
-
-function _renderFPS() {
-  _els.fpsEl.textContent = `FPS: ${_state.fps}`;
-}
-
-// ─── Mensagens centrais ───────────────────────────────────────────────────────
-let _msgTimeout = null;
+// ─── Helpers privados ─────────────────────────────────────────────────────────
 
 /**
- * Exibe mensagem no centro-topo por duração determinada.
- * @param {string} text
- * @param {number} [duration=3000] ms
+ * Cria o elemento DOM do HUD e injeta no body.
  */
-function showMessage(text, duration = 3000) {
-  if (_msgTimeout) clearTimeout(_msgTimeout);
-  const el = _els.msgEl;
-  el.textContent = text;
-  el.style.transition = 'opacity 0.3s';
-  el.style.opacity = '1';
-  _msgTimeout = setTimeout(() => {
-    el.style.transition = 'opacity 0.5s';
-    el.style.opacity = '0';
-    _msgTimeout = null;
-  }, duration);
+function _buildDOM() {
+    const hud = document.createElement('div');
+    hud.id = 'hud';
+    hud.innerHTML = `
+        <div id="hud-info">
+            <span id="hud-name">${_name}</span>
+            <span id="hud-level">Lv ${_level}</span>
+        </div>
+        <div id="hud-bars">
+            <div class="bar-row">
+                <label>HP</label>
+                <div class="bar-bg">
+                    <div id="hud-hp-bar" class="bar hp-bar" style="width:100%"></div>
+                </div>
+                <span id="hud-hp">100/100</span>
+            </div>
+            <div class="bar-row">
+                <label>MP</label>
+                <div class="bar-bg">
+                    <div id="hud-mp-bar" class="bar mp-bar" style="width:100%"></div>
+                </div>
+                <span id="hud-mp">50/50</span>
+            </div>
+        </div>
+        <div id="hud-fps">60 FPS</div>
+    `;
+    document.body.appendChild(hud);
+
+    // Wrapper de notificações
+    const notifWrap = document.createElement('div');
+    notifWrap.id = 'notif-wrap';
+    document.body.appendChild(notifWrap);
+
+    // Mensagem central
+    const center = document.createElement('div');
+    center.id = 'center-msg';
+    center.style.display = 'none';
+    document.body.appendChild(center);
+
+    // Estilos inline (evita dependência de CSS externo)
+    const style = document.createElement('style');
+    style.textContent = `
+        #hud {
+            position: fixed; top: 12px; left: 12px;
+            color: #fff; font-family: monospace; font-size: 13px;
+            text-shadow: 1px 1px 2px #000;
+            pointer-events: none; user-select: none;
+            z-index: 100;
+        }
+        #hud-info { margin-bottom: 4px; }
+        #hud-name { margin-right: 8px; font-weight: bold; }
+        .bar-row { display: flex; align-items: center; gap: 4px; margin-bottom: 3px; }
+        .bar-row label { width: 20px; }
+        .bar-bg { width: 120px; height: 10px; background: #333; border-radius: 4px; overflow: hidden; }
+        .bar { height: 100%; border-radius: 4px; transition: width 0.2s; }
+        .hp-bar { background: #e05050; }
+        .mp-bar { background: #4080e0; }
+        #hud-fps {
+            position: fixed; top: 8px; right: 12px;
+            color: #0f0; font-family: monospace; font-size: 11px;
+            text-shadow: 1px 1px 2px #000;
+            pointer-events: none;
+            z-index: 100;
+        }
+        #notif-wrap {
+            position: fixed; bottom: 60px; left: 50%;
+            transform: translateX(-50%);
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            pointer-events: none; z-index: 200;
+        }
+        .notif {
+            background: rgba(0,0,0,0.75); color: #fff;
+            padding: 6px 16px; border-radius: 20px;
+            font-family: monospace; font-size: 13px;
+            animation: notifFade 2.8s forwards;
+        }
+        .notif.success { border-left: 3px solid #4c4; }
+        .notif.warning { border-left: 3px solid #fa4; }
+        .notif.error   { border-left: 3px solid #e44; }
+        @keyframes notifFade {
+            0%   { opacity: 0; transform: translateY(8px); }
+            15%  { opacity: 1; transform: translateY(0);   }
+            70%  { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        #center-msg {
+            position: fixed; top: 40%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ffe87c; font-family: monospace; font-size: 22px; font-weight: bold;
+            text-shadow: 0 0 12px #f80, 1px 1px 3px #000;
+            pointer-events: none; z-index: 300;
+            animation: centerFade 3s forwards;
+        }
+        @keyframes centerFade {
+            0%   { opacity: 0; transform: translate(-50%, -60%); }
+            20%  { opacity: 1; transform: translate(-50%, -50%); }
+            70%  { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
 }
 
-// ─── Event listeners ──────────────────────────────────────────────────────────
-function _registerEvents() {
-  on('playerSpawned', ({ position }) => {
-    // playerSpawned não traz stats completos; playerHpChanged/playerMpChanged chegam logo após
-    _dirty.name = true;
-    _dirty.level = true;
-  });
-
-  on('playerHpChanged', ({ current, max }) => {
-    _state.hp = current;
-    _state.maxHp = max;
-    _dirty.hp = true;
-  });
-
-  on('playerMpChanged', ({ current, max }) => {
-    _state.mp = current;
-    _state.maxMp = max;
-    _dirty.mp = true;
-  });
-
-  on('levelUp', ({ newLevel }) => {
-    _state.level = newLevel;
-    _dirty.level = true;
-    showNotification(`Level up! Nível ${newLevel}`, 'info');
-  });
-
-  on('playerDied', () => {
-    showMessage('Você morreu', 5000);
-  });
-
-  on('saveLoaded', (data) => {
-    if (!data?.player) return;
-    const p = data.player;
-    _state.name    = p.name  ?? _state.name;
-    _state.level   = p.level ?? _state.level;
-    _state.hp      = p.hp    ?? _state.hp;
-    _state.maxHp   = p.maxHp ?? _state.maxHp;
-    _state.mp      = p.mp    ?? _state.mp;
-    _state.maxMp   = p.maxMp ?? _state.maxMp;
-    _dirty.hp = _dirty.mp = _dirty.level = _dirty.name = true;
-  });
+/**
+ * Reconecta referências DOM após _buildDOM.
+ */
+function _queryRefs() {
+    _elHP        = document.getElementById('hud-hp');
+    _elMP        = document.getElementById('hud-mp');
+    _elHPBar     = document.getElementById('hud-hp-bar');
+    _elMPBar     = document.getElementById('hud-mp-bar');
+    _elName      = document.getElementById('hud-name');
+    _elLevel     = document.getElementById('hud-level');
+    _elFPS       = document.getElementById('hud-fps');
+    _elNotifWrap = document.getElementById('notif-wrap');
+    _elCenter    = document.getElementById('center-msg');
 }
 
 // ─── API pública ──────────────────────────────────────────────────────────────
 
 /**
- * Inicializa o HUD: constrói o DOM e registra listeners de eventos.
- * @returns {void}
+ * Inicializa a UI: cria DOM e registra listeners de eventos.
  */
 export function init() {
-  _buildDOM();
-  _registerEvents();
-  _dirty.hp = _dirty.mp = _dirty.level = _dirty.name = _dirty.fps = true;
+    _buildDOM();
+    _queryRefs();
+
+    Events.on('playerHpChanged', ({ current, max }) => {
+        _hp = { current, max };
+        _dirty.hp = true;
+    });
+
+    Events.on('playerMpChanged', ({ current, max }) => {
+        _mp = { current, max };
+        _dirty.mp = true;
+    });
+
+    Events.on('playerSpawned', ({ name, level, hp, mp } = {}) => {
+        if (name)  { _name  = name;  _elName.textContent  = name; }
+        if (level) { _level = level; _elLevel.textContent = `Lv ${level}`; }
+        if (hp)    { _hp = hp;  _dirty.hp = true; }
+        if (mp)    { _mp = mp;  _dirty.mp = true; }
+    });
+
+    Events.on('levelUp', ({ newLevel }) => {
+        _level = newLevel;
+        if (_elLevel) _elLevel.textContent = `Lv ${newLevel}`;
+        showNotification(`🎉 Level Up! Nível ${newLevel}`, 'success');
+        Audio.playSFX('assets/audio/sfx/sfx_levelup.ogg');
+    });
 }
 
 /**
- * Atualiza o HUD respeitando dirty flags — chamado pelo game loop a cada frame.
- * @param {number} delta - Tempo desde o último frame em segundos.
- * @returns {void}
+ * Atualiza barras de HP/MP quando dirty flag ativo.
+ * Chamado a cada frame pelo game loop.
+ * @param {number} _delta
  */
-export function update(delta) {
-  if (_dirty.hp)    { _renderHP();    _dirty.hp    = false; }
-  if (_dirty.mp)    { _renderMP();    _dirty.mp    = false; }
-  if (_dirty.name)  { _renderName();  _dirty.name  = false; }
-  if (_dirty.level) { _renderLevel(); _dirty.level = false; }
-  if (_dirty.fps)   { _renderFPS();   _dirty.fps   = false; }
+export function update(_delta) {
+    if (_dirty.hp) {
+        const pct = _hp.max > 0 ? (_hp.current / _hp.max) * 100 : 0;
+        _elHP.textContent    = `${_hp.current}/${_hp.max}`;
+        _elHPBar.style.width = `${pct}%`;
+        _dirty.hp = false;
+    }
+    if (_dirty.mp) {
+        const pct = _mp.max > 0 ? (_mp.current / _mp.max) * 100 : 0;
+        _elMP.textContent    = `${_mp.current}/${_mp.max}`;
+        _elMPBar.style.width = `${pct}%`;
+        _dirty.mp = false;
+    }
 }
 
 /**
- * Informa o FPS atual ao HUD (chamado a cada 30 frames pelo main.js).
- * @param {number} value - Valor de FPS calculado como média móvel.
- * @returns {void}
- */
-export function setFPS(value) {
-  const rounded = Math.round(value);
-  if (_state.fps !== rounded) {
-    _state.fps = rounded;
-    _dirty.fps = true;
-  }
-}
-
-/**
- * Exibe uma janela de UI pelo ID (stub — janelas reais serão implementadas nos PROMPTs 7+).
- * @param {string} id - Identificador da janela ('inventory', 'equipment', 'quest').
- * @returns {void}
- */
-export function showWindow(id) {
-  console.log(`[UI] showWindow: ${id} (stub — disponível no PROMPT 7+)`);
-  emit('uiWindowOpened', { id });
-}
-
-/**
- * Fecha uma janela de UI pelo ID (stub).
- * @param {string} id - Identificador da janela.
- * @returns {void}
- */
-export function hideWindow(id) {
-  console.log(`[UI] hideWindow: ${id} (stub — disponível no PROMPT 7+)`);
-  emit('uiWindowClosed', { id });
-}
-
-/**
- * Exibe um toast de notificação temporário por 3 segundos.
- * @param {string} msg - Texto da notificação.
- * @param {'info'|'warn'|'error'} [type='info'] - Tipo visual da notificação.
- * @returns {void}
+ * Exibe notificação toast temporária (2.8s) e toca SFX de click.
+ * @param {string} msg              - Texto da notificação
+ * @param {'info'|'success'|'warning'|'error'} [type='info']
  */
 export function showNotification(msg, type = 'info') {
-  const notif = document.createElement('div');
-  notif.className = `hud-notification hud-notif-${type}`;
-  notif.textContent = msg;
-  _els.notifArea.appendChild(notif);
+    Audio.playSFX('assets/audio/sfx/sfx_ui_click.ogg', 0.4);
 
-  // Trigger reflow para ativar animação CSS de entrada
-  void notif.offsetWidth;
-  notif.classList.add('hud-notif-visible');
-
-  setTimeout(() => {
-    notif.classList.remove('hud-notif-visible');
-    notif.classList.add('hud-notif-hiding');
-    notif.addEventListener('transitionend', () => notif.remove(), { once: true });
-  }, 2700);
+    if (!_elNotifWrap) return;
+    const el = document.createElement('div');
+    el.className = `notif ${type}`;
+    el.textContent = msg;
+    _elNotifWrap.appendChild(el);
+    setTimeout(() => el.remove(), 2900);
 }
 
 /**
- * Exibe uma árvore de diálogo (stub — implementação real no PROMPT 8).
- * @param {object} tree - DialogueTree conforme schema do blueprint.
- * @returns {void}
+ * Exibe mensagem central temporária (ex: "LEVEL UP!").
+ * @param {string} msg
  */
-export function showDialogue(tree) {
-  console.log(`[UI] showDialogue: ${tree?.id ?? 'unknown'} (stub — disponível no PROMPT 8)`);
+export function showCenterMessage(msg) {
+    if (!_elCenter) return;
+    _elCenter.textContent = msg;
+    _elCenter.style.display = 'block';
+    _elCenter.style.animation = 'none';
+    // Força reflow para reiniciar animação
+    void _elCenter.offsetWidth;
+    _elCenter.style.animation = 'centerFade 3s forwards';
+    setTimeout(() => { _elCenter.style.display = 'none'; }, 3100);
+}
+
+/**
+ * Atualiza o contador de FPS no HUD.
+ * @param {number} fps
+ */
+export function setFPS(fps) {
+    if (_elFPS) _elFPS.textContent = `${fps} FPS`;
+}
+
+/**
+ * Exibe uma janela de UI pelo id (stub — implementação completa em prompts futuros).
+ * @param {string} id
+ */
+export function showWindow(id) {
+    Events.emit('uiWindowOpened', { id });
+}
+
+/**
+ * Fecha uma janela de UI pelo id (stub).
+ * @param {string} id
+ */
+export function hideWindow(id) {
+    Events.emit('uiWindowClosed', { id });
 }
