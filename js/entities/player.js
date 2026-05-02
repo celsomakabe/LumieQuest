@@ -11,6 +11,7 @@ import { getScene, getCamera, add } from '../world/scene.js';
 import { getGroundHeight }          from '../world/physics.js';
 import { getBaseStats }             from '../systems/classes.js';
 import * as Audio from '../core/audio.js';
+import { findNearestTarget, attack } from '../systems/combat.js';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -23,6 +24,7 @@ const CAM_OFFSET        = new THREE.Vector3(0, 5, 8);
 
 /** @type {THREE.Mesh|null} */
 let _mesh = null;
+let _attackAnimTimer = null;
 let _isDead = false;
 /** @type {Object|null} */
 let _data = null;
@@ -67,6 +69,34 @@ export function init(saveData = null) {
     // Bônus de equipamento via bus — sem import direto de equipment.js (R8)
     on('itemEquipped', _onItemEquipped);
     on('playerMoved', _onPlayerMoved);
+
+on('itemEquipped', _onItemEquipped);
+    on('playerMoved', _onPlayerMoved);
+
+    // Auto-attack no clique esquerdo
+    on('mouseClicked', (e) => {
+      if (e.button !== 0) return;
+
+      const pos    = _data.position;
+      const target = findNearestTarget(pos, 3);
+      if (!target) {
+        Audio.playSFX('assets/audio/sfx/sfx_combat_miss.ogg');
+        return;
+      }
+
+      const result = attack(_data, target);
+      if (!result) return;
+
+      if (_mesh) {
+        if (_attackAnimTimer) clearTimeout(_attackAnimTimer);
+        _mesh.scale.set(1.1, 1.1, 1.1);
+        _attackAnimTimer = setTimeout(() => {
+          if (_mesh) _mesh.scale.set(1.0, 1.0, 1.0);
+          _attackAnimTimer = null;
+        }, 100);
+      }
+    });
+
     emit('playerSpawned', { position: _mesh.position.clone() });
     console.log('[player] Spawnou em', _mesh.position);
 }

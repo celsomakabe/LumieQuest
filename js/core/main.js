@@ -13,6 +13,8 @@ import * as Scene   from '../world/scene.js';
 import * as Player  from '../entities/player.js';
 import * as Classes from '../systems/classes.js';
 import * as UI      from '../ui/ui.js';
+import * as THREE  from 'three';
+import * as Combat from '../systems/combat.js';
 
 // ─── Estado interno ───────────────────────────────────────────────────────────
 
@@ -167,6 +169,33 @@ export function init() {
     Classes.init();
     UI.init();
 
+// ── Monstro placeholder (Sessão 8 — remover quando monsters.js existir) ──
+    const _placeholderGeo  = new THREE.BoxGeometry(1, 1, 1);
+    const _placeholderMat  = new THREE.MeshLambertMaterial({ color: 0xcc2222 });
+    const _placeholderMesh = new THREE.Mesh(_placeholderGeo, _placeholderMat);
+    _placeholderMesh.position.set(3, 0.5, 3);
+    Scene.add(_placeholderMesh);
+
+    const _monster01 = {
+      id:        'placeholder_01',
+      mesh:      _placeholderMesh,
+      hp:        50,
+      maxHp:     50,
+      def:       0,
+      baseStats: { str: 5 },
+      position:  _placeholderMesh.position,
+    };
+
+    Combat.registerTarget(_monster01);
+
+    Events.once('entityDied', ({ entity }) => {
+      if (entity.id !== 'placeholder_01') return;
+      console.log('[combat] entityDied:', entity.id);
+      Scene.remove(_placeholderMesh);
+      _placeholderGeo.dispose();
+      _placeholderMat.dispose();
+    });
+
     // Captura save antes de tudo (one-shot)
     Events.once('saveLoaded', (data) => {
         _saveData = data;
@@ -197,6 +226,12 @@ export function init() {
         { type: 'audio', url: 'assets/audio/sfx/sfx_ui_click.ogg' },
         { type: 'audio', url: 'assets/audio/sfx/sfx_ui_hover.ogg' },
         { type: 'audio', url: 'assets/audio/sfx/sfx_levelup.ogg'  },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_footstep_grass1.ogg' },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_footstep_grass2.ogg' },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_combat_swing.ogg'    },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_combat_hit.ogg'      },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_combat_critical.ogg' },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_combat_miss.ogg'     },
     ]);
 
     // Inicia loop (roda em 'loading' para exibir progresso na UI)

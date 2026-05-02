@@ -5,6 +5,8 @@
  */
 
 import * as Events from '../core/events.js';
+import * as THREE from 'three';
+import { getCamera, getRenderer } from '../world/scene.js';
 import * as Audio  from '../core/audio.js';
 
 // ─── Referências DOM ──────────────────────────────────────────────────────────
@@ -163,6 +165,29 @@ export function init() {
     _buildDOM();
     _queryRefs();
 
+    if (!document.getElementById('lumie-damage-style')) {
+  const style = document.createElement('style');
+  style.id = 'lumie-damage-style';
+  style.textContent = `
+    @keyframes lumie-dmg-float {
+      0%   { transform: translateY(0px);   opacity: 1; }
+      100% { transform: translateY(-40px); opacity: 0; }
+    }
+    .lumie-dmg {
+      position: absolute;
+      pointer-events: none;
+      font-family: sans-serif;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px #000;
+      animation: lumie-dmg-float 800ms ease-out forwards;
+      white-space: nowrap;
+    }
+    .lumie-dmg.critical { color: #ffcc00; font-size: 1.5em; }
+    .lumie-dmg.normal   { color: #ff3333; font-size: 1em; }
+  `;
+  document.head.appendChild(style);
+    }
+
     Events.on('playerHpChanged', ({ current, max }) => {
         _hp = { current, max };
         _dirty.hp = true;
@@ -185,6 +210,10 @@ export function init() {
         if (_elLevel) _elLevel.textContent = `Lv ${newLevel}`;
         showNotification(`🎉 Level Up! Nível ${newLevel}`, 'success');
         Audio.playSFX('assets/audio/sfx/sfx_levelup.ogg');
+    });
+    Events.on('damageDealt', ({ target, amount, isCritical }) => {
+        if (!target?.position) return;
+        showDamagePopup(target.position, amount, isCritical);
     });
 }
 
@@ -261,4 +290,39 @@ export function showWindow(id) {
  */
 export function hideWindow(id) {
     Events.emit('uiWindowClosed', { id });
+}
+/**
+ * Exibe número de dano flutuante sobre a posição world do alvo.
+ * @param {{ x: number, y: number, z: number }} worldPosition
+ * @param {number}  amount
+ * @param {boolean} isCritical
+ */
+function showDamagePopup(worldPosition, amount, isCritical) {
+  const camera   = getCamera();
+  const renderer = getRenderer();
+  if (!camera || !renderer) return;
+
+  const canvas = renderer.domElement;
+  const vec = new THREE.Vector3(
+    worldPosition.x,
+    (worldPosition.y ?? 0) + 1.2,
+    worldPosition.z
+  );
+  vec.project(camera);
+
+  const hw = canvas.clientWidth  / 2;
+  const hh = canvas.clientHeight / 2;
+  const sx = Math.round( vec.x * hw + hw);
+  const sy = Math.round(-vec.y * hh + hh);
+
+  const div = document.createElement('div');
+  div.className  = `lumie-dmg ${isCritical ? 'critical' : 'normal'}`;
+  div.textContent = isCritical ? `★${amount}` : `${amount}`;
+  div.style.left = `${sx}px`;
+  div.style.top  = `${sy}px`;
+
+  const root = document.getElementById('ui-root') ?? document.body;
+  root.appendChild(div);
+
+  div.addEventListener('animationend', () => div.remove(), { once: true });
 }
