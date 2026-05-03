@@ -147,6 +147,7 @@ function _onAssetsReady() {
       if (player.hp <= 0) return;
       Combat.attack(attacker, player);
     });
+ 
     _gameState = 'playing';
     _lastTime  = performance.now();
     Events.emit('gameReady');

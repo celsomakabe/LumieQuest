@@ -136,6 +136,7 @@ function attack(attacker, target) {
   target.hp = Math.max(0, target.hp - amount);
 if (target.type === 'player') {
     emit('playerHpChanged', { current: target.hp, max: target.maxHp });
+    if (target.hp <= 0) emit('playerDied');
   }
 
   playSFX(isCritical ? SFX.critical : SFX.hit);
