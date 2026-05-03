@@ -17,7 +17,10 @@ import { findNearestTarget, attack } from '../systems/combat.js';
 
 const MOVE_SPEED        = 5;
 const MOUSE_SENSITIVITY = 0.003;
-const CAM_OFFSET        = new THREE.Vector3(0, 5, 8);
+const CAM_OFFSET        = new THREE.Vector3(0, 5, 8); // proporção base da câmera
+const CAM_ZOOM_MIN      = 3;   // distância mínima
+const CAM_ZOOM_MAX      = 20;  // distância máxima
+const CAM_ZOOM_STEP     = 0.5; // velocidade da roda do mouse
 
 
 // ─── Estado interno ───────────────────────────────────────────────────────────
@@ -31,6 +34,7 @@ let _data = null;
 
 let _rotationY   = 0;
 let _lastMouseX  = null; // null = primeiro frame, evita salto de rotação
+let _cameraDistance = 5; // distância da câmera, ajustável via roda do mouse
 let _hasMoved    = false;
 
 const _prevPosition = new THREE.Vector3();
@@ -69,10 +73,10 @@ export function init(saveData = null) {
     // Bônus de equipamento via bus — sem import direto de equipment.js (R8)
     on('itemEquipped', _onItemEquipped);
     on('playerMoved', _onPlayerMoved);
-
-on('itemEquipped', _onItemEquipped);
-    on('playerMoved', _onPlayerMoved);
-
+    on('mouseScrolled', ({ deltaY }) => {
+        const dir = deltaY > 0 ? 1 : -1;
+        _cameraDistance = Math.max(CAM_ZOOM_MIN, Math.min(CAM_ZOOM_MAX, _cameraDistance + dir * CAM_ZOOM_STEP));
+    });
     // Auto-attack no clique esquerdo
     on('mouseClicked', (e) => {
       if (e.button !== 0) return;
@@ -226,16 +230,19 @@ export function getInstance() {
  */
 function _updateMovement(delta, inputState) {
     const { keys, mouse } = inputState;
-
-    // Rotação Y pelo mouse (delta calculado localmente)
-    if (_lastMouseX !== null) {
-        const dx = mouse.x - _lastMouseX;
-        if (dx !== 0) {
-            _rotationY    -= dx * MOUSE_SENSITIVITY;
-            _mesh.rotation.y = _rotationY;
+    // Rotação Y pelo mouse — só com botão direito segurado (padrão MMORPG)
+    if (mouse.buttons?.right) {
+        if (_lastMouseX !== null) {
+            const dx = mouse.x - _lastMouseX;
+            if (dx !== 0) {
+                _rotationY    -= dx * MOUSE_SENSITIVITY;
+                _mesh.rotation.y = _rotationY;
+            }
         }
+        _lastMouseX = mouse.x;
+    } else {
+        _lastMouseX = null; // reseta quando solta o botão (evita salto na próxima vez)
     }
-    _lastMouseX = mouse.x;
 
     // Movimento WASD orientado pela rotação do player
     let moveX = 0;
@@ -277,12 +284,14 @@ function _updateCamera() {
     const cos = Math.cos(_rotationY);
     const sin = Math.sin(_rotationY);
 
-    const offsetX = CAM_OFFSET.x * cos - CAM_OFFSET.z * sin;
-    const offsetZ = CAM_OFFSET.x * sin + CAM_OFFSET.z * cos;
+// Escala proporcional baseada em _cameraDistance (zoom via wheel)
+    const zoomScale = _cameraDistance / 8;
+    const offsetX = (CAM_OFFSET.x * cos - CAM_OFFSET.z * sin) * zoomScale;
+    const offsetZ = (CAM_OFFSET.x * sin + CAM_OFFSET.z * cos) * zoomScale;
 
     camera.position.set(
         _mesh.position.x + offsetX,
-        _mesh.position.y + CAM_OFFSET.y,
+        _mesh.position.y + CAM_OFFSET.y * zoomScale,
         _mesh.position.z + offsetZ,
     );
 
