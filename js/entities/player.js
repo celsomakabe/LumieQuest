@@ -155,7 +155,17 @@ export function heal(amount) {
     _data.hp = Math.min(_data.maxHp, _data.hp + amount);
     emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
 }
-
+/**
+ * Restaura MP do player.
+ * @param {number} amount
+ * @returns {void}
+ */
+export function restoreMp(amount) {
+    if (_isDead) return;
+    if (!_data) return;
+    _data.mp = Math.min(_data.maxMp, _data.mp + amount);
+    emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+}
 /**
  * Adiciona XP e verifica level up. Fórmula: 100 * level².
  * @param {number} amount
@@ -328,7 +338,7 @@ function _buildData(saveData) {
         learnedSkills: saveData?.learnedSkills ?? [],
         position:      saveData?.position      ?? { x: 0, y: 0, z: 0 },
         currentMap:    saveData?.currentMap    ?? 'city01',
-        zeny:          saveData?.zeny          ?? 0,
+
         playtime:      saveData?.playtime      ?? 0,
     };
 }

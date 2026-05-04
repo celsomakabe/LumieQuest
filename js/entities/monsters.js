@@ -27,7 +27,17 @@ let _uidCounter = 0;
 
 /** @type {boolean} */
 let _initialized = false;
+/** @type {Object.<string, Object>} Catálogo de items para cor dos drops */
+let _itemCatalogue = {};
 
+/** @type {Map<string, {itemId: string, qty: number, mesh: THREE.Mesh, spawnTime: number}>} */
+const _drops = new Map();
+
+/** Contador para IDs únicos de drops */
+let _dropIdCounter = 0;
+
+/** @type {{x:number, y:number, z:number}} Posição do player atualizada por updateAll */
+let _playerPos = { x: 0, y: 0, z: 0 };
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 /**
@@ -44,10 +54,16 @@ async function init() {
   for (const m of data.monsters) {
     _catalogue[m.id] = m;
   }
-
+// Carrega catálogo de items para cor dos drops e _rollDrops
+  const itemsRes = await fetch('assets/data/items.json');
+  if (!itemsRes.ok) throw new Error(`[monsters] Falha ao carregar items.json: ${itemsRes.status}`);
+  const itemsData = await itemsRes.json();
+  for (const item of itemsData.items) {
+    _itemCatalogue[item.id] = item;
+  }
   // Listener global: detecta morte de qualquer entidade registrada neste módulo
   on('entityDied', _onEntityDied);
-
+  on('pickupRequest', _onPickupRequest);
   _initialized = true;
   console.log(`[monsters] Catálogo carregado: ${Object.keys(_catalogue).length} tipos.`);
 }
@@ -151,10 +167,12 @@ function spawnGroup(monsterId, count, area) {
  * @param {THREE.Vector3} playerPosition
  */
 function updateAll(dt, playerPosition) {
+  _playerPos = playerPosition;
   for (const [, m] of _monsters) {
     if (m.state === 'dead') continue;
     _updateMonster(m, dt, playerPosition);
   }
+  _updateDrops(dt, playerPosition);
 }
 
 /**
@@ -297,7 +315,9 @@ function _onEntityDied({ entity }) {
   m.state = 'dead';
   m.hp = 0;
   m.mesh.visible = false;
-
+// Rolar drops do monstro morto
+  const def = _catalogue[m.monsterId];
+  _rollDrops(def, m.mesh.position);
   unregisterTarget(m);
 
   emit('monsterDied', { id: m.id, monsterId: m.monsterId, xp: m.xp });
@@ -333,5 +353,113 @@ function _respawn(m) {
 }
 
 // ─── Exports públicos ─────────────────────────────────────────────────────────
+// ─── Drops ────────────────────────────────────────────────────────────────────
 
+/**
+ * Rola drops de um monstro morto e cria meshes flutuantes na cena.
+ * @param {Object} def - Definição do monstro (com def.drops)
+ * @param {THREE.Vector3} position - Posição da morte
+ */
+function _rollDrops(def, position) {
+  if (!def || !Array.isArray(def.drops)) return;
+
+  for (const drop of def.drops) {
+    if (Math.random() >= drop.chance) continue;
+
+    let qty = 1;
+    if (drop.qty && typeof drop.qty === 'object') {
+      qty = Math.floor(Math.random() * (drop.qty.max - drop.qty.min + 1)) + drop.qty.min;
+    } else if (typeof drop.qty === 'number') {
+      qty = drop.qty;
+    }
+
+    const itemColor = _itemCatalogue[drop.itemId]?.modelPlaceholder ?? '#ffffff';
+
+    const geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+    const material = new THREE.MeshLambertMaterial({ color: itemColor });
+    const mesh = new THREE.Mesh(geometry, material);
+
+    mesh.position.set(
+      position.x + (Math.random() - 0.5) * 0.6,
+      position.y + 0.3,
+      position.z + (Math.random() - 0.5) * 0.6
+    );
+    mesh.castShadow = false;
+
+    sceneAdd(mesh);
+
+    const dropId = `drop_${_dropIdCounter++}`;
+    _drops.set(dropId, {
+      itemId: drop.itemId,
+      qty,
+      mesh,
+      spawnTime: performance.now()
+    });
+
+    emit('itemDropped', { itemId: drop.itemId, qty, position: mesh.position, dropId });
+  }
+}
+
+/**
+ * Remove drop do mundo: dispose geometry/material e remove da cena.
+ * @param {string} dropId
+ */
+function _removeDrop(dropId) {
+  const drop = _drops.get(dropId);
+  if (!drop) return;
+  drop.mesh.geometry.dispose();
+  drop.mesh.material.dispose();
+  sceneRemove(drop.mesh);
+  _drops.delete(dropId);
+}
+
+/**
+ * Atualiza animação flutuante e auto-pickup de todos os drops.
+ * @param {number} dt
+ * @param {THREE.Vector3} playerPos
+ */
+function _updateDrops(dt, playerPos) {
+  const now = performance.now();
+
+  for (const [dropId, drop] of _drops) {
+    drop.mesh.position.y = 0.3 + Math.sin(now * 0.002 + drop.mesh.position.x) * 0.08;
+    drop.mesh.rotation.y += dt * 1.5;
+
+    if ((now - drop.spawnTime) < 500) continue;
+
+    const dx = drop.mesh.position.x - playerPos.x;
+    const dz = drop.mesh.position.z - playerPos.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+
+    if (dist < 1.5) {
+      emit('itemPicked', { itemId: drop.itemId, qty: drop.qty, dropId });
+      _removeDrop(dropId);
+    }
+  }
+}
+
+/**
+ * Pickup manual: localiza drop mais próximo no raio e coleta.
+ * @param {{ position: {x:number,y:number,z:number} }} payload
+ */
+function _onPickupRequest({ position }) {
+  let nearestId = null;
+  let nearestDist = Infinity;
+
+  for (const [dropId, drop] of _drops) {
+    const dx = drop.mesh.position.x - position.x;
+    const dz = drop.mesh.position.z - position.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+    if (dist < 1.5 && dist < nearestDist) {
+      nearestDist = dist;
+      nearestId = dropId;
+    }
+  }
+
+  if (nearestId) {
+    const drop = _drops.get(nearestId);
+    emit('itemPicked', { itemId: drop.itemId, qty: drop.qty, dropId: nearestId });
+    _removeDrop(nearestId);
+  }
+}
 export { init, spawnMonster, spawnGroup, updateAll };

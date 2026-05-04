@@ -8,7 +8,7 @@ import * as Events from '../core/events.js';
 import * as THREE from 'three';
 import { getCamera, getRenderer } from '../world/scene.js';
 import * as Audio  from '../core/audio.js';
-
+import * as Inventory from '../systems/inventory.js';
 // ─── Referências DOM ──────────────────────────────────────────────────────────
 
 let _elHP        = null;
@@ -216,6 +216,96 @@ export function init() {
         if (target.type === 'player') return;
         showDamagePopup(target.position, amount, isCritical);
     });
+    // ── HUD de Ouro ───────────────────────────────────────────────────────
+    const goldHud = document.createElement('div');
+    goldHud.id = 'ui-gold-hud';
+    goldHud.style.cssText = `
+        position:fixed; bottom:16px; right:16px;
+        background:rgba(20,18,14,0.82); border:1px solid #5a4a2a;
+        border-radius:6px; padding:4px 10px;
+        color:#ffd700; font-family:monospace; font-size:13px;
+        z-index:100; pointer-events:none;
+    `;
+    goldHud.textContent = '🪙 0';
+    document.body.appendChild(goldHud);
+
+    // ── Painel de Inventário ──────────────────────────────────────────────
+    const invPanel = document.createElement('div');
+    invPanel.id = 'ui-inventory';
+    invPanel.style.cssText = `
+        display:none; position:fixed; top:50%; left:50%;
+        transform:translate(-50%,-50%);
+        background:rgba(20,18,14,0.97); border:1px solid #5a4a2a;
+        border-radius:8px; padding:16px; z-index:200;
+        width:480px; color:#e8d8a0; font-family:monospace; font-size:15px;
+        box-shadow:0 8px 32px rgba(0,0,0,0.7);
+        user-select:none;
+    `;
+    invPanel.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <span style="font-size:15px;font-weight:bold;">🎒 Inventário</span>
+            <span id="ui-inv-close" style="cursor:pointer;font-size:18px;line-height:1;">✕</span>
+        </div>
+        <div style="margin-bottom:10px;font-size:12px;color:#c8a84a;">
+            🪙 <span id="ui-gold-inv">0</span>
+        </div>
+        <div style="margin-bottom:10px;">
+            <div style="font-size:11px;color:#a08040;margin-bottom:6px;">EQUIPAMENTO</div>
+            <div style="display:flex;gap:6px;">
+                <div class="ui-equip-slot" data-slot="weapon"    title="Arma"      style="width:72px;height:72px;border:1px solid #5a4a2a;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#2a2010;font-size:12px;text-align:center;">Arma</div>
+                <div class="ui-equip-slot" data-slot="armor"     title="Armadura"  style="width:72px;height:72px;border:1px solid #5a4a2a;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#2a2010;font-size:12px;text-align:center;">Arm.</div>
+                <div class="ui-equip-slot" data-slot="accessory" title="Acessório" style="width:72px;height:72px;border:1px solid #5a4a2a;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#2a2010;font-size:12px;text-align:center;">Aces.</div>
+            </div>
+        </div>
+        <div style="font-size:11px;color:#a08040;margin-bottom:6px;">ITENS (clique-dir: usar/equipar)</div>
+        <div id="ui-inv-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;"></div>
+        <div style="margin-top:8px;font-size:10px;color:#706050;">E = pegar item | I = fechar</div>
+    `;
+    document.body.appendChild(invPanel);
+
+    document.getElementById('ui-inv-close').addEventListener('click', () => {
+        invPanel.style.display = 'none';
+        Events.emit('uiWindowClosed', { id: 'inventory' });
+    });
+
+    invPanel.querySelectorAll('.ui-equip-slot').forEach(el => {
+        el.addEventListener('click', () => {
+            Inventory.unequipItem(el.dataset.slot);
+            _refreshInventoryUI();
+        });
+    });
+
+    // ── Listeners de Inventário ───────────────────────────────────────────
+    Events.on('itemAdded',      () => _refreshInventoryUI());
+    Events.on('itemRemoved',    () => _refreshInventoryUI());
+    Events.on('itemEquipped',   () => _refreshInventoryUI());
+    Events.on('itemUnequipped', () => _refreshInventoryUI());
+
+    Events.on('goldChanged', ({ total }) => {
+        const gh = document.getElementById('ui-gold-hud');
+        const gi = document.getElementById('ui-gold-inv');
+        if (gh) gh.textContent = '🪙 ' + total;
+        if (gi) gi.textContent = total;
+    });
+
+    Events.on('inventoryFull', ({ itemId }) => {
+        showNotification(`Inventário cheio! (${itemId})`, 'warning');
+    });
+
+    Events.on('uiWindowToggle', ({ id }) => {
+        if (id !== 'inventory') return;
+        const panel = document.getElementById('ui-inventory');
+        const isOpen = panel.style.display !== 'none';
+        if (isOpen) {
+            panel.style.display = 'none';
+            Events.emit('uiWindowClosed', { id: 'inventory' });
+        } else {
+            Audio.playSFX('assets/audio/sfx/sfx_ui_click.ogg');
+            _refreshInventoryUI();
+            panel.style.display = 'block';
+            Events.emit('uiWindowOpened', { id: 'inventory' });
+        }
+    });
 }
 
 /**
@@ -291,6 +381,78 @@ export function showWindow(id) {
  */
 export function hideWindow(id) {
     Events.emit('uiWindowClosed', { id });
+}/**
+ * Re-renderiza grid + equipment slots + ouro do painel de inventário.
+ */
+function _refreshInventoryUI() {
+    const slots   = Inventory.getSlots();
+    const equip   = Inventory.getEquipment();
+    const gold    = Inventory.getGold();
+    const grid    = document.getElementById('ui-inv-grid');
+    const goldInv = document.getElementById('ui-gold-inv');
+    const goldHud = document.getElementById('ui-gold-hud');
+
+    if (goldInv) goldInv.textContent = gold;
+    if (goldHud) goldHud.textContent = '🪙 ' + gold;
+
+    if (grid) {
+        grid.innerHTML = '';
+        for (let i = 0; i < 30; i++) {
+            const slot = slots[i];
+            const cell = document.createElement('div');
+            cell.style.cssText = `
+                width:64px;height:64px;border:1px solid #3a2a10;border-radius:3px;
+                display:flex;align-items:center;justify-content:center;
+                background:#1a1408;cursor:${slot ? 'pointer' : 'default'};
+                font-size:10px;text-align:center;color:#c8a84a;position:relative;
+                box-sizing:border-box;
+            `;
+            if (slot) {
+                const def = Inventory.getItemDef(slot.itemId);
+                const icon = def?.type === 'weapon'     ? '⚔️'
+                           : def?.type === 'armor'      ? '🛡️'
+                           : def?.type === 'accessory'  ? '💍'
+                           : def?.type === 'consumable' ? '🧪'
+                           : '📦';
+                cell.innerHTML = `<span style="font-size:16px;">${icon}</span>`;
+                if (def && def.stack > 1) {
+                    const qtyEl = document.createElement('span');
+                    qtyEl.style.cssText = 'position:absolute;bottom:1px;right:3px;font-size:9px;color:#ffd700;';
+                    qtyEl.textContent = slot.qty;
+                    cell.appendChild(qtyEl);
+                }
+                cell.title = (def?.name ?? slot.itemId) + (slot.qty > 1 ? ` x${slot.qty}` : '');
+                cell.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    const d = Inventory.getItemDef(slot.itemId);
+                    if (!d) return;
+                    if (d.type === 'consumable') {
+                        Inventory.useItem(i);
+                        Audio.playSFX('assets/audio/sfx/sfx_ui_click.ogg');
+                    } else if (d.type === 'weapon' || d.type === 'armor' || d.type === 'accessory') {
+                        Inventory.equipItem(i);
+                    }
+                    _refreshInventoryUI();
+                });
+            }
+            grid.appendChild(cell);
+        }
+    }
+
+    document.querySelectorAll('.ui-equip-slot').forEach(el => {
+        const slotName = el.dataset.slot;
+        const itemId = equip[slotName];
+        if (itemId) {
+            const def = Inventory.getItemDef(itemId);
+            const icon = slotName === 'weapon' ? '⚔️' : slotName === 'armor' ? '🛡️' : '💍';
+            el.innerHTML = `<span style="font-size:18px;">${icon}</span><br><span style="font-size:9px;">${def?.name ?? itemId}</span>`;
+            el.style.borderColor = '#c8a84a';
+        } else {
+            const label = slotName === 'weapon' ? 'Arma' : slotName === 'armor' ? 'Arm.' : 'Aces.';
+            el.textContent = label;
+            el.style.borderColor = '#5a4a2a';
+        }
+    });
 }
 /**
  * Exibe número de dano flutuante sobre a posição world do alvo.

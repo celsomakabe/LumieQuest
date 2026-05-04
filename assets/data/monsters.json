@@ -12,7 +12,10 @@
       "attackRange": 1.2,
       "speed": 1.5,
       "modelPlaceholder": "#44cc44",
-      "drops": [],
+      "drops": [
+        { "itemId": "pocao-pequena", "chance": 0.30 },
+        { "itemId": "ouro", "chance": 0.80, "qty": { "min": 1, "max": 5 } }
+      ],
       "soundProfile": {}
     },
     {
@@ -27,7 +30,11 @@
       "attackRange": 1.4,
       "speed": 2.5,
       "modelPlaceholder": "#88aa22",
-      "drops": [],
+      "drops": [
+        { "itemId": "pocao-pequena", "chance": 0.20 },
+        { "itemId": "adaga-iniciante", "chance": 0.05 },
+        { "itemId": "ouro", "chance": 0.90, "qty": { "min": 3, "max": 10 } }
+      ],
       "soundProfile": {}
     },
     {
@@ -42,7 +49,10 @@
       "attackRange": 1.3,
       "speed": 3.5,
       "modelPlaceholder": "#886644",
-      "drops": [],
+      "drops": [
+        { "itemId": "pocao-pequena", "chance": 0.25 },
+        { "itemId": "ouro", "chance": 0.85, "qty": { "min": 5, "max": 15 } }
+      ],
       "soundProfile": {}
     },
     {
@@ -57,7 +67,11 @@
       "attackRange": 1.2,
       "speed": 1.8,
       "modelPlaceholder": "#224488",
-      "drops": [],
+      "drops": [
+        { "itemId": "pocao-pequena", "chance": 0.15 },
+        { "itemId": "armadura-cloth", "chance": 0.08 },
+        { "itemId": "ouro", "chance": 0.70, "qty": { "min": 8, "max": 20 } }
+      ],
       "soundProfile": {}
     },
     {
@@ -72,7 +86,11 @@
       "attackRange": 1.5,
       "speed": 2.8,
       "modelPlaceholder": "#ddddcc",
-      "drops": [],
+      "drops": [
+        { "itemId": "pocao-azul", "chance": 0.20 },
+        { "itemId": "espada-iniciante", "chance": 0.10 },
+        { "itemId": "ouro", "chance": 0.90, "qty": { "min": 10, "max": 25 } }
+      ],
       "soundProfile": {}
     },
     {
@@ -87,7 +105,10 @@
       "attackRange": 1.6,
       "speed": 1.2,
       "modelPlaceholder": "#888888",
-      "drops": [],
+      "drops": [
+        { "itemId": "armadura-cloth", "chance": 0.30 },
+        { "itemId": "ouro", "chance": 1.00, "qty": { "min": 15, "max": 30 } }
+      ],
       "soundProfile": {}
     },
     {
@@ -102,7 +123,10 @@
       "attackRange": 2.5,
       "speed": 4.0,
       "modelPlaceholder": "#cc44cc",
-      "drops": [],
+      "drops": [
+        { "itemId": "pocao-azul", "chance": 0.40 },
+        { "itemId": "ouro", "chance": 0.95, "qty": { "min": 20, "max": 40 } }
+      ],
       "soundProfile": {}
     },
     {
@@ -117,7 +141,11 @@
       "attackRange": 1.8,
       "speed": 4.5,
       "modelPlaceholder": "#553322",
-      "drops": [],
+      "drops": [
+        { "itemId": "espada-iniciante", "chance": 0.25 },
+        { "itemId": "machado-iniciante", "chance": 0.25 },
+        { "itemId": "ouro", "chance": 1.00, "qty": { "min": 50, "max": 100 } }
+      ],
       "soundProfile": {}
     }
   ]

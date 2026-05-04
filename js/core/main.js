@@ -16,7 +16,7 @@ import * as UI      from '../ui/ui.js';
 import * as THREE  from 'three';
 import * as Combat from '../systems/combat.js';
 import * as Monsters from '../entities/monsters.js';
-
+import * as Inventory from '../systems/inventory.js';
 // ─── Estado interno ───────────────────────────────────────────────────────────
 
 let _gameState     = 'loading';
@@ -119,12 +119,12 @@ function _loop(timestamp) {
 function _doAutoSave() {
     const playerData = Player.getState();
     const current    = Save.load() ?? {};
-Save.save({ ...current, player: playerData });
+Save.save({ ...current, player: { ...playerData, inventory: Inventory.serialize() } });
 }
 
 // ─── Assets Ready ─────────────────────────────────────────────────────────────
 
-function _onAssetsReady() {
+async function _onAssetsReady() {
     // Textura procedural — sem dependência de arquivo externo
     const dataURI = _makeProceduralGrassDataURI();
     Assets.loadTexture(dataURI).then(tex => {
@@ -140,6 +140,7 @@ function _onAssetsReady() {
 
     // Spawna player com dados do save (capturado via Events.once abaixo)
     Player.init(_saveData?.player ?? null);
+    await Inventory.init(_saveData?.player?.inventory ?? null);
     Combat.registerTarget(Player.getInstance());
 
   Events.on('monsterAttackRequest', ({ attacker }) => {
@@ -147,7 +148,28 @@ function _onAssetsReady() {
       if (player.hp <= 0) return;
       Combat.attack(attacker, player);
     });
- 
+ // ── Inventário ────────────────────────────────────────────────────────
+    Events.on('itemPicked', ({ itemId, qty }) => {
+        Inventory.addItem(itemId, qty);
+    Audio.playSFX('assets/audio/sfx/sfx_ui_click.ogg');
+    });
+
+    Events.on('inventoryHealRequest', ({ amount }) => {
+        Player.heal(amount);
+    });
+
+    Events.on('inventoryRestoreMpRequest', ({ amount }) => {
+        Player.restoreMp(amount);
+    });
+
+    Events.on('keyPressed', ({ code }) => {
+        if (code === 'KeyE') {
+            Events.emit('pickupRequest', { position: Player.getPosition() });
+        }
+        if (code === 'KeyI') {
+            Events.emit('uiWindowToggle', { id: 'inventory' });
+        }
+    });
     _gameState = 'playing';
     _lastTime  = performance.now();
     Events.emit('gameReady');

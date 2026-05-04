@@ -1,0 +1,84 @@
+{
+  "items": [
+    {
+      "id": "pocao-pequena",
+      "name": "Poção Pequena",
+      "type": "consumable",
+      "stack": 99,
+      "effect": { "type": "heal", "amount": 30 },
+      "classRestriction": null,
+      "sellPrice": 5,
+      "modelPlaceholder": "#ff4444"
+    },
+    {
+      "id": "pocao-azul",
+      "name": "Poção Azul",
+      "type": "consumable",
+      "stack": 99,
+      "effect": { "type": "restore_mp", "amount": 20 },
+      "classRestriction": null,
+      "sellPrice": 8,
+      "modelPlaceholder": "#4444ff"
+    },
+    {
+      "id": "espada-iniciante",
+      "name": "Espada Iniciante",
+      "type": "weapon",
+      "stack": 1,
+      "effect": { "type": "weapon_bonus", "str": 3 },
+      "classRestriction": ["swordman"],
+      "sellPrice": 50,
+      "modelPlaceholder": "#c0c0c0"
+    },
+    {
+      "id": "machado-iniciante",
+      "name": "Machado Iniciante",
+      "type": "weapon",
+      "stack": 1,
+      "effect": { "type": "weapon_bonus", "str": 4 },
+      "classRestriction": ["swordman"],
+      "sellPrice": 60,
+      "modelPlaceholder": "#a0a0a0"
+    },
+    {
+      "id": "arco-iniciante",
+      "name": "Arco Iniciante",
+      "type": "weapon",
+      "stack": 1,
+      "effect": { "type": "weapon_bonus", "dex": 3 },
+      "classRestriction": ["archer"],
+      "sellPrice": 50,
+      "modelPlaceholder": "#8b4513"
+    },
+    {
+      "id": "adaga-iniciante",
+      "name": "Adaga Iniciante",
+      "type": "weapon",
+      "stack": 1,
+      "effect": { "type": "weapon_bonus", "agi": 2, "str": 1 },
+      "classRestriction": ["thief"],
+      "sellPrice": 30,
+      "modelPlaceholder": "#b8860b"
+    },
+    {
+      "id": "armadura-cloth",
+      "name": "Armadura de Pano",
+      "type": "armor",
+      "stack": 1,
+      "effect": { "type": "armor_bonus", "vit": 2, "def": 1 },
+      "classRestriction": null,
+      "sellPrice": 80,
+      "modelPlaceholder": "#6b8e23"
+    },
+    {
+      "id": "ouro",
+      "name": "Ouro",
+      "type": "currency",
+      "stack": 999999,
+      "effect": null,
+      "classRestriction": null,
+      "sellPrice": 0,
+      "modelPlaceholder": "#ffd700"
+    }
+  ]
+}

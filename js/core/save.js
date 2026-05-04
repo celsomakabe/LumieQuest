@@ -13,7 +13,7 @@ const STORAGE_KEY = 'lumiequest_save';
  * v2 — PROMPT 3: adiciona bloco "player"
  * @type {number}
  */
-const CURRENT_SAVE_VERSION = 2;
+const CURRENT_SAVE_VERSION = 3;
 
 /** @type {Record<number, (data: Object) => Object>} */
 const MIGRATIONS = {
@@ -29,13 +29,29 @@ const MIGRATIONS = {
             baseStats: { str: 10, agi: 8, vit: 12, int: 5, dex: 7, luk: 5 },
             statPoints: 0, skillPoints: 0, learnedSkills: [],
             position: { x: 0, y: 0, z: 0 },
-            currentMap: 'city01', zeny: 0, playtime: 0,
+          currentMap: 'city01', playtime: 0,
         },
-    }),
-    // v3 — PROMPT 13: setId e grade nos equipamentos
-    // v4 — PROMPT 14: refineLevel nos equipamentos
-    // v5 — PROMPT 15: cards[] e sockets nos equipamentos
-    // v6 — PROMPT 16: bloco pets
+    }),/**
+     * v2 → v3: cria bloco inventory (30 slots, equipment, gold) e migra zeny → inventory.gold.
+     */
+    3: (data) => {
+        const goldFromZeny = (data.player && typeof data.player.zeny === 'number')
+            ? data.player.zeny
+            : 0;
+        if (data.player) {
+            data.player.inventory = {
+                slots: new Array(30).fill(null),
+                gold: goldFromZeny,
+                equipment: { weapon: null, armor: null, accessory: null },
+            };
+            delete data.player.zeny;
+        }
+        return data;
+    },
+// v4 — PROMPT 13: setId e grade nos equipamentos
+    // v5 — PROMPT 14: refineLevel nos equipamentos
+    // v6 — PROMPT 15: cards[] e sockets nos equipamentos
+    // v7 — PROMPT 16: bloco pets
 };
 
 /**
