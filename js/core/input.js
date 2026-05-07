@@ -22,6 +22,7 @@ const _bindings = {
     jump:      'Space',
     attack:    'Mouse0',
     camera:    'Mouse2',
+    interact:  'KeyF',
 };
 
 // ─── Estado interno ───────────────────────────────────────────────────────────
