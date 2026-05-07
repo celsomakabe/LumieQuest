@@ -1,0 +1,199 @@
+{
+  "npcs": [
+    {
+      "id": "mayor",
+      "name": "Prefeito Aldric",
+      "position": { "x": -3, "y": 0, "z": -4 },
+      "modelPlaceholder": { "type": "capsule", "color": "#FFD700" },
+      "dialogTree": {
+        "root": "greet",
+        "nodes": {
+          "greet": {
+            "text": "Bem-vindo a Lumie, aventureiro! Sou o Prefeito Aldric. Nossa cidade vive tempos difíceis com os monstros ao redor.",
+            "options": [
+              { "text": "O que está acontecendo?", "next": "explain" },
+              { "text": "Preciso de ajuda com algo?", "next": "quest_hint" },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "explain": {
+            "text": "Slimes e goblins infestariam os arredores. Nossos guardas mal conseguem conter o avanço. Se você for corajoso, pode nos ajudar.",
+            "options": [
+              { "text": "Farei o que puder.", "next": "thanks" },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "quest_hint": {
+            "text": "Fale com o Ferreiro Bram — ele forja armas para quem nos defende. E o Padre Silas pode curar suas feridas.",
+            "options": [
+              { "text": "Obrigado pela dica.", "next": "thanks" },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "thanks": {
+            "text": "Que os deuses te protejam, aventureiro. Lumie conta com você!",
+            "options": [
+              { "text": "Adeus.", "next": "end" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "blacksmith",
+      "name": "Ferreiro Bram",
+      "position": { "x": 4, "y": 0, "z": -3 },
+      "modelPlaceholder": { "type": "capsule", "color": "#FFD700" },
+      "dialogTree": {
+        "root": "greet",
+        "nodes": {
+          "greet": {
+            "text": "Hmph. Outro aventureiro. Olha para as minhas armas — feitas à mão, cada uma. Você quer comprar ou só veio olhar?",
+            "options": [
+              { "text": "O que você vende?", "next": "wares" },
+              { "text": "Como você aprendeu a forjar?", "next": "story" },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "wares": {
+            "text": "Espadas, machados, lanças... Por ora meu estoque está baixo. Os goblins roubaram meu minério na última semana. Volte quando resolvermos isso.",
+            "options": [
+              { "text": "Entendido. Vou ver o que posso fazer.", "next": "thanks" },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "story": {
+            "text": "Aprendi com meu pai, que aprendeu com o avô. Três gerações forjando o aço de Lumie. Não é trabalho — é missão.",
+            "options": [
+              { "text": "Impressionante.", "next": "thanks" },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "thanks": {
+            "text": "Se quiser uma boa lâmina, me traga minério de ferro. Faço algo decente por você.",
+            "options": [
+              { "text": "Adeus.", "next": "end" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "merchant",
+      "name": "Comerciante Lyra",
+      "position": { "x": 0, "y": 0, "z": -6 },
+      "modelPlaceholder": { "type": "capsule", "color": "#FFD700" },
+      "dialogTree": {
+        "root": "greet",
+        "nodes": {
+          "greet": {
+            "text": "Boa tarde! Lyra's Mercadorias, o melhor preço da cidade — aliás, o único preço da cidade! O que você precisa?",
+            "options": [
+              { "text": "O que você tem para vender?", "next": "wares" },
+              { "text": "Como estão os negócios?", "next": "business" },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "wares": {
+            "text": "Poções de vida, ervas medicinais, pergaminhos... Tudo o que o aventureiro moderno precisa para sobreviver! Meu inventário completo abre em breve.",
+            "options": [
+              { "text": "Aguardo a abertura.", "next": "thanks" },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "business": {
+            "text": "Péssimos, para ser honesta. Com monstros bloqueando as estradas, as caravanas pararam de chegar. Se isso continuar, vou à falência.",
+            "options": [
+              { "text": "Espero que melhore.", "next": "thanks" },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "thanks": {
+            "text": "Volte sempre! E se encontrar itens valiosos por aí, eu compro — pagando bem!",
+            "options": [
+              { "text": "Adeus.", "next": "end" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "priest",
+      "name": "Padre Silas",
+      "position": { "x": -5, "y": 0, "z": 2 },
+      "modelPlaceholder": { "type": "capsule", "color": "#FFD700" },
+      "dialogTree": {
+        "root": "greet",
+        "nodes": {
+          "greet": {
+            "text": "A luz de Odin guie seus passos, filho. Estou aqui para curar corpos e almas. Você veio buscar conforto ou orientação?",
+            "options": [
+              { "text": "Pode me curar?", "next": "heal" },
+              { "text": "O que é este lugar?", "next": "lore" },
+              { "text": "Adeus, Padre.", "next": "end" }
+            ]
+          },
+          "heal": {
+            "text": "A cura divina ainda não me foi concedida neste plano... mas ore comigo e sua força se renovará. Em breve poderei fazer mais por você.",
+            "options": [
+              { "text": "Obrigado mesmo assim.", "next": "blessing" },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "lore": {
+            "text": "Lumie foi construída sobre as ruínas de um antigo templo. Dizem que poder dorme sob a terra aqui. Talvez por isso os monstros circulam tanto.",
+            "options": [
+              { "text": "Interessante...", "next": "blessing" },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "blessing": {
+            "text": "Que Odin proteja sua jornada. Leve esta bênção: que cada passo seu seja firme e cada golpe, certeiro.",
+            "options": [
+              { "text": "Adeus, Padre.", "next": "end" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "guard",
+      "name": "Guarda Torren",
+      "position": { "x": 3, "y": 0, "z": 3 },
+      "modelPlaceholder": { "type": "capsule", "color": "#FFD700" },
+      "dialogTree": {
+        "root": "greet",
+        "nodes": {
+          "greet": {
+            "text": "Alto aí! ...Ah, é um aventureiro. Tudo bem, pode passar. Mas fique esperto — vi um grupo de goblins perto do portão leste ontem à noite.",
+            "options": [
+              { "text": "Quantos eram?", "next": "info" },
+              { "text": "Você consegue lidar com eles sozinho?", "next": "pride" },
+              { "text": "Obrigado pelo aviso.", "next": "end" }
+            ]
+          },
+          "info": {
+            "text": "Três, talvez quatro. Mas eram grandes. O tipo que carrega clava. Cuidado se for para leste — e não saia da cidade depois do anoitecer.",
+            "options": [
+              { "text": "Vou tomar cuidado.", "next": "thanks" },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "pride": {
+            "text": "Sozinho? Claro que sim! Já lutei contra cinco goblins de uma vez! Mas... é melhor ter alguém cobrindo as costas. Fica a dica.",
+            "options": [
+              { "text": "Posso cobrir suas costas.", "next": "thanks" },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "thanks": {
+            "text": "Bom. Juntos mantemos Lumie segura. Agora circula — tenho ronda a fazer.",
+            "options": [
+              { "text": "Adeus.", "next": "end" }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
