@@ -24,6 +24,7 @@ let _scene = null;
 
 /** NPC que está atualmente com player no raio */
 let _nearestInRange = null;
+let _dialogOpen = false;
 /** Intervalo mínimo entre emissões do hint (ms) */
 const HINT_COOLDOWN = 1500;
 let _lastHintTime = 0;
@@ -59,6 +60,8 @@ export function init(scene) {
 
   // Escuta tecla F para iniciar diálogo
   Events.on('keyPressed', _onKeyPressed);
+  Events.on('dialogStarted', () => { _dialogOpen = true; });
+  Events.on('dialogEnded',   () => { _dialogOpen = false; });
 }
 
 /**
@@ -154,24 +157,24 @@ export function getAll() {
  * Trata pressionamento de tecla F para iniciar diálogo.
  * @param {Object} payload - { key: string }
  */
-function _onKeyPressed({ key }) {
-  if (key !== 'f' && key !== 'F') return;
+function _onKeyPressed({ code, action, key }) {
+  const isInteract =
+    action === 'interact' ||
+    code === 'KeyF' ||
+    key === 'f' ||
+    key === 'F';
 
-  // Importa isDialogOpen em runtime para evitar dependência circular na inicialização
-  // (ui.js depende de events.js; npcs.js tb depende de events.js — ok)
-  import('../ui/ui.js').then(({ isDialogOpen }) => {
-    if (isDialogOpen()) return; // já em diálogo, ignora F
+  if (!isInteract) return;
+  if (_dialogOpen) return;
+  if (!_nearestInRange) return;
 
-    if (!_nearestInRange) return;
+  const npc = _nearestInRange;
 
-    const npc = _nearestInRange;
+  // TODO: SFX quando audio.json existir — playSFX('sfx_dialog_open')
 
-    // TODO: SFX quando audio.json existir — playSFX('sfx_dialog_open')
-
-    Events.emit('dialogStarted', {
-      npcId:      npc.id,
-      npcName:    npc.name,
-      dialogTree: npc.dialogTree,
-    });
+  Events.emit('dialogStarted', {
+    npcId:      npc.id,
+    npcName:    npc.name,
+    dialogTree: npc.dialogTree,
   });
 }
