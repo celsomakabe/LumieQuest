@@ -16,6 +16,7 @@ import * as UI      from '../ui/ui.js';
 import * as THREE  from 'three';
 import * as Combat from '../systems/combat.js';
 import * as Monsters from '../entities/monsters.js';
+import * as NPCs     from '../entities/npcs.js';
 import * as Inventory from '../systems/inventory.js';
 let _dialogOpen = false;
 
@@ -109,7 +110,8 @@ function _loop(timestamp) {
 
     // Entities
     Player.update(delta, inputState);
-    Monsters.updateAll(delta, Player.getPosition());    
+    Monsters.updateAll(delta, Player.getPosition());
+    NPCs.updateAll(delta, Player.getPosition());  
     // Render
     Scene.render(delta);
 
@@ -209,7 +211,16 @@ export async function init() {
     await Monsters.init();
     Monsters.spawnGroup('slime',  5, { center: { x:  5, z:  5 }, radius: 4 });
     Monsters.spawnGroup('goblin', 3, { center: { x: -5, z:  5 }, radius: 3 });
-
+// ── NPCs ──────────────────────────────────────────────────────────────
+    NPCs.init(Scene.getScene());
+    try {
+        const res  = await fetch('./assets/data/npcs.json');
+        const data = await res.json();
+        NPCs.spawnFromConfig(data);
+    } catch (err) {
+        console.error('[main] Falha ao carregar npcs.json:', err);
+    }
+    // ──────────────────────────────────────────────────────────────────────
     // Captura save antes de tudo (one-shot)
     Events.once('saveLoaded', (data) => {
         _saveData = data;
