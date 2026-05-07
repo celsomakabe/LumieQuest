@@ -17,6 +17,10 @@ import * as THREE  from 'three';
 import * as Combat from '../systems/combat.js';
 import * as Monsters from '../entities/monsters.js';
 import * as Inventory from '../systems/inventory.js';
+let _dialogOpen = false;
+
+Events.on('dialogStarted', () => { _dialogOpen = true; });
+Events.on('dialogEnded',   () => { _dialogOpen = false; });
 // ─── Estado interno ───────────────────────────────────────────────────────────
 
 let _gameState     = 'loading';
@@ -163,6 +167,8 @@ async function _onAssetsReady() {
     });
 
     Events.on('keyPressed', ({ code }) => {
+    if (_dialogOpen) return;
+
         if (code === 'KeyE') {
             Events.emit('pickupRequest', { position: Player.getPosition() });
         }

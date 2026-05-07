@@ -12,6 +12,10 @@ import { getGroundHeight }          from '../world/physics.js';
 import { getBaseStats }             from '../systems/classes.js';
 import * as Audio from '../core/audio.js';
 import { findNearestTarget, attack } from '../systems/combat.js';
+let _dialogOpen = false;
+
+on('dialogStarted', () => { _dialogOpen = true; });
+on('dialogEnded',   () => { _dialogOpen = false; });
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -80,6 +84,7 @@ export function init(saveData = null) {
     // Auto-attack no clique esquerdo
     on('mouseClicked', (e) => {
       if (e.button !== 0) return;
+      if (_dialogOpen) return;
       if (_data.hp <= 0) return;
 
       const pos    = _data.position;
@@ -258,10 +263,12 @@ function _updateMovement(delta, inputState) {
     let moveX = 0;
     let moveZ = 0;
 
-    if (keys['KeyW']) moveZ -= 1;
-    if (keys['KeyS']) moveZ += 1;
-    if (keys['KeyA']) moveX -= 1;
-    if (keys['KeyD']) moveX += 1;
+    if (!_dialogOpen) {
+        if (keys['KeyW']) moveZ -= 1;
+        if (keys['KeyS']) moveZ += 1;
+        if (keys['KeyA']) moveX -= 1;
+        if (keys['KeyD']) moveX += 1;
+    }
 
     if (moveX !== 0 || moveZ !== 0) {
         // Normaliza diagonal
