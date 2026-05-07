@@ -32,7 +32,16 @@ let _hp    = { current: 100, max: 100 };
 let _mp    = { current:  50, max:  50 };
 let _name  = 'Herói';
 let _level = 1;
+// ─── estado do diálogo ───────────────────────────────────────────────────────
+let _dialogOpen     = false;
+let _currentNpcId   = null;
+let _currentNpcName = null;
+let _currentTree    = null;
+let _currentNodeId  = null;
 
+// elementos DOM (criados em _buildDialogWindow / _buildHintElement)
+let _dialogEl       = null;
+let _hintEl         = null;
 // ─── Helpers privados ─────────────────────────────────────────────────────────
 
 /**
@@ -306,8 +315,198 @@ export function init() {
             Events.emit('uiWindowOpened', { id: 'inventory' });
         }
     });
+
+    // ── diálogo de NPC ───────────────────────────────────────────────────
+    _buildDialogWindow();
+    _buildHintElement();
+
+    Events.on('dialogStarted', _onDialogStarted);
+    Events.on('uiHintShow',    _onHintShow);
+    Events.on('uiHintHide',    _onHintHide);
+
+    // ESC fecha diálogo
+    Events.on('keyPressed', ({ code }) => {
+        if (code === 'Escape' && _dialogOpen) _closeDialog();
+    });
+}
+// ─── construção DOM (diálogo) ────────────────────────────────────────────────
+
+function _buildDialogWindow() {
+    _dialogEl = document.createElement('div');
+    _dialogEl.id = 'dialog-window';
+    _dialogEl.style.cssText = `
+        display: none;
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60vw;
+        min-width: 320px;
+        max-width: 860px;
+        min-height: 25vh;
+        background: rgba(10, 8, 5, 0.88);
+        border: 2px solid #c8a227;
+        border-radius: 8px;
+        padding: 16px 20px 14px;
+        box-sizing: border-box;
+        z-index: 200;
+        font-family: inherit;
+        color: #f0e6c8;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: auto;
+        backdrop-filter: blur(4px);
+    `;
+
+    const nameEl = document.createElement('div');
+    nameEl.id = 'dialog-npc-name';
+    nameEl.style.cssText = `
+        font-size: 13px;
+        font-weight: bold;
+        color: #c8a227;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 1px solid rgba(200, 162, 39, 0.35);
+        padding-bottom: 8px;
+    `;
+
+    const textEl = document.createElement('div');
+    textEl.id = 'dialog-text';
+    textEl.style.cssText = `
+        font-size: 14px;
+        line-height: 1.6;
+        flex: 1;
+        color: #f0e6c8;
+    `;
+
+    const optionsEl = document.createElement('div');
+    optionsEl.id = 'dialog-options';
+    optionsEl.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 4px;
+    `;
+
+    _dialogEl.appendChild(nameEl);
+    _dialogEl.appendChild(textEl);
+    _dialogEl.appendChild(optionsEl);
+    document.body.appendChild(_dialogEl);
 }
 
+function _buildHintElement() {
+    _hintEl = document.createElement('div');
+    _hintEl.id = 'npc-hint';
+    _hintEl.style.cssText = `
+        display: none;
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(10, 8, 5, 0.75);
+        border: 1px solid rgba(200, 162, 39, 0.6);
+        border-radius: 4px;
+        padding: 5px 14px;
+        color: #c8a227;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        pointer-events: none;
+        z-index: 190;
+        white-space: nowrap;
+    `;
+    document.body.appendChild(_hintEl);
+}
+
+// ─── controle do diálogo ─────────────────────────────────────────────────────
+
+function _onDialogStarted({ npcId, npcName, dialogTree }) {
+    _dialogOpen     = true;
+    _currentNpcId   = npcId;
+    _currentNpcName = npcName;
+    _currentTree    = dialogTree;
+    _currentNodeId  = dialogTree.root;
+
+    _dialogEl.style.display = 'flex';
+    _hintEl.style.display   = 'none';
+
+    _renderDialogNode(_currentNodeId);
+}
+
+function _renderDialogNode(nodeId) {
+    const node = _currentTree.nodes[nodeId];
+    if (!node) { _closeDialog(); return; }
+
+    document.getElementById('dialog-npc-name').textContent = _currentNpcName;
+    document.getElementById('dialog-text').textContent     = node.text;
+
+    const optionsEl = document.getElementById('dialog-options');
+    optionsEl.innerHTML = '';
+
+    node.options.forEach((opt, index) => {
+        const btn = document.createElement('button');
+        btn.textContent = `› ${opt.text}`;
+        btn.style.cssText = `
+            background: transparent;
+            border: none;
+            border-left: 2px solid transparent;
+            color: #d4c48a;
+            font-size: 13px;
+            text-align: left;
+            padding: 4px 10px;
+            cursor: pointer;
+            transition: color 0.15s, border-color 0.15s;
+            font-family: inherit;
+        `;
+        btn.addEventListener('mouseenter', () => {
+            btn.style.color       = '#fff9e6';
+            btn.style.borderColor = '#c8a227';
+        });
+        btn.addEventListener('mouseleave', () => {
+            btn.style.color       = '#d4c48a';
+            btn.style.borderColor = 'transparent';
+        });
+        btn.addEventListener('click', () => {
+            Events.emit('dialogOptionSelected', {
+                npcId:       _currentNpcId,
+                nodeId:      _currentNodeId,
+                optionIndex: index,
+            });
+
+            if (opt.next === 'end') {
+                _closeDialog();
+            } else {
+                _currentNodeId = opt.next;
+                _renderDialogNode(_currentNodeId);
+            }
+        });
+
+        optionsEl.appendChild(btn);
+    });
+}
+
+function _closeDialog() {
+    if (!_dialogOpen) return;
+
+    _dialogOpen = false;
+    _dialogEl.style.display = 'none';
+
+    Events.emit('dialogEnded', { npcId: _currentNpcId });
+
+    _currentNpcId   = null;
+    _currentNpcName = null;
+    _currentTree    = null;
+    _currentNodeId  = null;
+}
+
+function _onHintShow({ message }) {
+    if (_dialogOpen) return;
+    _hintEl.textContent   = message;
+    _hintEl.style.display = 'block';
+}
+
+function _onHintHide() {
+    _hintEl.style.display = 'none';
+}
 /**
  * Atualiza barras de HP/MP quando dirty flag ativo.
  * Chamado a cada frame pelo game loop.
@@ -381,7 +580,16 @@ export function showWindow(id) {
  */
 export function hideWindow(id) {
     Events.emit('uiWindowClosed', { id });
-}/**
+}
+/**
+ * Retorna true se uma janela de diálogo de NPC estiver aberta.
+ * Consultado por player.js e npcs.js para bloquear input durante diálogo.
+ * @returns {boolean}
+ */
+export function isDialogOpen() {
+    return _dialogOpen;
+}
+/**
  * Re-renderiza grid + equipment slots + ouro do painel de inventário.
  */
 function _refreshInventoryUI() {
