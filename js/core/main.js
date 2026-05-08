@@ -180,7 +180,9 @@ async function _onAssetsReady() {
             }
         }
     });
-
+    Events.on('monsterDied', ({ xp }) => {
+        if (xp) Player.addExp(xp);
+    });
     Events.on('keyPressed', ({ code }) => {
     if (_dialogOpen) return;
 

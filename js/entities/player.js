@@ -183,7 +183,7 @@ export function addExp(amount) {
     if (!Number.isFinite(gain) || gain <= 0) return;
 
     _data.exp += gain;
-
+    emit('expChanged', { current: _data.exp, needed: 100 * (_data.level * _data.level) });
     while (true) {
         const xpNeeded = 100 * (_data.level * _data.level);
         if (_data.exp < xpNeeded) break;

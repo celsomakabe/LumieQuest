@@ -21,16 +21,20 @@ let _elLevel     = null;
 let _elFPS       = null;
 let _elNotifWrap = null;
 let _elCenter    = null;
+let _elXP        = null;
+let _elXPBar     = null;
 
 // ─── Estado ───────────────────────────────────────────────────────────────────
 
 let _dirty = {
     hp: false,
     mp: false,
+    xp: false,
 };
 
 let _hp    = { current: 100, max: 100 };
 let _mp    = { current:  50, max:  50 };
+let _xp    = { current:   0, needed: 100 };
 let _name  = 'Herói';
 let _level = 1;
 // ─── estado do diálogo ───────────────────────────────────────────────────────
@@ -76,6 +80,14 @@ function _buildDOM() {
                     <div id="hud-mp-bar" class="bar mp-bar" style="width:100%"></div>
                 </div>
                 <span id="hud-mp">50/50</span>
+
+            </div>
+            <div class="bar-row">
+                <label>XP</label>
+                <div class="bar-bg">
+                    <div id="hud-xp-bar" class="bar xp-bar" style="width:0%"></div>
+                </div>
+                <span id="hud-xp">0/100</span>
             </div>
         </div>
         <div id="hud-fps">60 FPS</div>
@@ -111,6 +123,7 @@ function _buildDOM() {
         .bar { height: 100%; border-radius: 4px; transition: width 0.2s; }
         .hp-bar { background: #e05050; }
         .mp-bar { background: #4080e0; }
+        .xp-bar { background: #a060e0; }
         #hud-fps {
             position: fixed; top: 8px; right: 12px;
             color: #0f0; font-family: monospace; font-size: 11px;
@@ -170,6 +183,8 @@ function _queryRefs() {
     _elFPS       = document.getElementById('hud-fps');
     _elNotifWrap = document.getElementById('notif-wrap');
     _elCenter    = document.getElementById('center-msg');
+    _elXP        = document.getElementById('hud-xp');
+    _elXPBar     = document.getElementById('hud-xp-bar');
 }
 
 // ─── API pública ──────────────────────────────────────────────────────────────
@@ -226,6 +241,10 @@ export function init() {
         if (_elLevel) _elLevel.textContent = `Lv ${newLevel}`;
         showNotification(`🎉 Level Up! Nível ${newLevel}`, 'success');
         Audio.playSFX('assets/audio/sfx/sfx_levelup.ogg');
+    });
+    Events.on('expChanged', ({ current, needed }) => {
+        _xp = { current, needed };
+        _dirty.xp = true;
     });
     Events.on('damageDealt', ({ target, amount, isCritical }) => {
         if (!target?.position) return;
@@ -873,6 +892,13 @@ export function update(_delta) {
         _dirty.mp = false;
     }
 
+// DEPOIS:
+    if (_dirty.xp) {
+        const pct = _xp.needed > 0 ? (_xp.current / _xp.needed) * 100 : 0;
+        if (_elXPBar) _elXPBar.style.width = `${pct}%`;
+        if (_elXP)    _elXP.textContent    = `${_xp.current}/${_xp.needed}`;
+        _dirty.xp = false;
+    }
     // Atualiza Quest Log se aberto
     if (_questLogOpen) _renderQuestLog();
 }
