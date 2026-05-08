@@ -77,6 +77,11 @@ export function hydrate(data) {
 }
 
 export function addItem(itemId, qty = 1) {
+if (itemId === 'gold') {
+        _gold += qty;
+        emit('goldChanged', { amount: qty, total: _gold });
+        return true;
+    }
     const def = _catalogue[itemId];
     if (!def) {
         console.warn('[Inventory] Item desconhecido:', itemId);
