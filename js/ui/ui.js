@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import { getCamera, getRenderer } from '../world/scene.js';
 import * as Audio  from '../core/audio.js';
 import * as Inventory from '../systems/inventory.js';
+import * as Quests from '../systems/quests.js';
 // ─── Referências DOM ──────────────────────────────────────────────────────────
 
 let _elHP        = null;
@@ -38,6 +39,12 @@ let _currentNpcId   = null;
 let _currentNpcName = null;
 let _currentTree    = null;
 let _currentNodeId  = null;
+
+// ── Quest Log ─────────────────────────────────────────
+let _questLogOpen = false;
+
+/** @type {Map<string, HTMLElement>} npcId → elemento indicador */
+const _npcIndicators = new Map();
 
 // elementos DOM (criados em _buildDialogWindow / _buildHintElement)
 let _dialogEl       = null;
@@ -324,10 +331,42 @@ export function init() {
     Events.on('uiHintShow',    _onHintShow);
     Events.on('uiHintHide',    _onHintHide);
 
-    // ESC fecha diálogo
-    Events.on('keyPressed', ({ code }) => {
+// ESC fecha diálogo / Quest Log
+    Events.on('keyPressed', ({ code, action }) => {
         if (code === 'Escape' && _dialogOpen) _closeDialog();
+        if (code === 'Escape' && _questLogOpen && !_dialogOpen) toggleQuestLog();
+
+        if (action === 'questLog') {
+            if (!_dialogOpen) toggleQuestLog();
+        }
     });
+
+    // ── Quest Log ─────────────────────────────────────────
+    _createQuestLogPanel();
+    _createQuestNotificationContainer();
+
+    Events.on('uiWindowClosed', ({ id, name }) => {
+        if (id === 'questLog' || name === 'questLog') _questLogOpen = false;
+    });
+
+    // Listeners de notificação de quest (payloads confirmados em quests.js)
+    Events.on('questAccepted', ({ quest }) =>
+        showQuestNotification(`Quest aceita: ${quest.name}`, 'quest-accepted'));
+
+    Events.on('questProgress', ({ questId, objectiveId, current, required }) => {
+        const entry = Quests.getActiveQuests().find(({ definition: q }) => q.id === questId);
+        const quest = entry?.definition;
+        const obj = quest?.objectives?.find(o => o.id === objectiveId);
+        if (obj) {
+            showQuestNotification(`${obj.label}: ${current}/${required}`, 'quest-progress');
+        }
+    });
+
+    Events.on('questCompletable', ({ quest }) =>
+        showQuestNotification(`${quest.name}: fale com o NPC!`, 'quest-completable'));
+
+    Events.on('questCompleted', ({ quest }) =>
+        showQuestNotification(`Quest completa: ${quest.name}`, 'quest-completed'));
 }
 // ─── construção DOM (diálogo) ────────────────────────────────────────────────
 
@@ -512,6 +551,293 @@ function _onHintHide() {
  * Chamado a cada frame pelo game loop.
  * @param {number} _delta
  */
+/**
+ * Cria o painel HTML do Quest Log (oculto por padrão).
+ */
+function _createQuestLogPanel() {
+    if (document.getElementById('quest-log')) return;
+
+    const panel = document.createElement('div');
+    panel.id = 'quest-log';
+    panel.style.cssText = `
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 420px;
+    max-height: 520px;
+    background: rgba(10, 10, 10, 0.92);
+    border: 1px solid #a08040;
+    border-radius: 6px;
+    padding: 16px;
+    color: #e8d8a0;
+    font-family: sans-serif;
+    font-size: 14px;
+    z-index: 900;
+    overflow-y: auto;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.7);
+  `;
+    panel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;
+                margin-bottom:12px;border-bottom:1px solid #a08040;padding-bottom:8px;">
+      <span style="font-size:16px;font-weight:bold;">📋 Diário de Quests</span>
+      <span style="cursor:pointer;font-size:18px;color:#a08040;"
+            id="quest-log-close">✕</span>
+    </div>
+    <div id="quest-log-body"></div>
+  `;
+    document.body.appendChild(panel);
+
+    document.getElementById('quest-log-close')
+        .addEventListener('click', () => toggleQuestLog());
+}
+
+/**
+ * Cria o container de notificações de quest (canto superior direito).
+ */
+function _createQuestNotificationContainer() {
+    if (document.getElementById('quest-notifications')) return;
+
+    const container = document.createElement('div');
+    container.id = 'quest-notifications';
+    container.style.cssText = `
+    position: fixed;
+    top: 80px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 950;
+    pointer-events: none;
+  `;
+    document.body.appendChild(container);
+}
+
+/**
+ * Renderiza o conteúdo do Quest Log com as quests ativas.
+ */
+function _renderQuestLog() {
+    const body = document.getElementById('quest-log-body');
+    if (!body) return;
+
+    const active = Quests.getActiveQuests();
+
+    if (active.length === 0) {
+        body.innerHTML = `<p style="color:#888;text-align:center;margin-top:16px;">
+      Nenhuma quest ativa.</p>`;
+        return;
+    }
+
+    body.innerHTML = active.map(({ definition: q, active: a }) => {
+        const completable = Quests.isCompletable(q.id);
+
+        const objectivesHtml = (q.objectives ?? []).map(obj => {
+            const current = a?.progress?.[obj.id] ?? 0;
+            const pct = obj.required > 0 ? Math.min((current / obj.required) * 100, 100) : 0;
+            const barColor = pct >= 100 ? '#4caf50' : '#a08040';
+
+            return `
+        <div style="margin:6px 0;">
+          <div style="display:flex;justify-content:space-between;
+                      font-size:12px;color:#bbb;margin-bottom:2px;">
+            <span>${obj.label}</span>
+            <span>${current}/${obj.required}</span>
+          </div>
+          <div style="background:#333;border-radius:3px;height:6px;overflow:hidden;">
+            <div style="width:${pct}%;height:100%;
+                        background:${barColor};transition:width 0.3s;"></div>
+          </div>
+        </div>
+      `;
+        }).join('');
+
+        const turnInHint = completable
+            ? `<div style="color:#4caf50;font-size:12px;margin-top:6px;">
+           ✔ Fale com o NPC para completar!</div>`
+            : '';
+
+        return `
+      <div style="margin-bottom:16px;padding-bottom:12px;
+                  border-bottom:1px solid #333;">
+        <div style="font-weight:bold;margin-bottom:4px;
+                    color:${completable ? '#4caf50' : '#e8d8a0'};">
+          ${q.name}
+        </div>
+        <div style="font-size:12px;color:#aaa;margin-bottom:8px;
+                    line-height:1.4;">${q.description}</div>
+        ${objectivesHtml}
+        ${turnInHint}
+      </div>
+    `;
+    }).join('');
+}
+
+/**
+ * Retorna a cor e símbolo do indicador NPC com base no estado das quests.
+ * @param {string} npcId
+ * @returns {{ symbol: string, color: string }|null}
+ */
+function _getNpcIndicatorStyle(npcId) {
+    // "?" amarelo — turn-in disponível
+    if (Quests.getTurnInQuestForNpc(npcId)) {
+        return { symbol: '?', color: '#f0c040' };
+    }
+
+    // "?" cinza — quest ativa (não completável)
+    const active = Quests.getActiveQuests();
+    const hasActiveQuest = active.some(
+        ({ definition: q }) => q.completer === npcId
+    );
+    if (hasActiveQuest) {
+        return { symbol: '?', color: '#888888' };
+    }
+
+    // "!" amarelo — quest disponível para aceitar
+    if (Quests.getOfferableQuestForNpc(npcId)) {
+        return { symbol: '!', color: '#f0c040' };
+    }
+
+    return null;
+}
+
+/**
+ * Abre ou fecha o Quest Log.
+ * @returns {void}
+ */
+export function toggleQuestLog() {
+    const panel = document.getElementById('quest-log');
+    if (!panel) return;
+
+    _questLogOpen = !_questLogOpen;
+    panel.style.display = _questLogOpen ? 'block' : 'none';
+
+    if (_questLogOpen) {
+        _renderQuestLog();
+        Events.emit('uiWindowOpened', { id: 'questLog', name: 'questLog' });
+    } else {
+        Events.emit('uiWindowClosed', { id: 'questLog', name: 'questLog' });
+    }
+}
+
+/**
+ * Retorna true se o Quest Log estiver aberto.
+ * @returns {boolean}
+ */
+export function isQuestLogOpen() {
+    return _questLogOpen;
+}
+
+/**
+ * Atualiza ou cria o indicador visual (! / ?) sobre um NPC.
+ * @param {string} npcId
+ * @param {THREE.Object3D} mesh
+ * @param {THREE.Camera} camera
+ * @param {THREE.WebGLRenderer} renderer
+ * @returns {void}
+ */
+export function updateNpcQuestIndicator(npcId, mesh, camera, renderer) {
+    let el = _npcIndicators.get(npcId);
+    if (!el) {
+        el = document.createElement('div');
+        el.style.cssText = `
+      position: fixed;
+      pointer-events: none;
+      font-size: 20px;
+      font-weight: bold;
+      text-shadow: 0 1px 4px #000, 0 0 8px #000;
+      z-index: 500;
+      transform: translate(-50%, -100%);
+      transition: opacity 0.2s;
+      user-select: none;
+    `;
+        document.body.appendChild(el);
+        _npcIndicators.set(npcId, el);
+    }
+
+    const style = _getNpcIndicatorStyle(npcId);
+
+    if (!style || !mesh) {
+        el.style.display = 'none';
+        return;
+    }
+
+    const pos3D = new THREE.Vector3();
+    mesh.getWorldPosition(pos3D);
+    pos3D.y += 2.2;
+
+    pos3D.project(camera);
+
+    const canvas = renderer.domElement;
+    const screenX = (pos3D.x * 0.5 + 0.5) * canvas.clientWidth;
+    const screenY = (pos3D.y * -0.5 + 0.5) * canvas.clientHeight;
+
+    // Ocultar se fora do frustum / atrás
+    if (pos3D.z > 1) {
+        el.style.display = 'none';
+        return;
+    }
+
+    el.style.display = 'block';
+    el.style.left = `${screenX}px`;
+    el.style.top = `${screenY}px`;
+    el.style.color = style.color;
+    el.textContent = style.symbol;
+}
+
+/**
+ * Exibe uma notificação de quest no canto superior direito por 3 segundos.
+ * @param {string} message
+ * @param {'quest-accepted'|'quest-progress'|'quest-completable'|'quest-completed'} type
+ * @returns {void}
+ */
+export function showQuestNotification(message, type) {
+    const container = document.getElementById('quest-notifications');
+    if (!container) return;
+
+    const colorMap = {
+        'quest-accepted':    '#f0c040',
+        'quest-progress':    '#4a9eda',
+        'quest-completable': '#4caf50',
+        'quest-completed':   '#4caf50',
+    };
+    const color = colorMap[type] ?? '#e8d8a0';
+
+    const el = document.createElement('div');
+    el.style.cssText = `
+    background: rgba(10,10,10,0.88);
+    border-left: 3px solid ${color};
+    color: ${color};
+    padding: 8px 14px;
+    border-radius: 4px;
+    font-family: sans-serif;
+    font-size: 13px;
+    max-width: 280px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    animation: questNotifIn 0.25s ease;
+    pointer-events: none;
+  `;
+    el.textContent = message;
+    container.appendChild(el);
+
+    if (!document.getElementById('quest-notif-style')) {
+        const style = document.createElement('style');
+        style.id = 'quest-notif-style';
+        style.textContent = `
+      @keyframes questNotifIn {
+        from { opacity: 0; transform: translateX(24px); }
+        to   { opacity: 1; transform: translateX(0); }
+      }
+    `;
+        document.head.appendChild(style);
+    }
+
+    setTimeout(() => {
+        el.style.transition = 'opacity 0.3s';
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 320);
+    }, 3000);
+}
 export function update(_delta) {
     if (_dirty.hp) {
         const pct = _hp.max > 0 ? (_hp.current / _hp.max) * 100 : 0;
@@ -525,6 +851,9 @@ export function update(_delta) {
         _elMPBar.style.width = `${pct}%`;
         _dirty.mp = false;
     }
+
+    // Atualiza Quest Log se aberto
+    if (_questLogOpen) _renderQuestLog();
 }
 
 /**
