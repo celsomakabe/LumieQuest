@@ -178,9 +178,16 @@ export function restoreMp(amount) {
  */
 export function addExp(amount) {
     if (!_data) return;
-    _data.exp += amount;
-    const xpNeeded = 100 * (_data.level * _data.level);
-    if (_data.exp >= xpNeeded) {
+
+    const gain = Number(amount);
+    if (!Number.isFinite(gain) || gain <= 0) return;
+
+    _data.exp += gain;
+
+    while (true) {
+        const xpNeeded = 100 * (_data.level * _data.level);
+        if (_data.exp < xpNeeded) break;
+
         _data.exp   -= xpNeeded;
         _data.level += 1;
         _data.baseStats = getBaseStats(_data.class, _data.level);

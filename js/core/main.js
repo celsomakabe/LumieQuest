@@ -172,7 +172,7 @@ async function _onAssetsReady() {
 
     Events.on('questCompleted', ({ rewards }) => {
         if (!rewards) return;
-        if (rewards.exp)  Player.addExp(rewards.exp);
+        if (rewards.exp != null) Player.addExp(rewards.exp);
         if (rewards.gold) Inventory.addItem('gold', rewards.gold);
         if (rewards.items?.length) {
             for (const { itemId, qty } of rewards.items) {
