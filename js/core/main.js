@@ -18,6 +18,7 @@ import * as Combat from '../systems/combat.js';
 import * as Monsters from '../entities/monsters.js';
 import * as NPCs     from '../entities/npcs.js';
 import * as Inventory from '../systems/inventory.js';
+import * as Quests    from '../systems/quests.js';
 let _dialogOpen = false;
 
 Events.on('dialogStarted', () => { _dialogOpen = true; });
@@ -125,7 +126,7 @@ function _loop(timestamp) {
 function _doAutoSave() {
     const playerData = Player.getState();
     const current    = Save.load() ?? {};
-Save.save({ ...current, player: { ...playerData, inventory: Inventory.serialize() } });
+Save.save({ ...current, player: { ...playerData, inventory: Inventory.serialize(), quests: Quests.getState() } });
 }
 
 // ─── Assets Ready ─────────────────────────────────────────────────────────────
@@ -147,6 +148,7 @@ async function _onAssetsReady() {
     // Spawna player com dados do save (capturado via Events.once abaixo)
     Player.init(_saveData?.player ?? null);
     await Inventory.init(_saveData?.player?.inventory ?? null);
+    await Quests.init(_saveData?.player?.quests ?? null);
     Combat.registerTarget(Player.getInstance());
 
   Events.on('monsterAttackRequest', ({ attacker }) => {
@@ -166,6 +168,17 @@ async function _onAssetsReady() {
 
     Events.on('inventoryRestoreMpRequest', ({ amount }) => {
         Player.restoreMp(amount);
+    });
+
+    Events.on('questCompleted', ({ rewards }) => {
+        if (!rewards) return;
+        if (rewards.exp)  Events.emit('playerExpGained', { amount: rewards.exp });
+        if (rewards.gold) Events.emit('goldChanged', { delta: rewards.gold });
+        if (rewards.items?.length) {
+            for (const { itemId, qty } of rewards.items) {
+                Inventory.addItem(itemId, qty);
+            }
+        }
     });
 
     Events.on('keyPressed', ({ code }) => {
