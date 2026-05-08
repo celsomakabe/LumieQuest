@@ -186,7 +186,7 @@ function _executeAction(action) {
     if (!action) return;
     const { type, questId } = action;
 
-    if (type === 'offerQuest')    Quests.offerQuest(questId);
+    if (type === 'offerQuest')    Quests.acceptQuest(questId);
     if (type === 'completeQuest') Quests.completeQuest(questId);
 }
 
