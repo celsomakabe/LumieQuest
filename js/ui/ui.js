@@ -857,7 +857,7 @@ export function showQuestNotification(message, type) {
         el.style.transition = 'opacity 0.3s';
         el.style.opacity = '0';
         setTimeout(() => el.remove(), 320);
-    }, 3000);
+    }, 4000);
 }
 export function update(_delta) {
     if (_dirty.hp) {
