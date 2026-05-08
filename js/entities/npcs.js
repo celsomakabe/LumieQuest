@@ -191,7 +191,7 @@ function _executeAction(action) {
 }
 
 Events.on('dialogOptionSelected', ({ npcId, nodeId, optionIndex }) => {
-    const npc = _npcs[npcId];
+    const npc = _npcs.find(n => n.id === npcId);
     if (!npc) return;
 
     const node = npc.dialogTree.nodes[nodeId];
