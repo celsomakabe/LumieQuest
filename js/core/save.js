@@ -13,7 +13,7 @@ const STORAGE_KEY = 'lumiequest_save';
  * v2 — PROMPT 3: adiciona bloco "player"
  * @type {number}
  */
-const CURRENT_SAVE_VERSION = 3;
+const CURRENT_SAVE_VERSION = 4;
 
 /** @type {Record<number, (data: Object) => Object>} */
 const MIGRATIONS = {
@@ -52,6 +52,16 @@ const MIGRATIONS = {
     // v5 — PROMPT 14: refineLevel nos equipamentos
     // v6 — PROMPT 15: cards[] e sockets nos equipamentos
     // v7 — PROMPT 16: bloco pets
+// Migration 3 → 4: inicializa player.quests se ausente
+    4: (save) => {
+        if (!save.player.quests) {
+            save.player.quests = {
+                active:    {},
+                completed: []
+            };
+        }
+        return save;
+    }
 };
 
 /**
@@ -134,7 +144,7 @@ export function migrateSave(data) {
 }
 
 /**
- * Retorna CURRENT_SAVE_VERSION.
+ * Retorna CURRENT_SAVE_VERSION (4).
  * @returns {number}
  */
 export function getCurrentVersion() {
