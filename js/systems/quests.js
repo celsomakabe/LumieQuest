@@ -102,13 +102,13 @@ function _advance(questId, objectiveId, amount = 1) {
  * Processa morte de entidade — avança objetivos do tipo 'kill'.
  * @param {{ entity: { type: string } }} payload
  */
-function _onEntityDied({ entity }) {
-  if (!entity?.type) return;
+function _onMonsterDied({ monsterId }) {
+  if (!monsterId) return;
   for (const questId of Object.keys(_active)) {
     const quest = _getDef(questId);
     if (!quest) continue;
     for (const obj of quest.objectives) {
-      if (obj.type === 'kill' && obj.target === entity.type) {
+      if (obj.type === 'kill' && obj.target === monsterId) {
         _advance(questId, obj.id);
       }
     }
@@ -182,7 +182,7 @@ export async function init(playerQuestsSave) {
   }
 
   // Registrar listeners via event bus (R8)
-  Events.on('entityDied',   _onEntityDied);
+  Events.on('monsterDied',  _onMonsterDied);
   Events.on('itemPicked',   _onItemPicked);
   Events.on('playerMoved',  _onPlayerMoved);
 }
