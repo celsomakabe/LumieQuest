@@ -470,7 +470,27 @@ function _onDialogStarted({ npcId, npcName, dialogTree }) {
 
     _renderDialogNode(_currentNodeId);
 }
+function _evaluateDialogCondition(condition) {
+    if (!condition) return true;
 
+    const { type, questId } = condition;
+    if (!type) return true;
+
+    if (type === 'questNotStarted') {
+        return !Quests.isActive(questId) && !Quests.isCompleted(questId);
+    }
+    if (type === 'questActive') {
+        return Quests.isActive(questId);
+    }
+    if (type === 'questCompletable') {
+        return Quests.isCompletable(questId);
+    }
+    if (type === 'questCompleted') {
+        return Quests.isCompleted(questId);
+    }
+
+    return true;
+}
 function _renderDialogNode(nodeId) {
     const node = _currentTree.nodes[nodeId];
     if (!node) { _closeDialog(); return; }
@@ -482,6 +502,7 @@ function _renderDialogNode(nodeId) {
     optionsEl.innerHTML = '';
 
     node.options.forEach((opt, index) => {
+        if (!_evaluateDialogCondition(opt.condition)) return;
         const btn = document.createElement('button');
         btn.textContent = `› ${opt.text}`;
         btn.style.cssText = `
