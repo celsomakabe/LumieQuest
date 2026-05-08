@@ -177,4 +177,25 @@ function _onKeyPressed({ code, action, key }) {
     npcName:    npc.name,
     dialogTree: npc.dialogTree,
   });
+}/**
+ * Executa a action de uma opção de diálogo.
+ * @param {{ type: string, questId: string }} action
+ */
+function _executeAction(action) {
+    if (!action) return;
+    const { type, questId } = action;
+
+    if (type === 'offerQuest')    Quests.offerQuest(questId);
+    if (type === 'completeQuest') Quests.completeQuest(questId);
 }
+
+Events.on('dialogOptionSelected', ({ npcId, nodeId, optionIndex }) => {
+    const npc = _npcs[npcId];
+    if (!npc) return;
+
+    const node = npc.dialogTree.nodes[nodeId];
+    if (!node) return;
+
+    const opt = node.options[optionIndex];
+    if (opt?.action) _executeAction(opt.action);
+});
