@@ -3,8 +3,8 @@
     "id": "quest_slimes",
     "name": "Caçada aos Slimes",
     "description": "O prefeito está preocupado com os slimes que invadiram os arredores da vila. Elimine 5 deles para garantir a segurança dos moradores.",
-    "giver": "npc_prefeito",
-    "completer": "npc_prefeito",
+    "giver": "mayor",
+    "completer": "mayor",
     "objectives": [
       {
         "id": "kill_slimes",
@@ -23,8 +23,8 @@
     "id": "quest_delivery",
     "name": "Entrega Urgente",
     "description": "O prefeito precisa que um pacote importante chegue ao ferreiro o quanto antes. Pegue o pacote e leve ao ferreiro na aldeia.",
-    "giver": "npc_prefeito",
-    "completer": "npc_ferreiro",
+    "giver": "mayor",
+    "completer": "blacksmith",
     "objectives": [
       {
         "id": "gather_pacote",
@@ -46,8 +46,8 @@
     "id": "quest_forest",
     "name": "Exploração da Floresta",
     "description": "O guarda da vila precisa que alguém verifique o ponto de observação na floresta a nordeste. Chegue até lá e confirme que está seguro.",
-    "giver": "npc_guarda",
-    "completer": "npc_guarda",
+    "giver": "guard",
+    "completer": "guard",
     "objectives": [
       {
         "id": "reach_forest_checkpoint",
