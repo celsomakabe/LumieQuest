@@ -6,34 +6,61 @@
       "position": { "x": -3, "y": 0, "z": -4 },
       "modelPlaceholder": { "type": "capsule", "color": "#FFD700" },
       "dialogTree": {
-        "root": "greet",
+        "root": "root",
         "nodes": {
-          "greet": {
-            "text": "Bem-vindo a Lumie, aventureiro! Sou o Prefeito Aldric. Nossa cidade vive tempos difíceis com os monstros ao redor.",
+          "root": {
+            "text": "Saudações, aventureiro! Nossa vila precisa de ajuda.",
             "options": [
-              { "text": "O que está acontecendo?", "next": "explain" },
-              { "text": "Preciso de ajuda com algo?", "next": "quest_hint" },
-              { "text": "Adeus.", "next": "end" }
+              { "text": "O que está acontecendo?", "next": "problema" },
+              {
+                "text": "[Missão] Aceitar caçada aos slimes",
+                "next": "aceitar_slimes",
+                "condition": { "type": "questNotStarted", "questId": "quest_slimes" },
+                "action":    { "type": "offerQuest",      "questId": "quest_slimes" }
+              },
+              {
+                "text": "[Entregar] Já eliminei os slimes!",
+                "next": "slimes_completo",
+                "condition": { "type": "questCompletable", "questId": "quest_slimes" },
+                "action":    { "type": "completeQuest",    "questId": "quest_slimes" }
+              },
+              {
+                "text": "Ainda estou caçando os slimes.",
+                "next": "end",
+                "condition": { "type": "questActive", "questId": "quest_slimes" }
+              },
+              {
+                "text": "[Missão] Preciso de um pacote entregue",
+                "next": "aceitar_entrega",
+                "condition": { "type": "questNotStarted", "questId": "quest_delivery" },
+                "action":    { "type": "offerQuest",      "questId": "quest_delivery" }
+              },
+              { "text": "Até logo.", "next": "end" }
             ]
           },
-          "explain": {
-            "text": "Slimes e goblins infestariam os arredores. Nossos guardas mal conseguem conter o avanço. Se você for corajoso, pode nos ajudar.",
+          "problema": {
+            "text": "Slimes invadiram os arredores! E preciso de um pacote urgente no ferreiro. Pode ajudar?",
             "options": [
-              { "text": "Farei o que puder.", "next": "thanks" },
-              { "text": "Adeus.", "next": "end" }
+              { "text": "Voltarei ao menu anterior.", "next": "root" }
             ]
           },
-          "quest_hint": {
-            "text": "Fale com o Ferreiro Bram — ele forja armas para quem nos defende. E o Padre Silas pode curar suas feridas.",
+          "aceitar_slimes": {
+            "text": "Excelente! Elimine 5 slimes nos arredores e volte a mim. Boa sorte!",
             "options": [
-              { "text": "Obrigado pela dica.", "next": "thanks" },
-              { "text": "Adeus.", "next": "end" }
+              { "text": "Pode contar comigo.", "next": "end" }
             ]
           },
-          "thanks": {
-            "text": "Que os deuses te protejam, aventureiro. Lumie conta com você!",
+          "slimes_completo": {
+            "text": "Fantástico! A vila está mais segura graças a você. Aqui está sua recompensa, aventureiro!",
             "options": [
-              { "text": "Adeus.", "next": "end" }
+              { "text": "Obrigado, prefeito!", "next": "end" }
+            ]
+          },
+          "aceitar_entrega": {
+            "text": "Preciso que este pacote chegue ao ferreiro com urgência. Você pode fazer isso?",
+            "options": [
+              { "text": "Sim, levarei o pacote.", "next": "end" },
+              { "text": "Agora não posso.", "next": "end" }
             ]
           }
         }
@@ -45,34 +72,24 @@
       "position": { "x": 4, "y": 0, "z": -3 },
       "modelPlaceholder": { "type": "capsule", "color": "#FFD700" },
       "dialogTree": {
-        "root": "greet",
+        "root": "root",
         "nodes": {
-          "greet": {
-            "text": "Hmph. Outro aventureiro. Olha para as minhas armas — feitas à mão, cada uma. Você quer comprar ou só veio olhar?",
+          "root": {
+            "text": "Oi! Ocupado com as forjas agora. Tem algo pra mim?",
             "options": [
-              { "text": "O que você vende?", "next": "wares" },
-              { "text": "Como você aprendeu a forjar?", "next": "story" },
-              { "text": "Adeus.", "next": "end" }
+              {
+                "text": "[Entregar] Aqui está o pacote do prefeito.",
+                "next": "receber_pacote",
+                "condition": { "type": "questCompletable", "questId": "quest_delivery" },
+                "action":    { "type": "completeQuest",    "questId": "quest_delivery" }
+              },
+              { "text": "Só vim dar uma olhada.", "next": "end" }
             ]
           },
-          "wares": {
-            "text": "Espadas, machados, lanças... Por ora meu estoque está baixo. Os goblins roubaram meu minério na última semana. Volte quando resolvermos isso.",
+          "receber_pacote": {
+            "text": "Ah, finalmente chegou! Estava esperando por isso. Aqui está sua recompensa pelo trabalho.",
             "options": [
-              { "text": "Entendido. Vou ver o que posso fazer.", "next": "thanks" },
-              { "text": "Adeus.", "next": "end" }
-            ]
-          },
-          "story": {
-            "text": "Aprendi com meu pai, que aprendeu com o avô. Três gerações forjando o aço de Lumie. Não é trabalho — é missão.",
-            "options": [
-              { "text": "Impressionante.", "next": "thanks" },
-              { "text": "Adeus.", "next": "end" }
-            ]
-          },
-          "thanks": {
-            "text": "Se quiser uma boa lâmina, me traga minério de ferro. Faço algo decente por você.",
-            "options": [
-              { "text": "Adeus.", "next": "end" }
+              { "text": "Disponha, ferreiro!", "next": "end" }
             ]
           }
         }
@@ -162,34 +179,36 @@
       "position": { "x": 3, "y": 0, "z": 3 },
       "modelPlaceholder": { "type": "capsule", "color": "#FFD700" },
       "dialogTree": {
-        "root": "greet",
+        "root": "root",
         "nodes": {
-          "greet": {
-            "text": "Alto aí! ...Ah, é um aventureiro. Tudo bem, pode passar. Mas fique esperto — vi um grupo de goblins perto do portão leste ontem à noite.",
+          "root": {
+            "text": "Alto aí! Ah, é você. Preciso de alguém de confiança para uma tarefa.",
             "options": [
-              { "text": "Quantos eram?", "next": "info" },
-              { "text": "Você consegue lidar com eles sozinho?", "next": "pride" },
-              { "text": "Obrigado pelo aviso.", "next": "end" }
+              {
+                "text": "[Missão] Qual tarefa?",
+                "next": "oferecer_exploracao",
+                "condition": { "type": "questNotStarted", "questId": "quest_forest" },
+                "action":    { "type": "offerQuest",      "questId": "quest_forest" }
+              },
+              {
+                "text": "[Entregar] Já verifiquei a floresta, está tudo certo!",
+                "next": "exploracao_completa",
+                "condition": { "type": "questCompletable", "questId": "quest_forest" },
+                "action":    { "type": "completeQuest",    "questId": "quest_forest" }
+              },
+              { "text": "Nada por agora.", "next": "end" }
             ]
           },
-          "info": {
-            "text": "Três, talvez quatro. Mas eram grandes. O tipo que carrega clava. Cuidado se for para leste — e não saia da cidade depois do anoitecer.",
+          "oferecer_exploracao": {
+            "text": "Preciso que você verifique o ponto de observação na floresta a nordeste, perto de (40, 40). Confirme que está tudo seguro.",
             "options": [
-              { "text": "Vou tomar cuidado.", "next": "thanks" },
-              { "text": "Adeus.", "next": "end" }
+              { "text": "Entendido. Vou verificar.", "next": "end" }
             ]
           },
-          "pride": {
-            "text": "Sozinho? Claro que sim! Já lutei contra cinco goblins de uma vez! Mas... é melhor ter alguém cobrindo as costas. Fica a dica.",
+          "exploracao_completa": {
+            "text": "Excelente trabalho! O ponto estava seguro, como esperávamos. A vila agradece sua coragem!",
             "options": [
-              { "text": "Posso cobrir suas costas.", "next": "thanks" },
-              { "text": "Adeus.", "next": "end" }
-            ]
-          },
-          "thanks": {
-            "text": "Bom. Juntos mantemos Lumie segura. Agora circula — tenho ronda a fazer.",
-            "options": [
-              { "text": "Adeus.", "next": "end" }
+              { "text": "Sempre às ordens, guarda.", "next": "end" }
             ]
           }
         }
