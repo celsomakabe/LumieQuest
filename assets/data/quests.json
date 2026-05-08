@@ -1,0 +1,67 @@
+[
+  {
+    "id": "quest_slimes",
+    "name": "Caçada aos Slimes",
+    "description": "O prefeito está preocupado com os slimes que invadiram os arredores da vila. Elimine 5 deles para garantir a segurança dos moradores.",
+    "giver": "npc_prefeito",
+    "completer": "npc_prefeito",
+    "objectives": [
+      {
+        "id": "kill_slimes",
+        "type": "kill",
+        "target": "slime",
+        "label": "Eliminar Slimes",
+        "required": 5
+      }
+    ],
+    "rewards": {
+      "exp": 120,
+      "gold": 50
+    }
+  },
+  {
+    "id": "quest_delivery",
+    "name": "Entrega Urgente",
+    "description": "O prefeito precisa que um pacote importante chegue ao ferreiro o quanto antes. Pegue o pacote e leve ao ferreiro na aldeia.",
+    "giver": "npc_prefeito",
+    "completer": "npc_ferreiro",
+    "objectives": [
+      {
+        "id": "gather_pacote",
+        "type": "gather",
+        "target": "pacote_prefeito",
+        "label": "Coletar o Pacote do Prefeito",
+        "required": 1
+      }
+    ],
+    "rewards": {
+      "exp": 80,
+      "gold": 30,
+      "items": [
+        { "itemId": "potion_hp_small", "qty": 2 }
+      ]
+    }
+  },
+  {
+    "id": "quest_forest",
+    "name": "Exploração da Floresta",
+    "description": "O guarda da vila precisa que alguém verifique o ponto de observação na floresta a nordeste. Chegue até lá e confirme que está seguro.",
+    "giver": "npc_guarda",
+    "completer": "npc_guarda",
+    "objectives": [
+      {
+        "id": "reach_forest_checkpoint",
+        "type": "reach",
+        "target": "forest_checkpoint",
+        "label": "Chegar ao Ponto de Observação",
+        "required": 1,
+        "position": { "x": 40, "z": 40 },
+        "radius": 5
+      }
+    ],
+    "rewards": {
+      "exp": 60,
+      "gold": 20
+    }
+  }
+]
