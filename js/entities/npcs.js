@@ -4,6 +4,7 @@
 
 import * as THREE from 'three';
 import * as Events from '../core/events.js';
+import * as Quests from '../systems/quests.js';
 
 /** @type {Array<NPCInstance>} */
 const _npcs = [];
