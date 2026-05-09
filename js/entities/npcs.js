@@ -5,7 +5,8 @@
 import * as THREE from 'three';
 import * as Events from '../core/events.js';
 import * as Quests from '../systems/quests.js';
-
+import { updateNpcQuestIndicator } from '../ui/ui.js';
+import * as Scene from '../world/scene.js';
 /** @type {Array<NPCInstance>} */
 const _npcs = [];
 
@@ -109,7 +110,7 @@ export function spawnFromConfig(config) {
  */
 export function updateAll(delta, playerPos) {
   if (!playerPos) return;
-
+  const camera = Scene.getCamera();
   let closestNpc = null;
   let closestDistSq = Infinity;
 
@@ -141,6 +142,9 @@ export function updateAll(delta, playerPos) {
   } else if (!closestNpc && _nearestInRange) {
     _nearestInRange = null;
     Events.emit('uiHintHide', {});
+  }
+    for (const npc of _npcs) {
+    updateNpcQuestIndicator(npc.id, npc.mesh, camera, Scene.getRenderer());
   }
 }
 
