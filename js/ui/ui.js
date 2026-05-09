@@ -783,7 +783,7 @@ export function updateNpcQuestIndicator(npcId, mesh, camera, renderer) {
         el.style.cssText = `
       position: fixed;
       pointer-events: none;
-      font-size: 20px;
+      font-size: 24px !important;
       font-weight: bold;
       text-shadow: 0 1px 4px #000, 0 0 8px #000;
       z-index: 500;
@@ -804,7 +804,7 @@ export function updateNpcQuestIndicator(npcId, mesh, camera, renderer) {
 
     const pos3D = new THREE.Vector3();
     mesh.getWorldPosition(pos3D);
-    pos3D.y += 2.2;
+    pos3D.y += 0.9;
 
     pos3D.project(camera);
 
