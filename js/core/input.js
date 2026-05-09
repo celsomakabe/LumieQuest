@@ -23,6 +23,7 @@ const _bindings = {
     attack:    'Mouse0',
     camera:    'Mouse2',
     interact:  'KeyF',
+    questLog:  'KeyJ',   
 };
 
 // ─── Estado interno ───────────────────────────────────────────────────────────
