@@ -1,12 +1,19 @@
 ﻿/**
  * @module classes
- * @description Atributos base por job. Stub mÃ­nimo â€” PROMPT 10 completa.
- * DependÃªncias: events.js
+ * @description Atributos base por job, skills, canJobChange, executeSkill.
+ * Sessão 17 — PROMPT 12 Parte 1:
+ *   - JOBS_META evo2 populado (skills, jobModHP/MP, statBonus, reqLevel, reqJob, title)
+ *   - canJobChange estendido para evo1→evo2 (level 70 + quest épica completa)
+ *   - SKILL_EFFECTS: +12 ultimates (total 36)
+ *   - getSkills: herança de cadeia base→evo1→evo2 sem duplicatas
+ * Dependências: events.js
  */
 
 import { emit } from '../core/events.js';
 
-/** @type {Record<string, {str:number,agi:number,vit:number,int:number,dex:number,luk:number}>} */
+// ─── BASE STATS ──────────────────────────────────────────────────────────────
+
+/** @type {Record<string, {str,agi,vit,int,dex,luk}>} */
 const _baseStatsByJob = {
     swordman:        { str: 10, agi: 8,  vit: 12, int: 5,  dex: 7,  luk: 5  },
     knight:          { str: 14, agi: 9,  vit: 15, int: 5,  dex: 8,  luk: 5  },
@@ -22,62 +29,199 @@ const _baseStatsByJob = {
     shadow_assassin: { str: 15, agi: 22, vit: 10, int: 7,  dex: 14, luk: 18 },
 };
 
-/**
- * Metadata por job: skills disponÃ­veis e armas permitidas.
- * Apenas as 4 classes base sÃ£o populadas no PROMPT 10.
- * Os 8 jobs restantes (evo1/evo2) serÃ£o completados em PROMPTs 11 e 12.
- * @type {Record<string, { skills: string[], allowedWeapons: string[] }>}
- */
+// ─── JOBS_META ───────────────────────────────────────────────────────────────
+// Campos:
+//   skills[]       — IDs próprios do job (sem herança; getSkills() monta a cadeia)
+//   allowedWeapons — armas permitidas
+//   jobModHP/MP    — multiplicadores de HP/MP (usados em player.js)
+//   baseClass      — job imediatamente anterior na cadeia (evo1 e evo2)
+//   reqLevel       — nível mínimo para mudar para este job
+//   reqJob         — classe que o player precisa ter antes
+//   reqQuest       — quest que precisa estar em jobChangeQuestsCompleted
+//   statBonus      — bônus fixo de stats aplicado ao fazer job change
+//   title          — título exibido na HUD ao usar esta classe
+
 const JOBS_META = {
-    swordman:        { skills: ['bash', 'endure', 'provoke'],                  allowedWeapons: ['sword', 'spear'], jobModHP: 1.0, jobModMP: 0.8 },
-    knight:          { baseClass: 'swordman', skills: ['bashStrong', 'shieldBash', 'auraBlade'], allowedWeapons: ['sword', 'twohand_sword'], statBonus: { str: 3, vit: 3 }, jobModHP: 1.3, jobModMP: 0.9 },
-    lord_knight:     { skills: [],                                             allowedWeapons: [], jobModHP: 1.5, jobModMP: 1.0 },
-    mage:            { skills: ['fireball', 'iceBolt', 'lightning'],           allowedWeapons: ['staff', 'rod'], jobModHP: 0.6, jobModMP: 1.8 },
-    wizard:          { baseClass: 'mage', skills: ['meteor', 'frostNova', 'chainLightning'], allowedWeapons: ['staff', 'rod'], statBonus: { int: 3, dex: 3 }, jobModHP: 0.7, jobModMP: 2.2 },
-    high_wizard:     { skills: [],                                             allowedWeapons: [], jobModHP: 0.8, jobModMP: 2.5 },
-    archer:          { skills: ['doubleStrike', 'explosiveShot', 'slowShot'],  allowedWeapons: ['bow'], jobModHP: 0.9, jobModMP: 1.0 },
-    hunter:          { baseClass: 'archer', skills: ['arrowRain', 'piercingShot', 'eagleEye'], allowedWeapons: ['bow'], statBonus: { agi: 3, dex: 3 }, jobModHP: 1.0, jobModMP: 1.1 },
-    sniper:          { skills: [],                                             allowedWeapons: [], jobModHP: 1.1, jobModMP: 1.2 },
-    assassin:        { skills: ['stealthStrike', 'poison', 'evasion'],         allowedWeapons: ['dagger', 'katar'], jobModHP: 1.0, jobModMP: 1.0 },
-    assassin_master: { baseClass: 'assassin', skills: ['shadowClone', 'deadlyPoison', 'backstab'], allowedWeapons: ['dagger', 'katar'], statBonus: { agi: 3, luk: 3 }, jobModHP: 1.2, jobModMP: 1.1 },
-    shadow_assassin: { skills: [],                                             allowedWeapons: [], jobModHP: 1.4, jobModMP: 1.2 },
+    swordman: {
+        skills: ['bash', 'endure', 'provoke'],
+        allowedWeapons: ['sword', 'spear'],
+        jobModHP: 1.0, jobModMP: 0.8,
+        reqLevel: 1, reqJob: null, reqQuest: null,
+        statBonus: null,
+        title: 'Espadachim',
+    },
+    knight: {
+        baseClass: 'swordman',
+        skills: ['bashStrong', 'shieldBash', 'auraBlade'],
+        allowedWeapons: ['sword', 'twohand_sword'],
+        jobModHP: 1.3, jobModMP: 0.9,
+        reqLevel: 30, reqJob: 'swordman', reqQuest: 'quest_jobchange_knight',
+        statBonus: { str: 3, vit: 3 },
+        title: 'Cavaleiro',
+    },
+    lord_knight: {
+        baseClass: 'knight',
+        skills: ['spiralPierce', 'berserk', 'holyCross'],
+        allowedWeapons: ['sword', 'twohand_sword', 'spear'],
+        jobModHP: 1.6, jobModMP: 0.9,
+        reqLevel: 70, reqJob: 'knight', reqQuest: 'quest_evo2_lord_knight',
+        statBonus: { str: 5, vit: 5 },
+        title: 'Lorde Cavaleiro',
+    },
+    mage: {
+        skills: ['fireball', 'iceBolt', 'lightning'],
+        allowedWeapons: ['staff', 'rod'],
+        jobModHP: 0.6, jobModMP: 1.8,
+        reqLevel: 1, reqJob: null, reqQuest: null,
+        statBonus: null,
+        title: 'Mago',
+    },
+    wizard: {
+        baseClass: 'mage',
+        skills: ['meteor', 'frostNova', 'chainLightning'],
+        allowedWeapons: ['staff', 'rod'],
+        jobModHP: 0.7, jobModMP: 2.2,
+        reqLevel: 30, reqJob: 'mage', reqQuest: 'quest_jobchange_wizard',
+        statBonus: { int: 3, dex: 3 },
+        title: 'Bruxo',
+    },
+    high_wizard: {
+        baseClass: 'wizard',
+        skills: ['meteorStorm', 'timeStop', 'arcaneExplosion'],
+        allowedWeapons: ['staff', 'rod'],
+        jobModHP: 0.8, jobModMP: 2.6,
+        reqLevel: 70, reqJob: 'wizard', reqQuest: 'quest_evo2_high_wizard',
+        statBonus: { int: 5, dex: 3 },
+        title: 'Grande Bruxo',
+    },
+    archer: {
+        skills: ['doubleStrike', 'explosiveShot', 'slowShot'],
+        allowedWeapons: ['bow'],
+        jobModHP: 0.9, jobModMP: 1.0,
+        reqLevel: 1, reqJob: null, reqQuest: null,
+        statBonus: null,
+        title: 'Arqueiro',
+    },
+    hunter: {
+        baseClass: 'archer',
+        skills: ['arrowRain', 'piercingShot', 'eagleEye'],
+        allowedWeapons: ['bow'],
+        jobModHP: 1.0, jobModMP: 1.1,
+        reqLevel: 30, reqJob: 'archer', reqQuest: 'quest_jobchange_hunter',
+        statBonus: { agi: 3, dex: 3 },
+        title: 'Caçador',
+    },
+    sniper: {
+        baseClass: 'hunter',
+        skills: ['phantomArrow', 'sharpShoot', 'windWalk'],
+        allowedWeapons: ['bow'],
+        jobModHP: 1.1, jobModMP: 1.2,
+        reqLevel: 70, reqJob: 'hunter', reqQuest: 'quest_evo2_sniper',
+        statBonus: { agi: 5, dex: 5 },
+        title: 'Atirador de Elite',
+    },
+    assassin: {
+        skills: ['stealthStrike', 'poison', 'evasion'],
+        allowedWeapons: ['dagger', 'katar'],
+        jobModHP: 1.0, jobModMP: 1.0,
+        reqLevel: 1, reqJob: null, reqQuest: null,
+        statBonus: null,
+        title: 'Assassino',
+    },
+    assassin_master: {
+        baseClass: 'assassin',
+        skills: ['shadowClone', 'deadlyPoison', 'backstab'],
+        allowedWeapons: ['dagger', 'katar'],
+        jobModHP: 1.2, jobModMP: 1.1,
+        reqLevel: 30, reqJob: 'assassin', reqQuest: 'quest_jobchange_assassin',
+        statBonus: { agi: 3, luk: 3 },
+        title: 'Mestre Assassino',
+    },
+    shadow_assassin: {
+        baseClass: 'assassin_master',
+        skills: ['soulReap', 'abyssPoison', 'voidStep'],
+        allowedWeapons: ['dagger', 'katar'],
+        jobModHP: 1.3, jobModMP: 1.2,
+        reqLevel: 70, reqJob: 'assassin_master', reqQuest: 'quest_evo2_shadow_assassin',
+        statBonus: { agi: 5, luk: 3 },
+        title: 'Assassino das Sombras',
+    },
 };
+
+// ─── SKILL DEFS CACHE ────────────────────────────────────────────────────────
 
 /**
  * Cache de skill definitions carregadas do skills.json.
- * Populado por setSkillDefs(), chamado em main.js apÃ³s o fetch.
- * @type {Array<{id:string,name:string,description:string,classId:string,mpCost:number,cooldown:number,range:number,targetType:string}>}
+ * Populado por setSkillDefs(), chamado em main.js após fetch.
+ * @type {Array<{id,name,description,classId,mpCost,cooldown,range,targetType}>}
  */
 let _skillDefs = [];
 
-// â”€â”€â”€ SKILL_EFFECTS registry â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Cada effect recebe (caster, target, ctx) onde:
-//   caster = estado mutÃ¡vel do player (Player.getState())
-//   target = entidade do combat (monstro) ou null para self/aoe
-//   ctx    = { now: number, emit: Function, getEntities: Function }
-// Retorna { ok: boolean, message?: string, reason?: string }
+// ─── HELPERS INTERNOS ────────────────────────────────────────────────────────
+
+/**
+ * Aplica dano direto a uma entidade. Emite entityDied + monsterDied se hp <= 0.
+ * @param {Object} entity
+ * @param {number} amount
+ * @param {Object} ctx - { emit }
+ */
+function _applyDamage(entity, amount, ctx) {
+    if (!entity || typeof entity.hp !== 'number') return;
+    entity.hp = Math.max(0, entity.hp - amount);
+    if (entity.hp <= 0 && entity.id) {
+        ctx.emit('entityDied', { entity });
+        ctx.emit('monsterDied', { id: entity.id, monsterId: entity.monsterId, xp: entity.xp });
+    }
+}
+
+/**
+ * Aplica buff ao caster, substituindo se mesmo id já existir.
+ * @param {Object} caster
+ * @param {{ id:string, expiresAt:number, modifier:Object }} buff
+ */
+function _applyBuff(caster, buff) {
+    if (!Array.isArray(caster._activeBuffs)) caster._activeBuffs = [];
+    caster._activeBuffs = caster._activeBuffs.filter(b => b.id !== buff.id);
+    caster._activeBuffs.push(buff);
+}
+
+/**
+ * Aplica debuff ao target, substituindo se mesmo id já existir.
+ * @param {Object} target
+ * @param {{ id:string, expiresAt:number }} debuff
+ */
+function _applyDebuff(target, debuff) {
+    if (!Array.isArray(target._activeDebuffs)) target._activeDebuffs = [];
+    target._activeDebuffs = target._activeDebuffs.filter(d => d.id !== debuff.id);
+    target._activeDebuffs.push(debuff);
+}
+
+// ─── SKILL_EFFECTS REGISTRY ──────────────────────────────────────────────────
+// Cada effect: (caster, target, ctx) => { ok: boolean, message?: string, reason?: string }
+// ctx = { now: number, emit: Function, getEntities: Function }
+
 const SKILL_EFFECTS = {
 
-    // â”€â”€ SWORDMAN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── SWORDMAN ──────────────────────────────────────────────────────────────
 
-    /** Bash: golpe fÃ­sico 180% */
+    /** Bash: golpe físico 180% */
     bash(caster, target, ctx) {
         if (!target) return { ok: false, reason: 'sem_alvo' };
-        const baseDamage = Math.floor((caster.baseStats.str * 2 + caster.level * 3) * 1.8);
-        ctx.emit('skillDamage', { skillId: 'bash', target, damage: baseDamage, isCritical: false });
-        _applyDamage(target, baseDamage, ctx);
-        return { ok: true, message: `Bash causou ${baseDamage} de dano!` };
+        const dmg = Math.floor((caster.baseStats.str * 2 + caster.level * 3) * 1.8);
+        ctx.emit('skillDamage', { skillId: 'bash', target, damage: dmg, isCritical: false });
+        _applyDamage(target, dmg, ctx);
+        return { ok: true, message: `Bash causou ${dmg} de dano!` };
     },
 
     /** Endure: defesa +50% por 5s (self buff) */
-    endure(caster, target, ctx) {
+    endure(caster, _target, ctx) {
         const buff = { id: 'endure', expiresAt: ctx.now + 5000, modifier: { defenseMultiplier: 0.5 } };
         _applyBuff(caster, buff);
         ctx.emit('buffApplied', { buffId: 'endure', casterId: caster.name, expiresAt: buff.expiresAt });
         return { ok: true, message: 'Endure ativo: dano recebido reduzido em 50% por 5s.' };
     },
 
-    /** Provoke: forÃ§a aggro no alvo por 4s */
+    /** Provoke: força aggro no alvo por 4s */
     provoke(caster, target, ctx) {
         if (!target) return { ok: false, reason: 'sem_alvo' };
         const debuff = { id: 'provoked', expiresAt: ctx.now + 4000, forcedTargetId: caster.name };
@@ -86,136 +230,7 @@ const SKILL_EFFECTS = {
         return { ok: true, message: 'Alvo provocado por 4s.' };
     },
 
-    // â”€â”€ MAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-    /** Fire Ball: dano fogo 200% em AoE raio 2u */
-    fireball(caster, target, ctx) {
-        const baseDamage = Math.floor((caster.baseStats.int * 2.5 + caster.level * 4) * 2.0);
-        const AOE_RADIUS = 2;
-        const entities = ctx.getEntities();
-        const origin = target ? target.position : caster.position;
-        let hitCount = 0;
-        entities.forEach(e => {
-            if (!e || !e.position) return;
-            const dx = e.position.x - origin.x;
-            const dz = (e.position.z !== undefined ? e.position.z : e.position.y) -
-                       (origin.z   !== undefined ? origin.z   : origin.y);
-            const dist = Math.sqrt(dx * dx + dz * dz);
-            if (dist <= AOE_RADIUS) {
-                ctx.emit('skillDamage', { skillId: 'fireball', target: e, damage: baseDamage, isCritical: false });
-                _applyDamage(e, baseDamage, ctx);
-                hitCount++;
-            }
-        });
-        return { ok: true, message: `Fire Ball atingiu ${hitCount} alvo(s) com ${baseDamage} de dano!` };
-    },
-
-    /** Ice Bolt: dano gelo 160% + slow 30% por 3s */
-    iceBolt(caster, target, ctx) {
-        if (!target) return { ok: false, reason: 'sem_alvo' };
-        const baseDamage = Math.floor((caster.baseStats.int * 2.5 + caster.level * 4) * 1.6);
-        ctx.emit('skillDamage', { skillId: 'iceBolt', target, damage: baseDamage, isCritical: false });
-        _applyDamage(target, baseDamage, ctx);
-        const debuff = { id: 'slow_ice', expiresAt: ctx.now + 3000, slowAmount: 0.3 };
-        _applyDebuff(target, debuff);
-        ctx.emit('debuffApplied', { debuffId: 'slow_ice', targetId: target.instanceId, expiresAt: debuff.expiresAt });
-        return { ok: true, message: `Ice Bolt causou ${baseDamage} de dano e aplicou slow 30% por 3s.` };
-    },
-
-    /** Lightning: dano raio 220% single target */
-    lightning(caster, target, ctx) {
-        if (!target) return { ok: false, reason: 'sem_alvo' };
-        const baseDamage = Math.floor((caster.baseStats.int * 2.5 + caster.level * 4) * 2.2);
-        ctx.emit('skillDamage', { skillId: 'lightning', target, damage: baseDamage, isCritical: false });
-        _applyDamage(target, baseDamage, ctx);
-        return { ok: true, message: `Lightning causou ${baseDamage} de dano elÃ©trico!` };
-    },
-
-    // â”€â”€ ARCHER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-    /** Double Strike: 2 hits de 90% cada */
-    doubleStrike(caster, target, ctx) {
-        if (!target) return { ok: false, reason: 'sem_alvo' };
-        const hitDamage = Math.floor((caster.baseStats.dex * 2 + caster.level * 3) * 0.9);
-        for (let i = 0; i < 2; i++) {
-            ctx.emit('skillDamage', { skillId: 'doubleStrike', target, damage: hitDamage, isCritical: false, hitIndex: i });
-            _applyDamage(target, hitDamage, ctx);
-        }
-        return { ok: true, message: `Double Strike: 2 hits de ${hitDamage} cada!` };
-    },
-
-    /** Explosive Shot: 150% dano no alvo + AoE 80% raio 2.5u */
-    explosiveShot(caster, target, ctx) {
-        if (!target) return { ok: false, reason: 'sem_alvo' };
-        const mainDamage = Math.floor((caster.baseStats.dex * 2 + caster.level * 3) * 1.5);
-        const aoeDamage  = Math.floor(mainDamage * 0.8);
-        const AOE_RADIUS = 2.5;
-        ctx.emit('skillDamage', { skillId: 'explosiveShot', target, damage: mainDamage, isCritical: false });
-        _applyDamage(target, mainDamage, ctx);
-        const entities = ctx.getEntities();
-        entities.forEach(e => {
-            if (!e || !e.position || e === target) return;
-            const dx = e.position.x - target.position.x;
-            const dz = (e.position.z   !== undefined ? e.position.z   : e.position.y) -
-                       (target.position.z !== undefined ? target.position.z : target.position.y);
-            const dist = Math.sqrt(dx * dx + dz * dz);
-            if (dist <= AOE_RADIUS) {
-                ctx.emit('skillDamage', { skillId: 'explosiveShot', target: e, damage: aoeDamage, isCritical: false });
-                _applyDamage(e, aoeDamage, ctx);
-            }
-        });
-        return { ok: true, message: `Explosive Shot causou ${mainDamage} no alvo e ${aoeDamage} em AoE!` };
-    },
-
-    /** Slow Shot: 110% dano + slow 50% por 4s */
-    slowShot(caster, target, ctx) {
-        if (!target) return { ok: false, reason: 'sem_alvo' };
-        const baseDamage = Math.floor((caster.baseStats.dex * 2 + caster.level * 3) * 1.1);
-        ctx.emit('skillDamage', { skillId: 'slowShot', target, damage: baseDamage, isCritical: false });
-        _applyDamage(target, baseDamage, ctx);
-        const debuff = { id: 'slow_shot', expiresAt: ctx.now + 4000, slowAmount: 0.5 };
-        _applyDebuff(target, debuff);
-        ctx.emit('debuffApplied', { debuffId: 'slow_shot', targetId: target.instanceId, expiresAt: debuff.expiresAt });
-        return { ok: true, message: `Slow Shot causou ${baseDamage} de dano e aplicou slow 50% por 4s.` };
-    },
-
-    // â”€â”€ ASSASSIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-    /** Stealth Strike: crÃ­tico garantido (300%) se primeiro hit no alvo */
-    stealthStrike(caster, target, ctx) {
-        if (!target) return { ok: false, reason: 'sem_alvo' };
-        const isFirstHit = !target._wasHit;
-        const multiplier = isFirstHit ? 3.0 : 1.5;
-        const baseDamage = Math.floor((caster.baseStats.str + caster.baseStats.agi * 1.5 + caster.level * 3) * multiplier);
-        ctx.emit('skillDamage', { skillId: 'stealthStrike', target, damage: baseDamage, isCritical: isFirstHit });
-        _applyDamage(target, baseDamage, ctx);
-        target._wasHit = true;
-        return {
-            ok: true,
-            message: isFirstHit
-                ? `Stealth Strike CRÃTICO: ${baseDamage} de dano!`
-                : `Stealth Strike causou ${baseDamage} de dano.`
-        };
-    },
-
-    /** Poison: DoT 20% dano base por tick a cada 1s por 5s */
-    poison(caster, target, ctx) {
-        if (!target) return { ok: false, reason: 'sem_alvo' };
-        const tickDamage = Math.floor((caster.baseStats.str + caster.baseStats.agi + caster.level * 2) * 0.2);
-        const debuff = { id: 'poison', expiresAt: ctx.now + 5000, tickRate: 1000, damagePerTick: tickDamage, lastTick: ctx.now };
-        _applyDebuff(target, debuff);
-        ctx.emit('debuffApplied', { debuffId: 'poison', targetId: target.instanceId, expiresAt: debuff.expiresAt });
-        return { ok: true, message: `Alvo envenenado: ${tickDamage} de dano por segundo durante 5s.` };
-    },
-
-    /** Evasion: esquiva +50% por 4s (self buff) */
-    evasion(caster, target, ctx) {
-        const buff = { id: 'evasion', expiresAt: ctx.now + 4000, modifier: { evasionBonus: 0.5 } };
-        _applyBuff(caster, buff);
-        ctx.emit('buffApplied', { buffId: 'evasion', casterId: caster.name, expiresAt: buff.expiresAt });
-        return { ok: true, message: 'Evasion ativo: esquiva +50% por 4s.' };
-    },
-// ── KNIGHT ───────────────────────────────────────────────────────────────────
+    // ── KNIGHT ────────────────────────────────────────────────────────────────
 
     /** bashStrong: dano físico 280% */
     bashStrong(caster, target, ctx) {
@@ -239,14 +254,104 @@ const SKILL_EFFECTS = {
     },
 
     /** auraBlade: buff self atkMultiplier 1.5 por 8s */
-    auraBlade(caster, target, ctx) {
+    auraBlade(caster, _target, ctx) {
         const buff = { id: 'auraBlade', expiresAt: ctx.now + 8000, modifier: { atkMultiplier: 1.5 } };
         _applyBuff(caster, buff);
         ctx.emit('buffApplied', { buffId: 'auraBlade', casterId: caster.name, expiresAt: buff.expiresAt });
         return { ok: true, message: 'Aura Blade: ATK +50% por 8s.' };
     },
 
-    // ── WIZARD ───────────────────────────────────────────────────────────────────
+    // ── LORD KNIGHT — ULTIMATES ───────────────────────────────────────────────
+
+    /** spiralPierce: dano físico 400% ignorando 50% da defesa */
+    spiralPierce(caster, target, ctx) {
+        if (!target) return { ok: false, reason: 'sem_alvo' };
+        const dmg = Math.floor((caster.baseStats.str * 2 + caster.level * 3) * 4.0);
+        ctx.emit('skillDamage', { skillId: 'spiralPierce', target, damage: dmg, isCritical: false, armorPierce: 0.5 });
+        _applyDamage(target, dmg, ctx);
+        return { ok: true, message: `Spiral Pierce causou ${dmg} ignorando 50% de defesa!` };
+    },
+
+    /** berserk: buff self ATK+50% por 20s, penalidade DEF-30% */
+    berserk(caster, _target, ctx) {
+        const buff = {
+            id: 'berserk',
+            expiresAt: ctx.now + 20000,
+            modifier: { atkMultiplier: 1.5, defenseMultiplier: -0.3 },
+        };
+        _applyBuff(caster, buff);
+        ctx.emit('buffApplied', { buffId: 'berserk', casterId: caster.name, expiresAt: buff.expiresAt });
+        return { ok: true, message: 'Berserk: ATK +50% e DEF -30% por 20s.' };
+    },
+
+    /** holyCross: AoE raio 3u centrado no alvo, dano 300% + stun 2s */
+    holyCross(caster, target, ctx) {
+        if (!target) return { ok: false, reason: 'sem_alvo' };
+        const dmg = Math.floor((caster.baseStats.str * 2 + caster.level * 3) * 3.0);
+        const AOE_RADIUS = 3;
+        const origin = target.position;
+        let hits = 0;
+        ctx.getEntities().forEach(e => {
+            if (!e || !e.position) return;
+            const dx = e.position.x - origin.x;
+            const dz = (e.position.z !== undefined ? e.position.z : e.position.y) -
+                       (origin.z   !== undefined ? origin.z   : origin.y);
+            if (Math.sqrt(dx * dx + dz * dz) <= AOE_RADIUS) {
+                ctx.emit('skillDamage', { skillId: 'holyCross', target: e, damage: dmg, isCritical: false });
+                _applyDamage(e, dmg, ctx);
+                const debuff = { id: 'stunned', expiresAt: ctx.now + 2000 };
+                _applyDebuff(e, debuff);
+                ctx.emit('debuffApplied', { debuffId: 'stunned', targetId: e.instanceId, expiresAt: debuff.expiresAt });
+                hits++;
+            }
+        });
+        return { ok: true, message: `Holy Cross atingiu ${hits} alvo(s) com ${dmg} e stun 2s!` };
+    },
+
+    // ── MAGE ──────────────────────────────────────────────────────────────────
+
+    /** fireball: dano fogo 200% AoE raio 2u */
+    fireball(caster, target, ctx) {
+        const dmg = Math.floor((caster.baseStats.int * 2.5 + caster.level * 4) * 2.0);
+        const AOE_RADIUS = 2;
+        const origin = target ? target.position : caster.position;
+        let hitCount = 0;
+        ctx.getEntities().forEach(e => {
+            if (!e || !e.position) return;
+            const dx = e.position.x - origin.x;
+            const dz = (e.position.z !== undefined ? e.position.z : e.position.y) -
+                       (origin.z   !== undefined ? origin.z   : origin.y);
+            if (Math.sqrt(dx * dx + dz * dz) <= AOE_RADIUS) {
+                ctx.emit('skillDamage', { skillId: 'fireball', target: e, damage: dmg, isCritical: false });
+                _applyDamage(e, dmg, ctx);
+                hitCount++;
+            }
+        });
+        return { ok: true, message: `Fire Ball atingiu ${hitCount} alvo(s) com ${dmg} de dano!` };
+    },
+
+    /** iceBolt: dano gelo 160% + slow 30% 3s */
+    iceBolt(caster, target, ctx) {
+        if (!target) return { ok: false, reason: 'sem_alvo' };
+        const dmg = Math.floor((caster.baseStats.int * 2.5 + caster.level * 4) * 1.6);
+        ctx.emit('skillDamage', { skillId: 'iceBolt', target, damage: dmg, isCritical: false });
+        _applyDamage(target, dmg, ctx);
+        const debuff = { id: 'slow_ice', expiresAt: ctx.now + 3000, slowAmount: 0.3 };
+        _applyDebuff(target, debuff);
+        ctx.emit('debuffApplied', { debuffId: 'slow_ice', targetId: target.instanceId, expiresAt: debuff.expiresAt });
+        return { ok: true, message: `Ice Bolt causou ${dmg} de dano e slow 30% por 3s.` };
+    },
+
+    /** lightning: dano raio 220% single target */
+    lightning(caster, target, ctx) {
+        if (!target) return { ok: false, reason: 'sem_alvo' };
+        const dmg = Math.floor((caster.baseStats.int * 2.5 + caster.level * 4) * 2.2);
+        ctx.emit('skillDamage', { skillId: 'lightning', target, damage: dmg, isCritical: false });
+        _applyDamage(target, dmg, ctx);
+        return { ok: true, message: `Lightning causou ${dmg} de dano elétrico!` };
+    },
+
+    // ── WIZARD ────────────────────────────────────────────────────────────────
 
     /** meteor: AoE raio 3u, dano mágico 280% */
     meteor(caster, target, ctx) {
@@ -268,8 +373,8 @@ const SKILL_EFFECTS = {
         return { ok: true, message: `Meteor atingiu ${hits} alvo(s) com ${dmg}!` };
     },
 
-    /** frostNova: AoE raio 2.5u em volta do caster, dano 150% + slow 50% 4s */
-    frostNova(caster, target, ctx) {
+    /** frostNova: AoE raio 2.5u ao redor do caster, 150% + slow 50% 4s */
+    frostNova(caster, _target, ctx) {
         const dmg = Math.floor((caster.baseStats.int * 2.5 + caster.level * 4) * 1.5);
         const AOE_RADIUS = 2.5;
         ctx.getEntities().forEach(e => {
@@ -288,7 +393,7 @@ const SKILL_EFFECTS = {
         return { ok: true, message: 'Frost Nova disparada!' };
     },
 
-    /** chainLightning: 250% no alvo + 60% num segundo alvo a até 3u */
+    /** chainLightning: 250% no alvo + 60% em segundo alvo a até 3u */
     chainLightning(caster, target, ctx) {
         if (!target) return { ok: false, reason: 'sem_alvo' };
         const dmg1 = Math.floor((caster.baseStats.int * 2.5 + caster.level * 4) * 2.5);
@@ -310,9 +415,111 @@ const SKILL_EFFECTS = {
         return { ok: true, message: `Chain Lightning: ${dmg1} no alvo${second ? `, ${dmg2} em cadeia` : ''}.` };
     },
 
-    // ── HUNTER ───────────────────────────────────────────────────────────────────
+    // ── HIGH WIZARD — ULTIMATES ───────────────────────────────────────────────
 
-    /** arrowRain: AoE raio 3u, dano físico 200% */
+    /** meteorStorm: AoE raio 4u, 3 hits de 500% INT cada */
+    meteorStorm(caster, target, ctx) {
+        const dmgPerHit = Math.floor((caster.baseStats.int * 2.5 + caster.level * 4) * 5.0);
+        const AOE_RADIUS = 4;
+        const origin = target ? target.position : caster.position;
+        let hits = 0;
+        ctx.getEntities().forEach(e => {
+            if (!e || !e.position) return;
+            const dx = e.position.x - origin.x;
+            const dz = (e.position.z !== undefined ? e.position.z : e.position.y) -
+                       (origin.z !== undefined ? origin.z : origin.y);
+            if (Math.sqrt(dx * dx + dz * dz) <= AOE_RADIUS) {
+                for (let i = 0; i < 3; i++) {
+                    ctx.emit('skillDamage', { skillId: 'meteorStorm', target: e, damage: dmgPerHit, isCritical: false, hitIndex: i });
+                    _applyDamage(e, dmgPerHit, ctx);
+                }
+                hits++;
+            }
+        });
+        return { ok: true, message: `Meteor Storm: 3 hits de ${dmgPerHit} em ${hits} alvo(s)!` };
+    },
+
+    /** timeStop: freeze em área raio 3.5u por 4s, sem dano */
+    timeStop(caster, target, ctx) {
+        const AOE_RADIUS = 3.5;
+        const origin = target ? target.position : caster.position;
+        let hits = 0;
+        ctx.getEntities().forEach(e => {
+            if (!e || !e.position) return;
+            const dx = e.position.x - origin.x;
+            const dz = (e.position.z !== undefined ? e.position.z : e.position.y) -
+                       (origin.z !== undefined ? origin.z : origin.y);
+            if (Math.sqrt(dx * dx + dz * dz) <= AOE_RADIUS) {
+                const debuff = { id: 'frozen', expiresAt: ctx.now + 4000 };
+                _applyDebuff(e, debuff);
+                ctx.emit('debuffApplied', { debuffId: 'frozen', targetId: e.instanceId, expiresAt: debuff.expiresAt });
+                hits++;
+            }
+        });
+        return { ok: true, message: `Time Stop congelou ${hits} alvo(s) por 4s!` };
+    },
+
+    /** arcaneExplosion: dano 450% INT + knockback 0.5s */
+    arcaneExplosion(caster, target, ctx) {
+        if (!target) return { ok: false, reason: 'sem_alvo' };
+        const dmg = Math.floor((caster.baseStats.int * 2.5 + caster.level * 4) * 4.5);
+        ctx.emit('skillDamage', { skillId: 'arcaneExplosion', target, damage: dmg, isCritical: false });
+        _applyDamage(target, dmg, ctx);
+        const debuff = { id: 'knockback', expiresAt: ctx.now + 500 };
+        _applyDebuff(target, debuff);
+        ctx.emit('debuffApplied', { debuffId: 'knockback', targetId: target.instanceId, expiresAt: debuff.expiresAt });
+        return { ok: true, message: `Arcane Explosion causou ${dmg} e empurrou o alvo!` };
+    },
+
+    // ── ARCHER ────────────────────────────────────────────────────────────────
+
+    /** doubleStrike: 2 hits de 90% */
+    doubleStrike(caster, target, ctx) {
+        if (!target) return { ok: false, reason: 'sem_alvo' };
+        const hitDmg = Math.floor((caster.baseStats.dex * 2 + caster.level * 3) * 0.9);
+        for (let i = 0; i < 2; i++) {
+            ctx.emit('skillDamage', { skillId: 'doubleStrike', target, damage: hitDmg, isCritical: false, hitIndex: i });
+            _applyDamage(target, hitDmg, ctx);
+        }
+        return { ok: true, message: `Double Strike: 2 hits de ${hitDmg} cada!` };
+    },
+
+    /** explosiveShot: 150% no alvo + AoE 80% raio 2.5u */
+    explosiveShot(caster, target, ctx) {
+        if (!target) return { ok: false, reason: 'sem_alvo' };
+        const mainDmg = Math.floor((caster.baseStats.dex * 2 + caster.level * 3) * 1.5);
+        const aoeDmg  = Math.floor(mainDmg * 0.8);
+        const AOE_RADIUS = 2.5;
+        ctx.emit('skillDamage', { skillId: 'explosiveShot', target, damage: mainDmg, isCritical: false });
+        _applyDamage(target, mainDmg, ctx);
+        ctx.getEntities().forEach(e => {
+            if (!e || !e.position || e === target) return;
+            const dx = e.position.x - target.position.x;
+            const dz = (e.position.z   !== undefined ? e.position.z   : e.position.y) -
+                       (target.position.z !== undefined ? target.position.z : target.position.y);
+            if (Math.sqrt(dx * dx + dz * dz) <= AOE_RADIUS) {
+                ctx.emit('skillDamage', { skillId: 'explosiveShot', target: e, damage: aoeDmg, isCritical: false });
+                _applyDamage(e, aoeDmg, ctx);
+            }
+        });
+        return { ok: true, message: `Explosive Shot causou ${mainDmg} no alvo e ${aoeDmg} em AoE!` };
+    },
+
+    /** slowShot: 110% + slow 50% 4s */
+    slowShot(caster, target, ctx) {
+        if (!target) return { ok: false, reason: 'sem_alvo' };
+        const dmg = Math.floor((caster.baseStats.dex * 2 + caster.level * 3) * 1.1);
+        ctx.emit('skillDamage', { skillId: 'slowShot', target, damage: dmg, isCritical: false });
+        _applyDamage(target, dmg, ctx);
+        const debuff = { id: 'slow_shot', expiresAt: ctx.now + 4000, slowAmount: 0.5 };
+        _applyDebuff(target, debuff);
+        ctx.emit('debuffApplied', { debuffId: 'slow_shot', targetId: target.instanceId, expiresAt: debuff.expiresAt });
+        return { ok: true, message: `Slow Shot causou ${dmg} e slow 50% por 4s.` };
+    },
+
+    // ── HUNTER ────────────────────────────────────────────────────────────────
+
+    /** arrowRain: AoE raio 3u, 200% físico */
     arrowRain(caster, target, ctx) {
         const dmg = Math.floor((caster.baseStats.dex * 2 + caster.level * 3) * 2.0);
         const AOE_RADIUS = 3;
@@ -332,7 +539,7 @@ const SKILL_EFFECTS = {
         return { ok: true, message: `Arrow Rain atingiu ${hits} alvo(s) com ${dmg}!` };
     },
 
-    /** piercingShot: dano físico 320%, ignora 30% defesa */
+    /** piercingShot: 320% ignorando 30% defesa */
     piercingShot(caster, target, ctx) {
         if (!target) return { ok: false, reason: 'sem_alvo' };
         const dmg = Math.floor((caster.baseStats.dex * 2 + caster.level * 3) * 3.2);
@@ -341,23 +548,88 @@ const SKILL_EFFECTS = {
         return { ok: true, message: `Piercing Shot causou ${dmg} ignorando 30% de defesa!` };
     },
 
-    /** eagleEye: buff self critRateBonus 0.3 por 10s */
-    eagleEye(caster, target, ctx) {
+    /** eagleEye: buff critRateBonus +0.3 por 10s */
+    eagleEye(caster, _target, ctx) {
         const buff = { id: 'eagleEye', expiresAt: ctx.now + 10000, modifier: { critRateBonus: 0.3 } };
         _applyBuff(caster, buff);
         ctx.emit('buffApplied', { buffId: 'eagleEye', casterId: caster.name, expiresAt: buff.expiresAt });
         return { ok: true, message: 'Eagle Eye: chance de crítico +30% por 10s.' };
     },
 
-    // ── ASSASSIN_MASTER ──────────────────────────────────────────────────────────
+    // ── SNIPER — ULTIMATES ────────────────────────────────────────────────────
 
-    /** shadowClone: buff self evasionBonus 0.7 + atkMultiplier 1.3 por 5s */
-    shadowClone(caster, target, ctx) {
+    /** phantomArrow: dano físico 450% ignorando 70% de defesa */
+    phantomArrow(caster, target, ctx) {
+        if (!target) return { ok: false, reason: 'sem_alvo' };
+        const dmg = Math.floor((caster.baseStats.dex * 2 + caster.level * 3) * 4.5);
+        ctx.emit('skillDamage', { skillId: 'phantomArrow', target, damage: dmg, isCritical: false, armorPierce: 0.7 });
+        _applyDamage(target, dmg, ctx);
+        return { ok: true, message: `Phantom Arrow causou ${dmg} ignorando 70% de defesa!` };
+    },
+
+    /** sharpShoot: crítico garantido, dano físico 600% */
+    sharpShoot(caster, target, ctx) {
+        if (!target) return { ok: false, reason: 'sem_alvo' };
+        const dmg = Math.floor((caster.baseStats.dex * 2 + caster.level * 3) * 6.0);
+        ctx.emit('skillDamage', { skillId: 'sharpShoot', target, damage: dmg, isCritical: true });
+        _applyDamage(target, dmg, ctx);
+        return { ok: true, message: `Sharp Shoot CRÍTICO GARANTIDO: ${dmg} de dano!` };
+    },
+
+    /** windWalk: buff self agiBonus +60% e moveSpeedBonus +60% por 15s */
+    windWalk(caster, _target, ctx) {
         const buff = {
-            id: 'shadowClone',
-            expiresAt: ctx.now + 5000,
-            modifier: { evasionBonus: 0.7, atkMultiplier: 1.3 }
+            id: 'windWalk',
+            expiresAt: ctx.now + 15000,
+            modifier: { agiBonus: 0.6, moveSpeedBonus: 0.6 },
         };
+        _applyBuff(caster, buff);
+        ctx.emit('buffApplied', { buffId: 'windWalk', casterId: caster.name, expiresAt: buff.expiresAt });
+        return { ok: true, message: 'Wind Walk: AGI e velocidade +60% por 15s.' };
+    },
+
+    // ── ASSASSIN ──────────────────────────────────────────────────────────────
+
+    /** stealthStrike: crítico garantido 300% se primeiro hit; senão 150% */
+    stealthStrike(caster, target, ctx) {
+        if (!target) return { ok: false, reason: 'sem_alvo' };
+        const isFirstHit = !target._wasHit;
+        const multiplier = isFirstHit ? 3.0 : 1.5;
+        const dmg = Math.floor((caster.baseStats.str + caster.baseStats.agi * 1.5 + caster.level * 3) * multiplier);
+        ctx.emit('skillDamage', { skillId: 'stealthStrike', target, damage: dmg, isCritical: isFirstHit });
+        _applyDamage(target, dmg, ctx);
+        target._wasHit = true;
+        return {
+            ok: true,
+            message: isFirstHit
+                ? `Stealth Strike CRÍTICO: ${dmg} de dano!`
+                : `Stealth Strike causou ${dmg} de dano.`,
+        };
+    },
+
+    /** poison: DoT 20% por tick 1s durante 5s */
+    poison(caster, target, ctx) {
+        if (!target) return { ok: false, reason: 'sem_alvo' };
+        const tickDmg = Math.floor((caster.baseStats.str + caster.baseStats.agi + caster.level * 2) * 0.2);
+        const debuff = { id: 'poison', expiresAt: ctx.now + 5000, tickRate: 1000, damagePerTick: tickDmg, lastTick: ctx.now };
+        _applyDebuff(target, debuff);
+        ctx.emit('debuffApplied', { debuffId: 'poison', targetId: target.instanceId, expiresAt: debuff.expiresAt });
+        return { ok: true, message: `Alvo envenenado: ${tickDmg}/s por 5s.` };
+    },
+
+    /** evasion: esquiva +50% por 4s (self buff) */
+    evasion(caster, _target, ctx) {
+        const buff = { id: 'evasion', expiresAt: ctx.now + 4000, modifier: { evasionBonus: 0.5 } };
+        _applyBuff(caster, buff);
+        ctx.emit('buffApplied', { buffId: 'evasion', casterId: caster.name, expiresAt: buff.expiresAt });
+        return { ok: true, message: 'Evasion ativo: esquiva +50% por 4s.' };
+    },
+
+    // ── ASSASSIN_MASTER ───────────────────────────────────────────────────────
+
+    /** shadowClone: evasionBonus +0.7 e atkMultiplier 1.3 por 5s */
+    shadowClone(caster, _target, ctx) {
+        const buff = { id: 'shadowClone', expiresAt: ctx.now + 5000, modifier: { evasionBonus: 0.7, atkMultiplier: 1.3 } };
         _applyBuff(caster, buff);
         ctx.emit('buffApplied', { buffId: 'shadowClone', casterId: caster.name, expiresAt: buff.expiresAt });
         return { ok: true, message: 'Shadow Clone: evasão +70% e ATK +30% por 5s.' };
@@ -367,19 +639,13 @@ const SKILL_EFFECTS = {
     deadlyPoison(caster, target, ctx) {
         if (!target) return { ok: false, reason: 'sem_alvo' };
         const tickDmg = Math.max(2, Math.floor((caster.baseStats.str + caster.baseStats.agi) * 0.15));
-        const debuff = {
-            id: 'deadly_poison',
-            expiresAt: ctx.now + 8000,
-            tickRate: 1000,
-            damagePerTick: tickDmg,
-            lastTick: ctx.now
-        };
+        const debuff = { id: 'deadly_poison', expiresAt: ctx.now + 8000, tickRate: 1000, damagePerTick: tickDmg, lastTick: ctx.now };
         _applyDebuff(target, debuff);
         ctx.emit('debuffApplied', { debuffId: 'deadly_poison', targetId: target.instanceId, expiresAt: debuff.expiresAt });
         return { ok: true, message: `Deadly Poison: ${tickDmg}/s por 8s.` };
     },
 
-    /** backstab: 350% se alvo provocado/lento, senão 180% */
+    /** backstab: 350% se alvo com slow/provoke; senão 180% */
     backstab(caster, target, ctx) {
         if (!target) return { ok: false, reason: 'sem_alvo' };
         const isVulnerable = Array.isArray(target._activeDebuffs) &&
@@ -388,194 +654,155 @@ const SKILL_EFFECTS = {
                 d.expiresAt > ctx.now
             );
         const multiplier = isVulnerable ? 3.5 : 1.8;
-        const dmg = Math.floor(
-            (caster.baseStats.str + caster.baseStats.agi * 1.5 + caster.level * 3) * multiplier
-        );
+        const dmg = Math.floor((caster.baseStats.str + caster.baseStats.agi * 1.5 + caster.level * 3) * multiplier);
         ctx.emit('skillDamage', { skillId: 'backstab', target, damage: dmg, isCritical: isVulnerable });
         _applyDamage(target, dmg, ctx);
         return {
             ok: true,
             message: isVulnerable
                 ? `Backstab VULNERÁVEL: ${dmg} de dano!`
-                : `Backstab causou ${dmg} de dano.`
+                : `Backstab causou ${dmg} de dano.`,
         };
+    },
+
+    // ── SHADOW ASSASSIN — ULTIMATES ───────────────────────────────────────────
+
+    /** soulReap: dano 400% + lifesteal 30% (emite buffApplied com healAmount) */
+    soulReap(caster, target, ctx) {
+        if (!target) return { ok: false, reason: 'sem_alvo' };
+        const dmg = Math.floor((caster.baseStats.str + caster.baseStats.agi * 1.5 + caster.level * 3) * 4.0);
+        ctx.emit('skillDamage', { skillId: 'soulReap', target, damage: dmg, isCritical: false });
+        _applyDamage(target, dmg, ctx);
+        const healAmt = Math.floor(dmg * 0.3);
+        ctx.emit('buffApplied', { buffId: 'lifesteal_heal', casterId: caster.name, healAmount: healAmt });
+        return { ok: true, message: `Soul Reap causou ${dmg} e recuperou ${healAmt} HP!` };
+    },
+
+    /** abyssPoison: DoT 50/s por 10s ignorando resistência */
+    abyssPoison(caster, target, ctx) {
+        if (!target) return { ok: false, reason: 'sem_alvo' };
+        const debuff = {
+            id: 'abyss_poison',
+            expiresAt: ctx.now + 10000,
+            tickRate: 1000,
+            damagePerTick: 50,
+            lastTick: ctx.now,
+            ignoreResist: true,
+        };
+        _applyDebuff(target, debuff);
+        ctx.emit('debuffApplied', { debuffId: 'abyss_poison', targetId: target.instanceId, expiresAt: debuff.expiresAt, ignoreResist: true });
+        return { ok: true, message: 'Abyss Poison: 50 dano/s por 10s (ignora resistência)!' };
+    },
+
+    /** voidStep: knockback 0.3s telegrafado + dano 500% crítico garantido */
+    voidStep(caster, target, ctx) {
+        if (!target) return { ok: false, reason: 'sem_alvo' };
+        ctx.emit('debuffApplied', { debuffId: 'knockback', targetId: target.instanceId, expiresAt: ctx.now + 300 });
+        const dmg = Math.floor((caster.baseStats.str + caster.baseStats.agi * 1.5 + caster.level * 3) * 5.0);
+        ctx.emit('skillDamage', { skillId: 'voidStep', target, damage: dmg, isCritical: true });
+        _applyDamage(target, dmg, ctx);
+        return { ok: true, message: `Void Step: teleporte + ${dmg} de dano crítico!` };
     },
 };
 
-// â”€â”€â”€ helpers internos de buff/debuff â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-/**
- * Aplica dano direto a uma entidade. Mexe em entity.hp e dispara unregister
- * + entityDied + monsterDied via combat.js quando hp â‰¤ 0.
- * @param {Object} entity - target com .hp, .maxHp, opcionalmente .id, .xp, .monsterId
- * @param {number} amount
- * @param {Object} ctx - { emit }
- */
-function _applyDamage(entity, amount, ctx) {
-    if (!entity || typeof entity.hp !== 'number') return;
-    entity.hp = Math.max(0, entity.hp - amount);
-    if (entity.hp <= 0 && entity.id) {
-        ctx.emit('entityDied', { entity });
-        ctx.emit('monsterDied', { id: entity.id, monsterId: entity.monsterId, xp: entity.xp });
-    }
-}
-/**
- * Aplica buff ao caster, substituindo se mesmo id jÃ¡ existir.
- * @param {Object} caster
- * @param {{ id:string, expiresAt:number, modifier:Object }} buff
- */
-function _applyBuff(caster, buff) {
-    if (!Array.isArray(caster._activeBuffs)) caster._activeBuffs = [];
-    caster._activeBuffs = caster._activeBuffs.filter(b => b.id !== buff.id);
-    caster._activeBuffs.push(buff);
-}
+// ─── EXPORTS PÚBLICOS ─────────────────────────────────────────────────────────
 
-/**
- * Aplica debuff ao target, substituindo se mesmo id jÃ¡ existir.
- * @param {Object} target
- * @param {{ id:string, expiresAt:number }} debuff
- */
-function _applyDebuff(target, debuff) {
-    if (!Array.isArray(target._activeDebuffs)) target._activeDebuffs = [];
-    target._activeDebuffs = target._activeDebuffs.filter(d => d.id !== debuff.id);
-    target._activeDebuffs.push(debuff);
-}
-
-/**
- * Inicializa o mÃ³dulo de classes.
- * @returns {void}
- */
+/** @returns {void} */
 export function init() {
-    // PROMPT 10: carregar ClassData do save e registrar listeners de levelUp
+    // Reservado para futuras inicializações assíncronas
 }
 
 /**
- * Retorna atributos base de um job em determinado nÃ­vel.
- * BÃ´nus linear: +1 em todos os stats a cada 10 nÃ­veis.
+ * Retorna atributos base de um job.
+ * Ragnarok-style: stats não escalam com level — player investe statPoints manualmente.
  * @param {string} job
- * @param {number} level
- * @returns {{ str:number, agi:number, vit:number, int:number, dex:number, luk:number }}
+ * @param {number} _level  (ignorado, mantido por compatibilidade de assinatura)
+ * @returns {{str,agi,vit,int,dex,luk}}
  */
 export function getBaseStats(job, _level) {
-    // Ragnarok-style: stats base não escalam com level.
-    // Player ganha statPoints por levelup e investe manualmente.
     const base = _baseStatsByJob[job] ?? _baseStatsByJob['swordman'];
-    return {
-        str: base.str,
-        agi: base.agi,
-        vit: base.vit,
-        int: base.int,
-        dex: base.dex,
-        luk: base.luk,
-    };
+    return { str: base.str, agi: base.agi, vit: base.vit, int: base.int, dex: base.dex, luk: base.luk };
 }
 
 /**
- * Retorna skills disponÃ­veis para um job.
- * @param {string} _job
- * @returns {Array}
- */
-/**
- * Retorna array de definiÃ§Ãµes completas das skills de um job.
- * LÃª os skillIds de JOBS_META[job].skills e mapeia em _skillDefs.
+ * Retorna array de skill definitions da cadeia completa de um job (base→evo1→evo2).
+ * Constrói a cadeia recursivamente sem duplicatas, preservando ordem hierárquica.
  * @param {string} job
  * @returns {Array<Object>}
  */
 export function getSkills(job) {
-    const meta = JOBS_META[job];
-    if (!meta || !Array.isArray(meta.skills)) return [];
-    return meta.skills.map(id => _skillDefs.find(s => s.id === id)).filter(Boolean);
+    const ids = _getSkillChain(job);
+    return ids.map(id => _skillDefs.find(s => s.id === id)).filter(Boolean);
 }
 
 /**
- * Verifica requisitos de job change.
- * @param {Object} _playerData
- * @returns {boolean}
+ * Monta cadeia de skillIds de um job percorrendo baseClass recursivamente.
+ * @param {string} job
+ * @returns {string[]}
  */
-export function canJobChange(player) {
-    const JOB_MAP = {
-        swordman: 'knight',
-        mage:     'wizard',
-        archer:   'hunter',
-        assassin: 'assassin_master'
-    };
-    const JOB_QUEST = {
-        swordman: 'quest_jobchange_knight',
-        mage:     'quest_jobchange_wizard',
-        archer:   'quest_jobchange_hunter',
-        assassin: 'quest_jobchange_assassin'
-    };
-    const targetJob = JOB_MAP[player.class] || null;
+function _getSkillChain(job) {
+    const meta = JOBS_META[job];
+    if (!meta) return [];
+    const parentIds = meta.baseClass ? _getSkillChain(meta.baseClass) : [];
+    const ownIds = Array.isArray(meta.skills) ? meta.skills : [];
+    const seen = new Set(parentIds);
+    const own = ownIds.filter(id => !seen.has(id));
+    return [...parentIds, ...own];
+}
+
+/**
+ * Verifica se o player pode mudar para um job específico.
+ * Aceita base→evo1 (lv30 + quest evo1) e evo1→evo2 (lv70 + quest épica).
+ * Assinatura legada canJobChange(player) sem targetJob mantida por compatibilidade.
+ * @param {Object} player      — player state (getState())
+ * @param {string} [targetJob] — job de destino; se omitido, deduz via legado base→evo1
+ * @returns {{ canChange:boolean, targetJob:string|null, reason:string }}
+ */
+export function canJobChange(player, targetJob) {
     if (!targetJob) {
-        return { canChange: false, targetJob: null, reason: 'classe_nao_elegivel' };
+        const LEGACY_MAP = {
+            swordman: 'knight', mage: 'wizard', archer: 'hunter', assassin: 'assassin_master',
+        };
+        targetJob = LEGACY_MAP[player.class] || null;
+        if (!targetJob) {
+            return { canChange: false, targetJob: null, reason: 'classe_nao_elegivel' };
+        }
     }
-    if (player.level < 30) {
+
+    const meta = JOBS_META[targetJob];
+    if (!meta) return { canChange: false, targetJob, reason: 'job_inexistente' };
+
+    if (meta.reqJob && player.class !== meta.reqJob) {
+        return { canChange: false, targetJob, reason: 'classe_incorreta' };
+    }
+
+    if (meta.reqLevel && player.level < meta.reqLevel) {
         return { canChange: false, targetJob, reason: 'nivel_insuficiente' };
     }
-    const requiredQuest = JOB_QUEST[player.class];
-    const completed = Array.isArray(player.jobChangeQuestsCompleted)
-        ? player.jobChangeQuestsCompleted
-        : [];
-    if (!completed.includes(requiredQuest)) {
-        return { canChange: false, targetJob, reason: 'quest_nao_completa' };
+
+    if (meta.reqQuest) {
+        const completed = Array.isArray(player.jobChangeQuestsCompleted)
+            ? player.jobChangeQuestsCompleted
+            : [];
+        if (!completed.includes(meta.reqQuest)) {
+            return { canChange: false, targetJob, reason: 'quest_nao_completa' };
+        }
     }
+
     return { canChange: true, targetJob, reason: 'ok' };
 }
 
 /**
- * Executa troca de job.
- * @param {Object} _playerData
- * @param {string} targetJob
- * @returns {void}
- */
-export function doJobChange(player, newJobId) {
-    const check = canJobChange(player);
-    if (!check.canChange) {
-        console.warn('[Classes] doJobChange bloqueado:', check.reason);
-        return false;
-    }
-    const meta = JOBS_META[newJobId];
-    if (!meta) {
-        console.warn('[Classes] doJobChange: JOBS_META não encontrado para', newJobId);
-        return false;
-    }
-    const oldClass = player.class;
-
-    player.class    = newJobId;
-    player.jobLevel = 1;
-    player.jobExp   = 0;
-    player.statPoints += 5;
-
-    if (meta.statBonus) {
-        Object.keys(meta.statBonus).forEach(stat => {
-            if (player.baseStats[stat] !== undefined) {
-                player.baseStats[stat] += meta.statBonus[stat];
-            }
-        });
-    }
-
-    player.hp = player.maxHp;
-    player.mp = player.maxMp;
-
-    if (!Array.isArray(player.jobHistory)) player.jobHistory = [];
-    player.jobHistory.push({ jobId: newJobId, changedAt: Date.now(), level: player.level });
-
-    emit('jobChanged', { oldClass, newClass: newJobId, player });
-    emit('levelUp', { newLevel: player.level });
-
-    return true;
-}
-/**
  * Recebe as skill definitions carregadas do skills.json.
- * Chamado por main.js apÃ³s fetch de assets/data/skills.json.
+ * Chamado por main.js após fetch de assets/data/skills.json.
  * @param {Array<Object>} defs
- * @returns {void}
  */
 export function setSkillDefs(defs) {
     _skillDefs = Array.isArray(defs) ? defs : [];
 }
 
 /**
- * Retorna a definiÃ§Ã£o serializada de uma skill pelo id.
+ * Retorna a definição serializada de uma skill pelo id.
  * @param {string} skillId
  * @returns {Object|undefined}
  */
@@ -584,7 +811,7 @@ export function getSkillDef(skillId) {
 }
 
 /**
- * Retorna todas as skill defs de uma classe pelo classId.
+ * Retorna todas as skill defs cujo classId === classId fornecido.
  * @param {string} classId
  * @returns {Array<Object>}
  */
@@ -595,8 +822,8 @@ export function getAllSkillsForClass(classId) {
 /**
  * Executa o effect de uma skill via SKILL_EFFECTS registry.
  * @param {string} skillId
- * @param {Object} caster - estado do player
- * @param {Object|null} target - entidade alvo ou null
+ * @param {Object} caster   — estado do player (Player.getState())
+ * @param {Object|null} target
  * @param {{ now:number, emit:Function, getEntities:Function }} ctx
  * @returns {{ ok:boolean, message?:string, reason?:string }}
  */
@@ -610,9 +837,11 @@ export function executeSkill(skillId, caster, target, ctx) {
         return { ok: false, reason: 'erro_interno' };
     }
 }
+
 /**
- * Retorna metadata pública de um job (skills, allowedWeapons, statBonus, baseClass).
- * Usado por Player.applyJobChange pra ler statBonus sem expor o objeto interno.
+ * Retorna metadata pública de um job.
+ * Inclui: skills[], allowedWeapons, jobModHP/MP, statBonus, baseClass,
+ *         reqLevel, reqJob, reqQuest, title.
  * @param {string} jobId
  * @returns {Object|null}
  */
