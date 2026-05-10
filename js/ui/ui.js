@@ -10,6 +10,10 @@ import { getCamera, getRenderer } from '../world/scene.js';
 import * as Audio  from '../core/audio.js';
 import * as Inventory from '../systems/inventory.js';
 import * as Quests from '../systems/quests.js';
+import * as Combat from '../systems/combat.js';
+import * as Player from '../entities/player.js';
+import * as Classes from '../systems/classes.js';
+import * as Monsters from '../entities/monsters.js';
 // ─── Referências DOM ──────────────────────────────────────────────────────────
 
 let _elHP        = null;
@@ -53,6 +57,14 @@ const _npcIndicators = new Map();
 // elementos DOM (criados em _buildDialogWindow / _buildHintElement)
 let _dialogEl       = null;
 let _hintEl         = null;
+// ── Estado de skills/hotbar (PROMPT 10) ──────────────────────────────────
+let _skillWindowOpen   = false;
+let _hotbarEl          = null;
+let _hotbarSlotEls     = [];   // cache de refs DOM dos 4 slots (perf)
+let _skillWindowEl     = null;
+let _classModalEl      = null;
+let _classModalCb      = null;
+let _selectedSkillId   = null; // skill clicada na lista, esperando slot
 // ─── Helpers privados ─────────────────────────────────────────────────────────
 
 /**
@@ -354,7 +366,7 @@ export function init() {
     Events.on('keyPressed', ({ code, action }) => {
         if (code === 'Escape' && _dialogOpen) _closeDialog();
         if (code === 'Escape' && _questLogOpen && !_dialogOpen) toggleQuestLog();
-
+        if (code === 'Escape' && _skillWindowOpen && !_dialogOpen) toggleSkillWindow();
         if (action === 'questLog') {
             if (!_dialogOpen) toggleQuestLog();
         }
@@ -383,10 +395,36 @@ export function init() {
 
     Events.on('questCompletable', ({ quest }) =>
         showQuestNotification(`${quest.name}: fale com o NPC!`, 'quest-completable'));
-
-    Events.on('questCompleted', ({ quest }) =>
+Events.on('questCompleted', ({ quest }) =>
         showQuestNotification(`Quest completa: ${quest.name}`, 'quest-completed'));
+
+    // ── PROMPT 10: Hotbar, Janela K, hotkeys de skill ─────────────────────
+    _injectSkillStyles();
+    _buildHotbar();
+    _buildSkillWindow();
+
+    Events.on('keyPressed', ({ action }) => {
+        if (_dialogOpen) return;
+
+        if (action === 'skillWindow') {
+            toggleSkillWindow();
+            return;
+        }
+
+        const slotMap = { skill1: 0, skill2: 1, skill3: 2, skill4: 3 };
+        if (action in slotMap) {
+            _triggerSkillSlot(slotMap[action]);
+        }
+    });
+
+    // Atualiza hotbar ao spawn (modal de classe popula equippedSkills antes do spawn)
+    Events.on('playerSpawned', () => updateHotbar());
+
+    // ── Barras de HP de monstros ──────────────────────────────────────────
+    Events.on('monsterSpawned', ({ id }) => _createMonsterHpBar(id));
+    Events.on('monsterDied',    ({ id }) => _removeMonsterHpBar(id));
 }
+
 // ─── construção DOM (diálogo) ────────────────────────────────────────────────
 
 function _buildDialogWindow() {
@@ -506,6 +544,9 @@ function _evaluateDialogCondition(condition) {
     }
     if (type === 'questCompleted') {
         return Quests.isCompleted(questId);
+    }
+    if (type === 'playerClassIs') {
+        return Player.getState()?.class === condition.value;
     }
 
     return true;
@@ -1072,4 +1113,478 @@ function showDamagePopup(worldPosition, amount, isCritical) {
   root.appendChild(div);
 
   div.addEventListener('animationend', () => div.remove(), { once: true });
+}
+// ═══════════════════════════════════════════════════════════════════════════
+// PROMPT 10 — Hotbar, Janela de Skills, Modal de Classe
+// ═══════════════════════════════════════════════════════════════════════════
+
+const _CLASS_COLORS = {
+    swordman: '#e07a3a',
+    mage:     '#6a9fe8',
+    archer:   '#6db56d',
+    assassin: '#b06ab3',
+};
+
+const _CLASS_DATA = [
+    { id: 'swordman', name: 'Swordman', desc: 'Guerreiro resistente, mestre de espadas e lanças.', skills: ['Bash', 'Endure', 'Provoke'] },
+    { id: 'mage',     name: 'Mage',     desc: 'Conjurador de feitiços elementais devastadores.',   skills: ['Fire Ball', 'Ice Bolt', 'Lightning'] },
+    { id: 'archer',   name: 'Archer',   desc: 'Atirador preciso com grande alcance de combate.',   skills: ['Double Strike', 'Explosive Shot', 'Slow Shot'] },
+    { id: 'assassin', name: 'Assassin', desc: 'Especialista em golpes furtivos e venenos.',        skills: ['Stealth Strike', 'Poison', 'Evasion'] },
+];
+
+/**
+ * Constrói o HTML da hotbar (4 slots) e injeta no body.
+ * Cacheia refs em _hotbarSlotEls (perf — evita querySelectorAll a 60fps).
+ */
+function _buildHotbar() {
+    if (_hotbarEl) return;
+    _hotbarEl = document.createElement('div');
+    _hotbarEl.id = 'hotbar';
+    for (let i = 0; i < 4; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'hotbar-slot empty';
+        slot.dataset.slot = String(i);
+        slot.innerHTML = `
+            <span class="hb-key">${i + 1}</span>
+            <span class="hb-mpcost"></span>
+            <div class="hb-icon"></div>
+            <div class="hb-cooldown-overlay"></div>
+        `;
+        _hotbarEl.appendChild(slot);
+        _hotbarSlotEls.push(slot);
+    }
+    document.body.appendChild(_hotbarEl);
+}
+
+/**
+ * Constrói a janela de skills (tecla K). display:none até toggleSkillWindow().
+ */
+function _buildSkillWindow() {
+    if (_skillWindowEl) return;
+    _skillWindowEl = document.createElement('div');
+    _skillWindowEl.id = 'skill-window';
+    _skillWindowEl.style.display = 'none';
+    _skillWindowEl.innerHTML = `
+        <div class="sw-header"><span>Skills</span><button class="sw-close" aria-label="Fechar">✕</button></div>
+        <div class="sw-hotbar-slots">
+            <div class="sw-slot" data-slot="0"><span class="sw-slot-label">1</span><span class="sw-slot-name">—</span><button class="sw-clear" data-slot="0">✕</button></div>
+            <div class="sw-slot" data-slot="1"><span class="sw-slot-label">2</span><span class="sw-slot-name">—</span><button class="sw-clear" data-slot="1">✕</button></div>
+            <div class="sw-slot" data-slot="2"><span class="sw-slot-label">3</span><span class="sw-slot-name">—</span><button class="sw-clear" data-slot="2">✕</button></div>
+            <div class="sw-slot" data-slot="3"><span class="sw-slot-label">4</span><span class="sw-slot-name">—</span><button class="sw-clear" data-slot="3">✕</button></div>
+        </div>
+        <div class="sw-skill-list" id="sw-skill-list"></div>
+    `;
+    document.body.appendChild(_skillWindowEl);
+
+    _skillWindowEl.querySelector('.sw-close').addEventListener('click', () => toggleSkillWindow());
+
+    _skillWindowEl.querySelectorAll('.sw-clear').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const slot = parseInt(e.currentTarget.dataset.slot, 10);
+            _clearSkillSlot(slot);
+        });
+    });
+
+    _skillWindowEl.querySelectorAll('.sw-slot').forEach(slotEl => {
+        slotEl.addEventListener('click', () => {
+            if (!_selectedSkillId) return;
+            const slot = parseInt(slotEl.dataset.slot, 10);
+            const state = Player.getState();
+            if (!state) return;
+            state.equippedSkills[slot] = _selectedSkillId;
+            _selectedSkillId = null;
+            _skillWindowEl.querySelectorAll('.sw-skill-item').forEach(el => el.classList.remove('selecting'));
+            updateHotbar();
+            _renderSkillWindowSlots(state);
+        });
+    });
+}
+
+/**
+ * Injeta o CSS da hotbar, janela K e modal de classe (uma única vez).
+ */
+function _injectSkillStyles() {
+    if (document.getElementById('lumie-skill-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'lumie-skill-styles';
+    style.textContent = `
+        #hotbar { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 100; }
+        .hotbar-slot { position: relative; width: 60px; height: 60px; background: rgba(10,10,10,0.72); border: 2px solid rgba(255,255,255,0.18); border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; box-sizing: border-box; }
+        .hotbar-slot.empty { border-style: dashed; border-color: rgba(255,255,255,0.10); }
+        .hb-key { position: absolute; bottom: 3px; right: 5px; font-size: 10px; color: rgba(255,255,255,0.55); pointer-events: none; z-index: 2; }
+        .hb-mpcost { position: absolute; top: 3px; left: 4px; font-size: 9px; color: #7ec8e3; pointer-events: none; z-index: 2; }
+        .hb-icon { width: 40px; height: 40px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: bold; color: #fff; pointer-events: none; }
+        .hb-cooldown-overlay { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: rgba(0,0,0,0.62); pointer-events: none; z-index: 3; transition: height 0.05s linear; }
+
+        #skill-window { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 320px; max-height: 480px; background: rgba(15,15,20,0.96); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; z-index: 200; display: flex; flex-direction: column; overflow: hidden; }
+        .sw-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.10); font-size: 13px; font-weight: bold; color: #e0e0e0; }
+        .sw-close { background: none; border: none; color: #aaa; cursor: pointer; font-size: 14px; padding: 2px 6px; }
+        .sw-close:hover { color: #fff; }
+        .sw-hotbar-slots { display: flex; gap: 6px; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .sw-slot { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 5px; padding: 5px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; }
+        .sw-slot-label { font-size: 9px; color: rgba(255,255,255,0.4); }
+        .sw-slot-name { font-size: 10px; color: #e0e0e0; text-align: center; word-break: break-word; }
+        .sw-clear { background: none; border: none; color: rgba(255,100,100,0.6); cursor: pointer; font-size: 9px; padding: 0; line-height: 1; }
+        .sw-clear:hover { color: #ff6464; }
+        .sw-skill-list { overflow-y: auto; flex: 1; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+        .sw-skill-item { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09); border-radius: 5px; padding: 8px 10px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; transition: background 0.15s; }
+        .sw-skill-item:hover { background: rgba(255,255,255,0.10); }
+        .sw-skill-item.selecting { border-color: #7ec8e3; background: rgba(126,200,227,0.10); }
+        .sw-skill-name { font-size: 12px; font-weight: bold; color: #e8e8e8; }
+        .sw-skill-desc { font-size: 10px; color: #999; line-height: 1.3; }
+        .sw-skill-meta { font-size: 10px; color: #7ec8e3; margin-top: 1px; }
+
+        #class-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 500; display: flex; align-items: center; justify-content: center; }
+        #class-modal { background: rgba(15,15,22,0.98); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 36px 32px 32px; width: min(95vw, 980px); max-height: 92vh; overflow-y: auto; }
+        #class-modal h2 { text-align: center; color: #e8e8e8; margin-bottom: 28px; font-size: 26px; letter-spacing: 1px; }
+        .class-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+        .class-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 24px 20px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: background 0.18s, border-color 0.18s; }
+        .class-card:hover { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.28); }
+        .class-card-name { font-size: 20px; font-weight: bold; color: #e8e8e8; text-align: center; margin-bottom: 4px; }
+        .class-card-desc { font-size: 13px; color: #b8b8b8; text-align: center; line-height: 1.5; }
+        .class-card-skills { font-size: 13px; color: #7ec8e3; line-height: 1.7; margin-top: 8px; text-align: center; }
+        .class-card-btn { margin-top: 14px; padding: 12px 0; background: rgba(126,200,227,0.15); border: 1px solid rgba(126,200,227,0.35); border-radius: 6px; color: #7ec8e3; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s; width: 100%; }
+        .class-card-btn:hover { background: rgba(126,200,227,0.30); }
+    `;
+    document.head.appendChild(style);
+}
+
+/**
+ * Dispara skill do slot N. Resolve alvo via Combat.findNearestTarget se a skill
+ * exigir alvo, e chama Combat.castSkill.
+ * Bloqueado se _dialogOpen.
+ * @param {number} slotIndex - 0 a 3
+ */
+function _triggerSkillSlot(slotIndex) {
+    if (_dialogOpen) return;
+    const state = Player.getState();
+    if (!state || !Array.isArray(state.equippedSkills)) return;
+    const skillId = state.equippedSkills[slotIndex];
+    if (!skillId) return;
+
+    const def = Classes.getSkillDef(skillId);
+    if (!def) return;
+
+    let target = null;
+    if (def.targetType === 'enemy' || def.targetType === 'aoe') {
+        target = Combat.findNearestTarget(state.position, def.range);
+    }
+
+    const result = Combat.castSkill(state, skillId, target);
+    if (!result.ok) {
+        showNotification(_skillFailMessage(result.reason), 'warning');
+    }
+}
+
+/**
+ * Mensagem amigável para falha de cast.
+ * @param {string} reason
+ * @returns {string}
+ */
+function _skillFailMessage(reason) {
+    switch (reason) {
+        case 'sem_alvo':           return 'Sem alvo no alcance.';
+        case 'fora_de_alcance':    return 'Alvo fora de alcance.';
+        case 'mp_insuficiente':    return 'MP insuficiente.';
+        case 'em_cooldown':        return 'Skill em recarga.';
+        case 'skill_nao_aprendida':return 'Skill não aprendida.';
+        case 'classe_incorreta':   return 'Skill de outra classe.';
+        default:                   return 'Não foi possível usar a skill.';
+    }
+}
+
+/**
+ * Limpa o skill de um slot da hotbar.
+ * @param {number} slotIndex - 0 a 3
+ */
+function _clearSkillSlot(slotIndex) {
+    const state = Player.getState();
+    if (!state) return;
+    state.equippedSkills[slotIndex] = null;
+    updateHotbar();
+    _renderSkillWindowSlots(state);
+}
+
+/**
+ * Renderiza a lista de skills aprendidas na janela K.
+ * @param {Object} state - Player.getState()
+ */
+function _renderSkillWindowList(state) {
+    const list = document.getElementById('sw-skill-list');
+    if (!list) return;
+    list.innerHTML = '';
+    _selectedSkillId = null;
+
+    if (!Array.isArray(state.learnedSkills) || state.learnedSkills.length === 0) {
+        list.innerHTML = '<p style="color:#666;font-size:11px;text-align:center;padding:16px">Nenhuma skill aprendida.</p>';
+        return;
+    }
+
+    state.learnedSkills.forEach(skillId => {
+        const def = Classes.getSkillDef(skillId);
+        if (!def) return;
+
+        const item = document.createElement('div');
+        item.className = 'sw-skill-item';
+        item.dataset.skillId = skillId;
+        item.innerHTML = `
+            <span class="sw-skill-name">${def.name}</span>
+            <span class="sw-skill-desc">${def.description}</span>
+            <span class="sw-skill-meta">MP: ${def.mpCost} · CD: ${def.cooldown}s · Alcance: ${def.range}u</span>
+        `;
+        item.addEventListener('click', () => {
+            _skillWindowEl.querySelectorAll('.sw-skill-item').forEach(el => el.classList.remove('selecting'));
+            if (_selectedSkillId === skillId) {
+                _selectedSkillId = null;
+                return;
+            }
+            _selectedSkillId = skillId;
+            item.classList.add('selecting');
+        });
+        list.appendChild(item);
+    });
+}
+
+/**
+ * Renderiza nomes nos slots do topo da janela K.
+ * @param {Object} state
+ */
+function _renderSkillWindowSlots(state) {
+    if (!_skillWindowEl) return;
+    _skillWindowEl.querySelectorAll('.sw-slot').forEach(slotEl => {
+        const slot = parseInt(slotEl.dataset.slot, 10);
+        const skillId = state.equippedSkills[slot];
+        const nameEl = slotEl.querySelector('.sw-slot-name');
+        if (nameEl) {
+            const def = skillId ? Classes.getSkillDef(skillId) : null;
+            nameEl.textContent = def ? def.name : '—';
+        }
+    });
+}
+
+/**
+ * Atualiza visualmente os 4 slots da hotbar com base em state.equippedSkills.
+ */
+export function updateHotbar() {
+    const state = Player.getState();
+    _hotbarSlotEls.forEach((slot, i) => {
+        const skillId = state ? state.equippedSkills[i] : null;
+        const def = skillId ? Classes.getSkillDef(skillId) : null;
+        const iconEl = slot.querySelector('.hb-icon');
+        const costEl = slot.querySelector('.hb-mpcost');
+
+        if (def && state) {
+            const color = _CLASS_COLORS[state.class] || '#888';
+            iconEl.style.background = color;
+            iconEl.textContent = def.name.charAt(0);
+            costEl.textContent = def.mpCost;
+            slot.classList.remove('empty');
+        } else {
+            iconEl.style.background = 'transparent';
+            iconEl.textContent = '';
+            costEl.textContent = '';
+            slot.classList.add('empty');
+        }
+    });
+}
+
+/**
+ * Atualiza overlay de cooldown em cada slot. Chamado no game loop.
+ * Usa cache _hotbarSlotEls (sem querySelectorAll por frame).
+ * @param {number} _delta
+ */
+export function updateCooldownVisuals(_delta) {
+    const state = Player.getState();
+    if (!state || !state.cooldowns) {
+        _hotbarSlotEls.forEach(slot => {
+            const ov = slot.querySelector('.hb-cooldown-overlay');
+            if (ov) ov.style.height = '0%';
+        });
+        return;
+    }
+    const now = performance.now();
+    _hotbarSlotEls.forEach((slot, i) => {
+        const skillId = state.equippedSkills[i];
+        const overlay = slot.querySelector('.hb-cooldown-overlay');
+        if (!overlay) return;
+        if (!skillId) { overlay.style.height = '0%'; return; }
+
+        const def = Classes.getSkillDef(skillId);
+        const cdEnd = state.cooldowns[skillId];
+        if (!cdEnd || !def || now >= cdEnd) {
+            overlay.style.height = '0%';
+            return;
+        }
+        const total = def.cooldown * 1000;
+        const remaining = cdEnd - now;
+        const pct = Math.min(100, (remaining / total) * 100);
+        overlay.style.height = pct.toFixed(1) + '%';
+    });
+}
+
+/**
+ * Abre/fecha a janela de skills (tecla K). Bloqueada durante diálogo.
+ */
+export function toggleSkillWindow() {
+    if (_dialogOpen) return;
+    if (!_skillWindowEl) return;
+    _skillWindowOpen = !_skillWindowOpen;
+
+    if (_skillWindowOpen) {
+        _skillWindowEl.style.display = 'flex';
+        const state = Player.getState();
+        if (state) {
+            _renderSkillWindowList(state);
+            _renderSkillWindowSlots(state);
+        }
+        Events.emit('uiWindowOpened', { windowId: 'skillWindow' });
+    } else {
+        _skillWindowEl.style.display = 'none';
+        _selectedSkillId = null;
+        Events.emit('uiWindowClosed', { windowId: 'skillWindow' });
+    }
+}
+
+/**
+ * @returns {boolean}
+ */
+export function isSkillWindowOpen() {
+    return _skillWindowOpen;
+}
+
+/**
+ * Exibe modal de escolha de classe. Não fecha por ESC.
+ * @param {(classId: string) => void} onChosen - callback ao escolher
+ */
+export function showClassSelectionModal(onChosen) {
+    if (_classModalEl) return;
+    _classModalCb = onChosen;
+
+    _classModalEl = document.createElement('div');
+    _classModalEl.id = 'class-modal-overlay';
+
+    const modal = document.createElement('div');
+    modal.id = 'class-modal';
+    modal.innerHTML = `<h2>Escolha sua Classe</h2><div class="class-cards"></div>`;
+
+    const cardsEl = modal.querySelector('.class-cards');
+    _CLASS_DATA.forEach(cls => {
+        const card = document.createElement('div');
+        card.className = 'class-card';
+        card.innerHTML = `
+            <div class="class-card-name">${cls.name}</div>
+            <div class="class-card-desc">${cls.desc}</div>
+            <div class="class-card-skills">${cls.skills.join('<br>')}</div>
+            <button class="class-card-btn">Escolher</button>
+        `;
+        card.querySelector('.class-card-btn').addEventListener('click', () => {
+            const cb = _classModalCb;
+            _classModalEl.remove();
+            _classModalEl = null;
+            _classModalCb = null;
+            if (cb) cb(cls.id);
+        });
+        cardsEl.appendChild(card);
+    });
+
+    _classModalEl.appendChild(modal);
+    document.body.appendChild(_classModalEl);
+}
+// ═══════════════════════════════════════════════════════════════════════════
+// Barras de HP de monstros (HUD flutuante 3D)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** @type {Map<string, HTMLDivElement>} */
+const _monsterHpBars = new Map();
+
+/**
+ * Cria barra de HP flutuante para um monstro.
+ * Chamada via listener de monsterSpawned.
+ * @param {string} monsterId - id (uid) do monstro
+ */
+function _createMonsterHpBar(monsterId) {
+    if (_monsterHpBars.has(monsterId)) return;
+
+    const el = document.createElement('div');
+    el.className = 'monster-hpbar';
+    el.style.cssText = `
+        position: fixed;
+        width: 60px;
+        height: 6px;
+        background: rgba(0,0,0,0.7);
+        border: 1px solid rgba(0,0,0,0.85);
+        border-radius: 2px;
+        pointer-events: none;
+        z-index: 90;
+        transform: translate(-50%, -100%);
+        overflow: hidden;
+        display: none;
+    `;
+    const fill = document.createElement('div');
+    fill.className = 'monster-hpbar-fill';
+    fill.style.cssText = `
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to bottom, #ff5050, #c83232);
+        transition: width 0.15s linear;
+    `;
+    el.appendChild(fill);
+    document.body.appendChild(el);
+    _monsterHpBars.set(monsterId, el);
+}
+
+/**
+ * Remove barra de HP de monstro morto.
+ * @param {string} monsterId
+ */
+function _removeMonsterHpBar(monsterId) {
+    const el = _monsterHpBars.get(monsterId);
+    if (el) {
+        el.remove();
+        _monsterHpBars.delete(monsterId);
+    }
+}
+
+/**
+ * Atualiza posição e largura de todas as barras de HP de monstros.
+ * Chamada no game loop por main.js (ou pelo update interno da ui.js).
+ */
+export function updateMonsterHpBars() {
+    if (_monsterHpBars.size === 0) return;
+    const camera   = getCamera();
+    const renderer = getRenderer();
+    if (!camera || !renderer) return;
+    const canvas = renderer.domElement;
+
+    _monsterHpBars.forEach((el, monsterId) => {
+        const monster = Monsters.getById(monsterId);
+        if (!monster || !monster.mesh || monster.hp <= 0) {
+            el.style.display = 'none';
+            return;
+        }
+
+        const pos3D = new THREE.Vector3();
+        monster.mesh.getWorldPosition(pos3D);
+        pos3D.y += 1.2; // acima da cabeça do monstro
+        pos3D.project(camera);
+
+        if (pos3D.z > 1) {
+            el.style.display = 'none';
+            return;
+        }
+
+        const screenX = (pos3D.x *  0.5 + 0.5) * canvas.clientWidth;
+        const screenY = (pos3D.y * -0.5 + 0.5) * canvas.clientHeight;
+
+        el.style.display = 'block';
+        el.style.left = `${screenX}px`;
+        el.style.top  = `${screenY}px`;
+
+        const fill = el.firstChild;
+        if (fill) {
+            const pct = Math.max(0, Math.min(100, (monster.hp / monster.maxHp) * 100));
+            fill.style.width = pct.toFixed(1) + '%';
+        }
+    });
 }

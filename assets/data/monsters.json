@@ -14,7 +14,9 @@
       "modelPlaceholder": "#44cc44",
       "drops": [
         { "itemId": "pocao-pequena", "chance": 0.30 },
-        { "itemId": "ouro", "chance": 0.80, "qty": { "min": 1, "max": 5 } }
+        { "itemId": "ouro", "chance": 0.80, "qty": { "min": 1, "max": 5 } },
+        { "itemId": "cristal-arcano", "chance": 0.05 },
+        { "itemId": "veneno-raro", "chance": 0.05 }
       ],
       "soundProfile": {}
     },
@@ -33,7 +35,9 @@
       "drops": [
         { "itemId": "pocao-pequena", "chance": 0.20 },
         { "itemId": "adaga-iniciante", "chance": 0.05 },
-        { "itemId": "ouro", "chance": 0.90, "qty": { "min": 3, "max": 10 } }
+        { "itemId": "ouro", "chance": 0.90, "qty": { "min": 3, "max": 10 } },
+        { "itemId": "cristal-arcano", "chance": 0.05 },
+        { "itemId": "veneno-raro", "chance": 0.05 }
       ],
       "soundProfile": {}
     },
@@ -145,6 +149,40 @@
         { "itemId": "espada-iniciante", "chance": 0.25 },
         { "itemId": "machado-iniciante", "chance": 0.25 },
         { "itemId": "ouro", "chance": 1.00, "qty": { "min": 50, "max": 100 } }
+      ],
+      "soundProfile": {}
+    },
+    {
+      "id": "orc_warrior",
+      "name": "Orc Warrior",
+      "hp": 250,
+      "str": 25,
+      "def": 10,
+      "agi": 5,
+      "xp": 200,
+      "aggroRange": 6,
+      "attackRange": 1.5,
+      "speed": 2.5,
+      "modelPlaceholder": "#5a8a3c",
+      "drops": [
+        { "itemId": "ouro", "chance": 1.0, "qty": { "min": 50, "max": 100 } }
+      ],
+      "soundProfile": {}
+    },
+    {
+      "id": "assassin_shadow",
+      "name": "Assassino das Sombras",
+      "hp": 200,
+      "str": 35,
+      "def": 5,
+      "agi": 12,
+      "xp": 200,
+      "aggroRange": 7,
+      "attackRange": 1.3,
+      "speed": 4.0,
+      "modelPlaceholder": "#2a1a3a",
+      "drops": [
+        { "itemId": "ouro", "chance": 1.0, "qty": { "min": 50, "max": 100 } }
       ],
       "soundProfile": {}
     }

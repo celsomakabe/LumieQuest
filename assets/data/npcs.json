@@ -213,6 +213,266 @@
           }
         }
       }
+    },
+    {
+      "id": "mestre_knight",
+      "name": "Mestre Cavaleiro",
+      "position": { "x": 10, "y": 0, "z": 5 },
+      "modelPlaceholder": { "type": "capsule", "color": "#888888" },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "Saudações, guerreiro. Tenho uma missão para os dignos.",
+            "options": [
+              {
+                "text": "Continue treinando, Cavaleiro.",
+                "next": "already_knight",
+                "condition": { "type": "playerClassIs", "value": "knight" }
+              },
+              {
+                "text": "Aceitar Prova do Cavaleiro",
+                "next": "aceitar_prova",
+                "condition": { "type": "questNotStarted", "questId": "quest_jobchange_knight" },
+                "action":    { "type": "offerQuest",      "questId": "quest_jobchange_knight" }
+              },
+              {
+                "text": "Continuo na prova.",
+                "next": "em_andamento",
+                "condition": { "type": "questActive", "questId": "quest_jobchange_knight" }
+              },
+              {
+                "text": "Completei a Prova do Cavaleiro!",
+                "next": "completar_prova",
+                "condition": { "type": "questCompletable", "questId": "quest_jobchange_knight" },
+                "action":    { "type": "completeQuest",    "questId": "quest_jobchange_knight" }
+              },
+              {
+                "text": "Estou pronto para me tornar Knight!",
+                "next": "confirmar_jobchange",
+                "condition": { "type": "questCompleted", "questId": "quest_jobchange_knight" },
+                "action":    { "type": "doJobChange",     "jobId": "knight" }
+              },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "already_knight": {
+            "text": "Continue treinando, Cavaleiro.",
+            "options": [{ "text": "Adeus.", "next": "end" }]
+          },
+          "aceitar_prova": {
+            "text": "Derrote o Orc Warrior nas ruínas e prove sua força. Volte quando terminar.",
+            "options": [{ "text": "Pode contar comigo.", "next": "end" }]
+          },
+          "em_andamento": {
+            "text": "Termine a prova antes de continuar.",
+            "options": [{ "text": "Voltarei.", "next": "end" }]
+          },
+          "completar_prova": {
+            "text": "Você superou a prova. Está pronto para o juramento.",
+            "options": [{ "text": "Estou pronto.", "next": "end" }]
+          },
+          "confirmar_jobchange": {
+            "text": "Que a força guie sua lâmina. Você agora é um Knight!",
+            "options": [{ "text": "Obrigado, Mestre.", "next": "end" }]
+          }
+        }
+      }
+    },
+    {
+      "id": "mestre_wizard",
+      "name": "Mestre Arcano",
+      "position": { "x": -10, "y": 0, "z": 5 },
+      "modelPlaceholder": { "type": "capsule", "color": "#4444ff" },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "A magia exige dedicação e sabedoria. Prove que você é digno.",
+            "options": [
+              {
+                "text": "Continue aprimorando sua magia, Wizard.",
+                "next": "already_wizard",
+                "condition": { "type": "playerClassIs", "value": "wizard" }
+              },
+              {
+                "text": "Aceitar o desafio da Sabedoria Arcana",
+                "next": "aceitar_prova",
+                "condition": { "type": "questNotStarted", "questId": "quest_jobchange_wizard" },
+                "action":    { "type": "offerQuest",      "questId": "quest_jobchange_wizard" }
+              },
+              {
+                "text": "Ainda estou coletando os cristais.",
+                "next": "em_andamento",
+                "condition": { "type": "questActive", "questId": "quest_jobchange_wizard" }
+              },
+              {
+                "text": "Coletei os 3 Cristais Arcanos!",
+                "next": "completar_prova",
+                "condition": { "type": "questCompletable", "questId": "quest_jobchange_wizard" },
+                "action":    { "type": "completeQuest",    "questId": "quest_jobchange_wizard" }
+              },
+              {
+                "text": "Estou pronto para me tornar Wizard!",
+                "next": "confirmar_jobchange",
+                "condition": { "type": "questCompleted", "questId": "quest_jobchange_wizard" },
+                "action":    { "type": "doJobChange",     "jobId": "wizard" }
+              },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "already_wizard": {
+            "text": "Continue aprimorando sua magia, Wizard.",
+            "options": [{ "text": "Adeus.", "next": "end" }]
+          },
+          "aceitar_prova": {
+            "text": "Colete 3 Cristais Arcanos dos slimes elementais. A magia os atrai.",
+            "options": [{ "text": "Entendido.", "next": "end" }]
+          },
+          "em_andamento": {
+            "text": "Reúna os cristais antes de retornar.",
+            "options": [{ "text": "Voltarei.", "next": "end" }]
+          },
+          "completar_prova": {
+            "text": "Os cristais vibram com poder. Sua dedicação foi comprovada.",
+            "options": [{ "text": "Estou pronto.", "next": "end" }]
+          },
+          "confirmar_jobchange": {
+            "text": "Que os arcanos guiem seus feitiços. Você agora é um Wizard!",
+            "options": [{ "text": "Obrigado, Mestre.", "next": "end" }]
+          }
+        }
+      }
+    },
+    {
+      "id": "mestre_hunter",
+      "name": "Mestre Caçador",
+      "position": { "x": 10, "y": 0, "z": -5 },
+      "modelPlaceholder": { "type": "capsule", "color": "#44aa22" },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "A floresta é implacável. Apenas os precisos sobrevivem.",
+            "options": [
+              {
+                "text": "Continue aprimorando sua mira, Hunter.",
+                "next": "already_hunter",
+                "condition": { "type": "playerClassIs", "value": "hunter" }
+              },
+              {
+                "text": "Aceitar a Caçada da Floresta",
+                "next": "aceitar_prova",
+                "condition": { "type": "questNotStarted", "questId": "quest_jobchange_hunter" },
+                "action":    { "type": "offerQuest",      "questId": "quest_jobchange_hunter" }
+              },
+              {
+                "text": "Ainda estou caçando.",
+                "next": "em_andamento",
+                "condition": { "type": "questActive", "questId": "quest_jobchange_hunter" }
+              },
+              {
+                "text": "Eliminei os 20 monstros!",
+                "next": "completar_prova",
+                "condition": { "type": "questCompletable", "questId": "quest_jobchange_hunter" },
+                "action":    { "type": "completeQuest",    "questId": "quest_jobchange_hunter" }
+              },
+              {
+                "text": "Estou pronto para me tornar Hunter!",
+                "next": "confirmar_jobchange",
+                "condition": { "type": "questCompleted", "questId": "quest_jobchange_hunter" },
+                "action":    { "type": "doJobChange",     "jobId": "hunter" }
+              },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "already_hunter": {
+            "text": "Continue aprimorando sua mira, Hunter.",
+            "options": [{ "text": "Adeus.", "next": "end" }]
+          },
+          "aceitar_prova": {
+            "text": "Elimine 20 monstros onde quiser. Quantidade revela disciplina.",
+            "options": [{ "text": "Aceito o desafio.", "next": "end" }]
+          },
+          "em_andamento": {
+            "text": "Continue caçando. Ainda não é suficiente.",
+            "options": [{ "text": "Voltarei.", "next": "end" }]
+          },
+          "completar_prova": {
+            "text": "Impressionante. Sua precisão e resistência foram comprovadas.",
+            "options": [{ "text": "Estou pronto.", "next": "end" }]
+          },
+          "confirmar_jobchange": {
+            "text": "Que seu arco nunca falhe. Você agora é um Hunter!",
+            "options": [{ "text": "Obrigado, Mestre.", "next": "end" }]
+          }
+        }
+      }
+    },
+    {
+      "id": "mestre_assassin",
+      "name": "Mestre das Sombras",
+      "position": { "x": -10, "y": 0, "z": -5 },
+      "modelPlaceholder": { "type": "capsule", "color": "#222222" },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "As sombras falam de você. Ainda não sei se merecem.",
+            "options": [
+              {
+                "text": "Continue nas sombras, Mestre.",
+                "next": "already_assassin_master",
+                "condition": { "type": "playerClassIs", "value": "assassin_master" }
+              },
+              {
+                "text": "Aceitar as Sombras Mortais",
+                "next": "aceitar_prova",
+                "condition": { "type": "questNotStarted", "questId": "quest_jobchange_assassin" },
+                "action":    { "type": "offerQuest",      "questId": "quest_jobchange_assassin" }
+              },
+              {
+                "text": "Ainda estou completando a missão.",
+                "next": "em_andamento",
+                "condition": { "type": "questActive", "questId": "quest_jobchange_assassin" }
+              },
+              {
+                "text": "Trouxe os venenos e eliminei o alvo.",
+                "next": "completar_prova",
+                "condition": { "type": "questCompletable", "questId": "quest_jobchange_assassin" },
+                "action":    { "type": "completeQuest",    "questId": "quest_jobchange_assassin" }
+              },
+              {
+                "text": "Estou pronto para me tornar Assassin Master!",
+                "next": "confirmar_jobchange",
+                "condition": { "type": "questCompleted", "questId": "quest_jobchange_assassin" },
+                "action":    { "type": "doJobChange",     "jobId": "assassin_master" }
+              },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "already_assassin_master": {
+            "text": "Continue nas sombras, Mestre.",
+            "options": [{ "text": "Adeus.", "next": "end" }]
+          },
+          "aceitar_prova": {
+            "text": "Colete 5 Venenos Raros e elimine o Assassino das Sombras. Não decepcione.",
+            "options": [{ "text": "Será feito.", "next": "end" }]
+          },
+          "em_andamento": {
+            "text": "Ainda não terminou. Volte quando completar.",
+            "options": [{ "text": "Voltarei.", "next": "end" }]
+          },
+          "completar_prova": {
+            "text": "As sombras o reconhecem como digno.",
+            "options": [{ "text": "Estou pronto.", "next": "end" }]
+          },
+          "confirmar_jobchange": {
+            "text": "Desapareça nas sombras e ressurja como Mestre. Você agora é Assassin Master!",
+            "options": [{ "text": "Obrigado, Mestre.", "next": "end" }]
+          }
+        }
+      }
     }
   ]
 }

@@ -108,7 +108,7 @@ function _onMonsterDied({ monsterId }) {
     const quest = _getDef(questId);
     if (!quest) continue;
     for (const obj of quest.objectives) {
-      if (obj.type === 'kill' && obj.target === monsterId) {
+     if (obj.type === 'kill' && (obj.target === monsterId || obj.target === 'any')) {
         _advance(questId, obj.id);
       }
     }
@@ -234,15 +234,21 @@ export function completeQuest(questId) {
 
   // TODO: audio.playSFX('sfx_quest_complete'); // audio.json não existe ainda
 
-  Events.emit('questCompleted', {
+Events.emit('questCompleted', {
     questId,
     quest,
     rewards: quest.rewards
   });
 
+  if (quest.rewards && quest.rewards.jobChange) {
+    Events.emit('jobChangeUnlocked', {
+      questId,
+      jobId: quest.rewards.jobChange
+    });
+  }
+
   return true;
 }
-
 /**
  * Abandona uma quest sem recompensa.
  * @param {string} questId

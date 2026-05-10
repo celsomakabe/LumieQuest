@@ -1,0 +1,244 @@
+{
+  "skills": [
+    {
+      "id": "bash",
+      "name": "Bash",
+      "description": "Golpe poderoso que causa 180% de dano físico.",
+      "classId": "swordman",
+      "mpCost": 10,
+      "cooldown": 3,
+      "range": 3,
+      "targetType": "enemy"
+    },
+    {
+      "id": "endure",
+      "name": "Endure",
+      "description": "Concentra resistência: reduz dano recebido em 50% por 5 segundos.",
+      "classId": "swordman",
+      "mpCost": 8,
+      "cooldown": 12,
+      "range": 1.5,
+      "targetType": "self"
+    },
+    {
+      "id": "provoke",
+      "name": "Provoke",
+      "description": "Provoca o alvo, forçando-o a atacar você por 4 segundos.",
+      "classId": "swordman",
+      "mpCost": 6,
+      "cooldown": 8,
+      "range": 5,
+      "targetType": "enemy"
+    },
+    {
+      "id": "fireball",
+      "name": "Fire Ball",
+      "description": "Lança uma bola de fogo que causa 200% de dano de fogo em área pequena (raio 2u).",
+      "classId": "mage",
+      "mpCost": 12,
+      "cooldown": 4,
+      "range": 6,
+      "targetType": "aoe"
+    },
+    {
+      "id": "iceBolt",
+      "name": "Ice Bolt",
+      "description": "Projétil de gelo que causa 160% de dano e aplica slow de 30% por 3 segundos.",
+      "classId": "mage",
+      "mpCost": 10,
+      "cooldown": 3,
+      "range": 7,
+      "targetType": "enemy"
+    },
+    {
+      "id": "lightning",
+      "name": "Lightning",
+      "description": "Raio em linha que atinge o alvo principal por 220% de dano elétrico.",
+      "classId": "mage",
+      "mpCost": 12,
+      "cooldown": 5,
+      "range": 7,
+      "targetType": "enemy"
+    },
+    {
+      "id": "doubleStrike",
+      "name": "Double Strike",
+      "description": "Dois ataques rápidos que causam 90% de dano físico cada.",
+      "classId": "archer",
+      "mpCost": 8,
+      "cooldown": 3,
+      "range": 7,
+      "targetType": "enemy"
+    },
+    {
+      "id": "explosiveShot",
+      "name": "Explosive Shot",
+      "description": "Flecha explosiva que causa 150% de dano e AoE adicional de 80% (raio 2.5u).",
+      "classId": "archer",
+      "mpCost": 12,
+      "cooldown": 6,
+      "range": 7,
+      "targetType": "aoe"
+    },
+    {
+      "id": "slowShot",
+      "name": "Slow Shot",
+      "description": "Flecha pesada que causa 110% de dano e aplica slow de 50% por 4 segundos.",
+      "classId": "archer",
+      "mpCost": 8,
+      "cooldown": 5,
+      "range": 7,
+      "targetType": "enemy"
+    },
+    {
+      "id": "stealthStrike",
+      "name": "Stealth Strike",
+      "description": "Ataque furtivo que garante crítico (300% dano) se for o primeiro hit no alvo.",
+      "classId": "assassin",
+      "mpCost": 10,
+      "cooldown": 6,
+      "range": 2,
+      "targetType": "enemy"
+    },
+    {
+      "id": "poison",
+      "name": "Poison",
+      "description": "Envenena o alvo, causando dano por 5 segundos (20% dano base por tick a cada 1s).",
+      "classId": "assassin",
+      "mpCost": 8,
+      "cooldown": 8,
+      "range": 2,
+      "targetType": "enemy"
+    },
+    {
+      "id": "evasion",
+      "name": "Evasion",
+      "description": "Aumenta a esquiva em 50% por 4 segundos.",
+      "classId": "assassin",
+      "mpCost": 6,
+      "cooldown": 10,
+      "range": 1.5,
+      "targetType": "self"
+    },
+    {
+      "id": "bashStrong",
+      "name": "Bash Strong",
+      "description": "Golpe devastador que causa 280% de dano físico.",
+      "classId": "knight",
+      "mpCost": 18,
+      "cooldown": 4,
+      "range": 3,
+      "targetType": "enemy"
+    },
+    {
+      "id": "shieldBash",
+      "name": "Shield Bash",
+      "description": "Golpe com escudo que causa 150% de dano físico e atordoa por 2 segundos.",
+      "classId": "knight",
+      "mpCost": 14,
+      "cooldown": 6,
+      "range": 3,
+      "targetType": "enemy"
+    },
+    {
+      "id": "auraBlade",
+      "name": "Aura Blade",
+      "description": "Envolve a arma em energia mística: ATK +50% por 8 segundos.",
+      "classId": "knight",
+      "mpCost": 20,
+      "cooldown": 15,
+      "range": 0,
+      "targetType": "self"
+    },
+    {
+      "id": "meteor",
+      "name": "Meteor",
+      "description": "Invoca um meteoro que causa 280% de dano mágico em área (raio 3u).",
+      "classId": "wizard",
+      "mpCost": 25,
+      "cooldown": 8,
+      "range": 8,
+      "targetType": "aoe"
+    },
+    {
+      "id": "frostNova",
+      "name": "Frost Nova",
+      "description": "Explosão de gelo ao redor do conjurador: 150% de dano e slow 50% por 4s.",
+      "classId": "wizard",
+      "mpCost": 18,
+      "cooldown": 6,
+      "range": 0,
+      "targetType": "aoe"
+    },
+    {
+      "id": "chainLightning",
+      "name": "Chain Lightning",
+      "description": "Raio em cadeia: 250% no alvo principal e 60% num segundo alvo adjacente.",
+      "classId": "wizard",
+      "mpCost": 22,
+      "cooldown": 7,
+      "range": 7,
+      "targetType": "enemy"
+    },
+    {
+      "id": "arrowRain",
+      "name": "Arrow Rain",
+      "description": "Chuva de flechas que causa 200% de dano físico em área (raio 3u).",
+      "classId": "hunter",
+      "mpCost": 20,
+      "cooldown": 7,
+      "range": 8,
+      "targetType": "aoe"
+    },
+    {
+      "id": "piercingShot",
+      "name": "Piercing Shot",
+      "description": "Flecha perfurante: 320% de dano físico ignorando 30% da defesa do alvo.",
+      "classId": "hunter",
+      "mpCost": 16,
+      "cooldown": 5,
+      "range": 8,
+      "targetType": "enemy"
+    },
+    {
+      "id": "eagleEye",
+      "name": "Eagle Eye",
+      "description": "Aguça os sentidos: chance de crítico +30% por 10 segundos.",
+      "classId": "hunter",
+      "mpCost": 15,
+      "cooldown": 18,
+      "range": 0,
+      "targetType": "self"
+    },
+    {
+      "id": "shadowClone",
+      "name": "Shadow Clone",
+      "description": "Cria um clone de sombra: evasão +70% e ATK +30% por 5 segundos.",
+      "classId": "assassin_master",
+      "mpCost": 18,
+      "cooldown": 12,
+      "range": 0,
+      "targetType": "self"
+    },
+    {
+      "id": "deadlyPoison",
+      "name": "Deadly Poison",
+      "description": "Veneno letal que causa dano por segundo durante 8 segundos.",
+      "classId": "assassin_master",
+      "mpCost": 16,
+      "cooldown": 8,
+      "range": 2,
+      "targetType": "enemy"
+    },
+    {
+      "id": "backstab",
+      "name": "Backstab",
+      "description": "350% de dano se o alvo está provocado ou lento; senão 180% de dano.",
+      "classId": "assassin_master",
+      "mpCost": 14,
+      "cooldown": 5,
+      "range": 2,
+      "targetType": "enemy"
+    }
+  ]
+}

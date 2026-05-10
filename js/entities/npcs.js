@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import * as Events from '../core/events.js';
 import * as Quests from '../systems/quests.js';
+import * as Classes from '../systems/classes.js';
 import { updateNpcQuestIndicator } from '../ui/ui.js';
 import * as Scene from '../world/scene.js';
 /** @type {Array<NPCInstance>} */
@@ -192,6 +193,11 @@ function _executeAction(action) {
 
     if (type === 'offerQuest')    Quests.acceptQuest(questId);
     if (type === 'completeQuest') Quests.completeQuest(questId);
+    if (type === 'doJobChange') {
+        import('../entities/player.js').then(PlayerMod => {
+            PlayerMod.applyJobChange(action.jobId);
+        });
+    }
 }
 
 Events.on('dialogOptionSelected', ({ npcId, nodeId, optionIndex }) => {

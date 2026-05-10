@@ -13,7 +13,7 @@ const STORAGE_KEY = 'lumiequest_save';
  * v2 — PROMPT 3: adiciona bloco "player"
  * @type {number}
  */
-const CURRENT_SAVE_VERSION = 4;
+const CURRENT_SAVE_VERSION = 6;
 
 /** @type {Record<number, (data: Object) => Object>} */
 const MIGRATIONS = {
@@ -48,11 +48,9 @@ const MIGRATIONS = {
         }
         return data;
     },
-// v4 — PROMPT 13: setId e grade nos equipamentos
-    // v5 — PROMPT 14: refineLevel nos equipamentos
-    // v6 — PROMPT 15: cards[] e sockets nos equipamentos
-    // v7 — PROMPT 16: bloco pets
-// Migration 3 → 4: inicializa player.quests se ausente
+    /**
+     * v3 → v4: inicializa player.quests se ausente.
+     */
     4: (save) => {
         if (!save.player.quests) {
             save.player.quests = {
@@ -61,6 +59,33 @@ const MIGRATIONS = {
             };
         }
         return save;
+    },
+
+    /**
+     * v4 → v5: adiciona player.equippedSkills (4 slots) e player.cooldowns.
+     * Idempotente: não sobrescreve se já existir (newGame pode popular antes da migration).
+     */
+    5: (data) => {
+        if (data.player) {
+            if (!Array.isArray(data.player.equippedSkills)) {
+                data.player.equippedSkills = [null, null, null, null];
+            }
+            if (!data.player.cooldowns || typeof data.player.cooldowns !== 'object') {
+                data.player.cooldowns = {};
+            }
+}
+        return data;
+    },
+    6: (data) => {
+        if (data.player) {
+            if (!Array.isArray(data.player.jobHistory)) {
+                data.player.jobHistory = [];
+            }
+            if (!Array.isArray(data.player.jobChangeQuestsCompleted)) {
+                data.player.jobChangeQuestsCompleted = [];
+            }
+        }
+        return data;
     }
 };
 

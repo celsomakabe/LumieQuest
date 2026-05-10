@@ -23,7 +23,12 @@ const _bindings = {
     attack:    'Mouse0',
     camera:    'Mouse2',
     interact:  'KeyF',
-    questLog:  'KeyJ',   
+    questLog:    'KeyJ',
+    skill1:      'Digit1',
+    skill2:      'Digit2',
+    skill3:      'Digit3',
+    skill4:      'Digit4',
+    skillWindow: 'KeyK',
 };
 
 // ─── Estado interno ───────────────────────────────────────────────────────────

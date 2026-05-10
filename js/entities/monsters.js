@@ -462,4 +462,23 @@ function _onPickupRequest({ position }) {
     _removeDrop(nearestId);
   }
 }
-export { init, spawnMonster, spawnGroup, updateAll };
+/**
+ * Retorna o mesh THREE de um monstro pelo id, ou null.
+ * @param {string} id
+ * @returns {THREE.Mesh|null}
+ */
+function getMesh(id) {
+  const m = _monsters?.get?.(id);
+  return m ? m.mesh : null;
+}
+
+/**
+ * Retorna o objeto completo do monstro pelo id, ou null.
+ * @param {string} id
+ * @returns {Object|null}
+ */
+function getById(id) {
+  return _monsters?.get?.(id) || null;
+}
+
+export { init, spawnMonster, spawnGroup, updateAll, getMesh, getById };

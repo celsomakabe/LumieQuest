@@ -118,7 +118,12 @@ function _loop(timestamp) {
 
     // UI
     UI.update(delta);
-    UI.setFPS(_calcFPS(delta));
+UI.setFPS(_calcFPS(delta));
+
+    // ── PROMPT 10: tick de DoTs/buffs e overlays de cooldown ──────────────
+    Combat.update(delta);
+    UI.updateCooldownVisuals(delta);
+    UI.updateMonsterHpBars();
 }
 
 // ─── Auto-save ────────────────────────────────────────────────────────────────
@@ -145,11 +150,53 @@ async function _onAssetsReady() {
     // Inicia BGM da cidade com fade in
     Audio.playBGM('assets/audio/bgm/bgm_city.ogg', 0.6);
 
+// ── PROMPT 10: carregar skills.json e injetar em Classes ──────────────
+    try {
+        const skillsRes  = await fetch('./assets/data/skills.json');
+        const skillsData = await skillsRes.json();
+        Classes.setSkillDefs(skillsData.skills || []);
+    } catch (err) {
+        console.error('[main] Falha ao carregar skills.json:', err);
+        Classes.setSkillDefs([]);
+    }
+
+    // ── PROMPT 10: modal de classe se save novo (player.class vazio) ──────
+    if (!_saveData) _saveData = { player: {} };
+    if (!_saveData.player) _saveData.player = {};
+
+    if (!_saveData.player.class) {
+        await new Promise(resolve => {
+            UI.showClassSelectionModal((classId) => {
+                const CLASS_SKILLS = {
+                    swordman: ['bash', 'endure', 'provoke'],
+                    mage:     ['fireball', 'iceBolt', 'lightning'],
+                    archer:   ['doubleStrike', 'explosiveShot', 'slowShot'],
+                    assassin: ['stealthStrike', 'poison', 'evasion'],
+                };
+                const skillIds = CLASS_SKILLS[classId] || [];
+                const baseStats = Classes.getBaseStats(classId, 1);
+
+                _saveData.player.class          = classId;
+                _saveData.player.level          = _saveData.player.level ?? 1;
+                _saveData.player.baseStats      = baseStats;
+                _saveData.player.learnedSkills  = skillIds.slice();
+                _saveData.player.equippedSkills = [skillIds[0] ?? null, skillIds[1] ?? null, skillIds[2] ?? null, null];
+                _saveData.player.cooldowns      = {};
+
+                resolve();
+            });
+        });
+    }
+
     // Spawna player com dados do save (capturado via Events.once abaixo)
-    Player.init(_saveData?.player ?? null);
-    await Inventory.init(_saveData?.player?.inventory ?? null);
-    await Quests.init(_saveData?.player?.quests ?? null);
+    Player.init(_saveData.player);
+    if (typeof window !== 'undefined') window.Player = Player; // debug console (PROMPT 10)
+    await Inventory.init(_saveData.player.inventory ?? null);
+    await Quests.init(_saveData.player.quests ?? null);
     Combat.registerTarget(Player.getInstance());
+
+    // Atualiza hotbar com skills equipadas (após Player.init populou _data)
+    UI.updateHotbar();
 
   Events.on('monsterAttackRequest', ({ attacker }) => {
       const player = Player.getInstance();
@@ -169,7 +216,9 @@ async function _onAssetsReady() {
     Events.on('inventoryRestoreMpRequest', ({ amount }) => {
         Player.restoreMp(amount);
     });
-
+    Events.on('jobChangeUnlocked', ({ questId }) => {
+        Player.unlockJobChangeQuest(questId);
+    });
     Events.on('questCompleted', ({ rewards }) => {
         if (!rewards) return;
         if (rewards.exp != null) Player.addExp(rewards.exp);
@@ -189,9 +238,15 @@ async function _onAssetsReady() {
         if (code === 'KeyE') {
             Events.emit('pickupRequest', { position: Player.getPosition() });
         }
+        
         if (code === 'KeyI') {
             Events.emit('uiWindowToggle', { id: 'inventory' });
         }
+ });
+
+    // ── PROMPT 10: consumo de MP por skills (combat.js emite via R8) ──────
+    Events.on('mpConsumeRequest', ({ amount }) => {
+        Player.consumeMp(amount);
     });
     _gameState = 'playing';
     _lastTime  = performance.now();
@@ -226,6 +281,8 @@ export async function init() {
     await Monsters.init();
     Monsters.spawnGroup('slime',  5, { center: { x:  5, z:  5 }, radius: 4 });
     Monsters.spawnGroup('goblin', 3, { center: { x: -5, z:  5 }, radius: 3 });
+    Monsters.spawnMonster('orc_warrior',     { x:  20, y: 0.5, z:  20 });
+    Monsters.spawnMonster('assassin_shadow', { x: -20, y: 0.5, z:  20 });
 // ── NPCs ──────────────────────────────────────────────────────────────
     NPCs.init(Scene.getScene());
     try {

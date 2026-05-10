@@ -63,5 +63,66 @@
       "exp": 60,
       "gold": 20
     }
+  },
+  {
+    "id": "quest_jobchange_knight",
+    "name": "Prova do Cavaleiro",
+    "description": "Derrote o Orc Warrior nas ruínas e prove sua força.",
+    "giver": "mestre_knight",
+    "completer": "mestre_knight",
+    "objectives": [
+      { "id": "kill_orc_warrior", "type": "kill", "target": "orc_warrior", "label": "Derrotar Orc Warrior", "required": 1 }
+    ],
+    "rewards": {
+      "exp": 5000,
+      "gold": 0,
+      "jobChange": "knight"
+    }
+  },
+  {
+    "id": "quest_jobchange_wizard",
+    "name": "Sabedoria Arcana",
+    "description": "Colete 3 Cristais Arcanos dos slimes e goblins.",
+    "giver": "mestre_wizard",
+    "completer": "mestre_wizard",
+    "objectives": [
+      { "id": "gather_cristal_arcano", "type": "gather", "target": "cristal-arcano", "label": "Coletar Cristal Arcano", "required": 3 }
+    ],
+    "rewards": {
+      "exp": 5000,
+      "gold": 0,
+      "jobChange": "wizard"
+    }
+  },
+  {
+    "id": "quest_jobchange_hunter",
+    "name": "Caçada da Floresta",
+    "description": "Elimine 20 monstros para provar sua precisão.",
+    "giver": "mestre_hunter",
+    "completer": "mestre_hunter",
+    "objectives": [
+      { "id": "kill_any_monster", "type": "kill", "target": "any", "label": "Derrotar monstros", "required": 20 }
+    ],
+    "rewards": {
+      "exp": 5000,
+      "gold": 0,
+      "jobChange": "hunter"
+    }
+  },
+  {
+    "id": "quest_jobchange_assassin",
+    "name": "Sombras Mortais",
+    "description": "Colete 5 Venenos Raros e derrote o Assassino das Sombras.",
+    "giver": "mestre_assassin",
+    "completer": "mestre_assassin",
+    "objectives": [
+      { "id": "gather_veneno_raro", "type": "gather", "target": "veneno-raro", "label": "Coletar Veneno Raro", "required": 5 },
+      { "id": "kill_assassin_shadow", "type": "kill", "target": "assassin_shadow", "label": "Derrotar Assassino das Sombras", "required": 1 }
+    ],
+    "rewards": {
+      "exp": 5000,
+      "gold": 0,
+      "jobChange": "assassin_master"
+    }
   }
 ]

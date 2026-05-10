@@ -9,13 +9,21 @@ import { emit, on }      from '../core/events.js';
 import { getState as getInput } from '../core/input.js';
 import { getScene, getCamera, add } from '../world/scene.js';
 import { getGroundHeight }          from '../world/physics.js';
-import { getBaseStats }             from '../systems/classes.js';
+import { getBaseStats, getJobMeta } from '../systems/classes.js';
 import * as Audio from '../core/audio.js';
 import { findNearestTarget, attack } from '../systems/combat.js';
 let _dialogOpen = false;
 
 on('dialogStarted', () => { _dialogOpen = true; });
 on('dialogEnded',   () => { _dialogOpen = false; });
+
+// Combat.castSkill emite mpConsumeRequest — player deduz o MP localmente.
+on('mpConsumeRequest', ({ amount }) => {
+    if (typeof amount === 'number' && amount > 0 && _data) {
+        _data.mp = Math.max(0, _data.mp - amount);
+        emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+    }
+});
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -50,6 +58,10 @@ let _lastFootstepTime = 0;
 const FOOTSTEP_COOLDOWN_MS = 350;
 const FOOTSTEP_VOLUME      = 0.4;
 const FOOTSTEP_THRESHOLD   = 0.01;
+
+// ── Regen passivo (Ragnarok-style) ───────────────────────────────────────
+const REGEN_TICK_S = 6;       // tick a cada 6 segundos
+let _regenTimer    = 0;       // acumulador de delta em segundos
 const FOOTSTEP_SFXS = [
     'assets/audio/sfx/sfx_footstep_grass1.ogg',
     'assets/audio/sfx/sfx_footstep_grass2.ogg'
@@ -62,7 +74,11 @@ const FOOTSTEP_SFXS = [
  * @returns {void}
  */
 export function init(saveData = null) {
-    _data = _buildData(saveData);
+   _data = _buildData(saveData);
+
+    // Restaurar HP/MP cheios no boot (estilo MMO: relogar = full)
+    _data.hp = _data.maxHp;
+    _data.mp = _data.maxMp;
 
     const geometry = new THREE.CapsuleGeometry(0.5, 1.5, 8, 16);
     const material = new THREE.MeshStandardMaterial({ color: 0x4488ff });
@@ -140,7 +156,18 @@ export function getPosition() {
 export function takeDamage(amount, source) {
     if (_isDead) return;
     if (!_data) return;
-    _data.hp = Math.max(0, _data.hp - amount);
+    // ── redução de dano por buff 'endure' ─────────────────────────────────
+    let dmg = dmg;
+    if (Array.isArray(_data._activeBuffs)) {
+        const endureBuff = _data._activeBuffs.find(
+            b => b.id === 'endure' && b.expiresAt > performance.now()
+        );
+        if (endureBuff && endureBuff.modifier && typeof endureBuff.modifier.defenseMultiplier === 'number') {
+            dmg = Math.floor(dmg * (1 - endureBuff.modifier.defenseMultiplier));
+        }
+    }
+
+    _data.hp = Math.max(0, _data.hp - dmg);
     emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
     if (_data.hp <= 0) {
         _isDead = true;
@@ -176,6 +203,16 @@ export function restoreMp(amount) {
  * @param {number} amount
  * @returns {void}
  */
+/**
+ * Deduz MP do player, respeitando mínimo 0. Emite playerMpChanged.
+ * @param {number} amount - quantidade a deduzir (positivo). Math.abs aplicado.
+ */
+export function consumeMp(amount) {
+    if (_isDead) return;
+    if (!_data) return;
+    _data.mp = Math.max(0, _data.mp - Math.abs(amount));
+    emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+}
 export function addExp(amount) {
     if (!_data) return;
 
@@ -185,21 +222,106 @@ export function addExp(amount) {
     _data.exp += gain;
     emit('expChanged', { current: _data.exp, needed: 100 * (_data.level * _data.level) });
     while (true) {
+        if (_data.level >= 99) {
+            _data.exp = 0;
+            break;
+        }
         const xpNeeded = 100 * (_data.level * _data.level);
         if (_data.exp < xpNeeded) break;
 
         _data.exp   -= xpNeeded;
         _data.level += 1;
-        _data.baseStats = getBaseStats(_data.class, _data.level);
-        _data.maxHp     = 100 + (_data.baseStats.vit * 5);
-        _data.maxMp     = 50  + (_data.baseStats.int * 3);
-        _data.hp        = _data.maxHp;
-        _data.mp        = _data.maxMp;
+
+        // Pre-Renewal: floor((BaseLv-1)/5) + 3 statPoints por level
+        _data.statPoints += Math.floor((_data.level - 1) / 5) + 3;
+
+        // Recalcular maxHp/maxMp via fórmula Ragnarok-like (não mexer em baseStats)
+        const meta = getJobMeta(_data.class);
+        const jobModHP = meta?.jobModHP ?? 1.0;
+        const jobModMP = meta?.jobModMP ?? 1.0;
+        _data.maxHp = Math.floor((35 + _data.level * 8) * (1 + _data.baseStats.vit / 100) * jobModHP);
+        _data.maxMp = Math.floor((40 + _data.level * 5) * (1 + _data.baseStats.int / 100) * jobModMP);
+        _data.hp = _data.maxHp;
+        _data.mp = _data.maxMp;
         emit('levelUp', { newLevel: _data.level });
+        emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+        emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
         console.log(`[player] Level up! Nível ${_data.level}`);
     }
 }
+/**
+ * Marca quest de job-change como completada no estado do player.
+ * Idempotente: ignora se já estava na lista.
+ * @param {string} questId
+ * @returns {void}
+ */
+/**
+ * Marca quest de job-change como completada no estado do player.
+ * Idempotente: ignora se já estava na lista.
+ * @param {string} questId
+ * @returns {void}
+ */
+export function unlockJobChangeQuest(questId) {
+    if (!_data) return;
+    if (!Array.isArray(_data.jobChangeQuestsCompleted)) {
+        _data.jobChangeQuestsCompleted = [];
+    }
+    if (!_data.jobChangeQuestsCompleted.includes(questId)) {
+        _data.jobChangeQuestsCompleted.push(questId);
+        console.log(`[player] Quest de job-change desbloqueada: ${questId}`);
+    }
+}
 
+/**
+ * Aplica mudança de job ao estado real do player.
+ * @param {string} newJobId
+ * @returns {Promise<boolean>}
+ */
+export async function applyJobChange(newJobId) {
+    if (!_data) return false;
+    const Classes = await import('../systems/classes.js');
+    const check = Classes.canJobChange(_data);
+    if (!check.canChange) {
+        console.warn('[player] applyJobChange bloqueado:', check.reason);
+        return false;
+    }
+    const meta = Classes.getJobMeta(newJobId);
+    if (!meta) {
+        console.warn('[player] JOBS_META não encontrado para', newJobId);
+        return false;
+    }
+    const oldClass = _data.class;
+
+    _data.class      = newJobId;
+    _data.jobLevel   = 1;
+    _data.jobExp     = 0;
+    _data.statPoints += 5;
+
+    if (meta.statBonus) {
+        Object.keys(meta.statBonus).forEach(stat => {
+            if (_data.baseStats[stat] !== undefined) {
+                _data.baseStats[stat] += meta.statBonus[stat];
+            }
+        });
+    }
+// Recalcular maxHp/maxMp com novo jobMod (HP/MP escalam por classe)
+    const jobModHP = meta.jobModHP ?? 1.0;
+    const jobModMP = meta.jobModMP ?? 1.0;
+    _data.maxHp = Math.floor((35 + _data.level * 8) * (1 + _data.baseStats.vit / 100) * jobModHP);
+    _data.maxMp = Math.floor((40 + _data.level * 5) * (1 + _data.baseStats.int / 100) * jobModMP);
+    _data.hp = _data.maxHp;
+    _data.mp = _data.maxMp;
+    emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+    emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+
+    if (!Array.isArray(_data.jobHistory)) _data.jobHistory = [];
+    _data.jobHistory.push({ jobId: newJobId, changedAt: Date.now(), level: _data.level });
+
+    emit('jobChanged', { oldClass, newClass: newJobId, player: _data });
+    emit('levelUp', { newLevel: _data.level });
+    console.log(`[player] Job change: ${oldClass} → ${newJobId}`);
+    return true;
+}
 /**
  * Atualiza movimento, rotação e câmera. Chamado pelo game loop.
  * @param {number} delta
@@ -209,6 +331,34 @@ export function addExp(amount) {
 export function update(delta, inputState) {
     if (_isDead) return;
     if (!_mesh || !_data) return;
+
+    // ── expirar buffs temporários ─────────────────────────────────────────────
+    if (Array.isArray(_data._activeBuffs) && _data._activeBuffs.length > 0) {
+        const now = performance.now();
+        _data._activeBuffs = _data._activeBuffs.filter(buff => {
+            if (now >= buff.expiresAt) {
+                emit('buffExpired', { buffId: buff.id, casterId: _data.name });
+                return false;
+            }
+            return true;
+});
+    }
+
+    // ── regen passivo de HP/MP (Ragnarok-style: tick 8s standing) ─────────
+    _regenTimer += delta;
+    if (_regenTimer >= REGEN_TICK_S) {
+        _regenTimer -= REGEN_TICK_S;
+        const hpRegen = Math.floor(_data.maxHp / 200) + Math.floor((_data.baseStats?.vit ?? 0) / 5);
+        const mpRegen = 1 + Math.floor(_data.maxMp / 100) + Math.floor((_data.baseStats?.int ?? 0) / 6);
+        if (hpRegen > 0 && _data.hp < _data.maxHp) {
+            _data.hp = Math.min(_data.maxHp, _data.hp + hpRegen);
+            emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+        }
+        if (mpRegen > 0 && _data.mp < _data.maxMp) {
+            _data.mp = Math.min(_data.maxMp, _data.mp + mpRegen);
+            emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+        }
+    }
 
     _prevPosition.copy(_mesh.position);
     _hasMoved = false;
@@ -329,6 +479,31 @@ function _updateCamera() {
  * @param {Object|null} saveData
  * @returns {Object}
  */
+/**
+ * Calcula maxHp Ragnarok-style.
+ * @param {string} job
+ * @param {number} level
+ * @param {{vit:number}} stats
+ * @returns {number}
+ */
+function _calcMaxHp(job, level, stats) {
+    const meta = getJobMeta(job);
+    const jobModHP = meta?.jobModHP ?? 1.0;
+    return Math.floor((35 + level * 8) * (1 + stats.vit / 100) * jobModHP);
+}
+
+/**
+ * Calcula maxMp Ragnarok-style.
+ * @param {string} job
+ * @param {number} level
+ * @param {{int:number}} stats
+ * @returns {number}
+ */
+function _calcMaxMp(job, level, stats) {
+    const meta = getJobMeta(job);
+    const jobModMP = meta?.jobModMP ?? 1.0;
+    return Math.floor((40 + level * 5) * (1 + stats.int / 100) * jobModMP);
+}
 function _buildData(saveData) {
     const job   = saveData?.class ?? 'swordman';
     const level = saveData?.level ?? 1;
@@ -342,10 +517,10 @@ function _buildData(saveData) {
         jobLevel:      saveData?.jobLevel      ?? 1,
         exp:           saveData?.exp           ?? 0,
         jobExp:        saveData?.jobExp        ?? 0,
-        hp:            saveData?.hp            ?? (100 + stats.vit * 5),
-        maxHp:         saveData?.maxHp         ?? (100 + stats.vit * 5),
-        mp:            saveData?.mp            ?? (50  + stats.int * 3),
-        maxMp:         saveData?.maxMp         ?? (50  + stats.int * 3),
+        hp:            saveData?.hp            ?? _calcMaxHp(job, level, stats),
+        maxHp:         saveData?.maxHp         ?? _calcMaxHp(job, level, stats),
+        mp:            saveData?.mp            ?? _calcMaxMp(job, level, stats),
+        maxMp:         saveData?.maxMp         ?? _calcMaxMp(job, level, stats),
         baseStats:     saveData?.baseStats     ?? stats,
         statPoints:    saveData?.statPoints    ?? 0,
         skillPoints:   saveData?.skillPoints   ?? 0,
@@ -354,7 +529,15 @@ function _buildData(saveData) {
         currentMap:    saveData?.currentMap    ?? 'city01',
 
         playtime:      saveData?.playtime      ?? 0,
+        equippedSkills: Array.isArray(saveData?.equippedSkills)
+            ? saveData.equippedSkills
+            : [null, null, null, null],
+        jobHistory: Array.isArray(saveData?.jobHistory) ? saveData.jobHistory : [],
+        jobChangeQuestsCompleted: Array.isArray(saveData?.jobChangeQuestsCompleted) ? saveData.jobChangeQuestsCompleted : [],
+        cooldowns:     {}, // sempre zerado no boot — performance.now() reinicia em 0
+        _activeBuffs:  [],
     };
+    
 }
 
 /**

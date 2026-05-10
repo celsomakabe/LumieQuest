@@ -79,6 +79,26 @@
       "classRestriction": null,
       "sellPrice": 0,
       "modelPlaceholder": "#ffd700"
+    },
+    {
+      "id": "cristal-arcano",
+      "name": "Cristal Arcano",
+      "type": "material",
+      "stack": 99,
+      "effect": null,
+      "classRestriction": null,
+      "sellPrice": 100,
+      "modelPlaceholder": "#aa66ff"
+    },
+    {
+      "id": "veneno-raro",
+      "name": "Veneno Raro",
+      "type": "material",
+      "stack": 99,
+      "effect": null,
+      "classRestriction": null,
+      "sellPrice": 100,
+      "modelPlaceholder": "#22ff44"
     }
   ]
 }

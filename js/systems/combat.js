@@ -1,6 +1,7 @@
 // js/systems/combat.js
 import { emit }    from '../core/events.js';
-import { playSFX } from '../core/audio.js';
+import { playSFX }     from '../core/audio.js';
+import * as Classes    from './classes.js';
 
 /** URLs dos SFX de combate */
 const SFX = {
@@ -77,7 +78,7 @@ function findNearestTarget(position, range = ATTACK_RANGE) {
   let minDist = Infinity;
   const fakeAttacker = { position };
   for (const t of _targets) {
-  if (t.hp <= 0) continue;
+    if (t.hp <= 0) continue;
     if (t.type === 'player') continue;
     const d = _distXZ(fakeAttacker, t);
     if (d <= range && d < minDist) {
@@ -126,15 +127,36 @@ function attack(attacker, target) {
 
   playSFX(SFX.swing);
 
+  // ── Evasion: target com buff 'evasion' tem chance de esquivar ──
+  if (Array.isArray(target._activeBuffs)) {
+    const now = performance.now();
+    const evasionBuff = target._activeBuffs.find(b => b.id === 'evasion' && b.expiresAt > now);
+    if (evasionBuff && Math.random() < evasionBuff.modifier.evasionBonus) {
+      playSFX(SFX.miss);
+      emit('damageDealt', { attacker, target, amount: 0, isCritical: false, evaded: true });
+      return { amount: 0, isCritical: false, evaded: true };
+    }
+  }
+
   const str        = attacker.baseStats?.str ?? 1;
   const def        = _getDef(target);
   const isCritical = Math.random() < 0.05;
   let amount       = Math.max(1, str - def);
   if (isCritical) amount = amount * 2;
+
+  // ── Endure: target com buff 'endure' reduz dano recebido ──
+  if (Array.isArray(target._activeBuffs)) {
+    const now = performance.now();
+    const endureBuff = target._activeBuffs.find(b => b.id === 'endure' && b.expiresAt > now);
+    if (endureBuff && typeof endureBuff.modifier.defenseMultiplier === 'number') {
+      amount = amount * endureBuff.modifier.defenseMultiplier;
+    }
+  }
+
   amount = Math.floor(amount);
 
   target.hp = Math.max(0, target.hp - amount);
-if (target.type === 'player') {
+  if (target.type === 'player') {
     emit('playerHpChanged', { current: target.hp, max: target.maxHp });
     if (target.hp <= 0) emit('playerDied');
   }
@@ -150,7 +172,108 @@ if (target.type === 'player') {
 
   return { amount, isCritical };
 }
+// ─── Skills ────────────────────────────────────────────────────────────────
 
+/**
+ * Tenta lançar uma skill do player contra um alvo.
+ * Valida classe, aprendizado, MP, cooldown e range. Emite mpConsumeRequest
+ * para player.js consumir o MP via event bus (R8).
+ * @param {Object} playerState - retorno de Player.getState()
+ * @param {string} skillId
+ * @param {Object|null} target - instância de monstro ou null para self/aoe
+ * @returns {{ ok: boolean, reason?: string, message?: string }}
+ */
+function castSkill(playerState, skillId, target) {
+  const skillDef = Classes.getSkillDef(skillId);
+  if (!skillDef) return { ok: false, reason: 'skill_inexistente' };
+
+  if (skillDef.classId !== playerState.class) {
+    return { ok: false, reason: 'classe_incorreta' };
+  }
+
+  if (!Array.isArray(playerState.learnedSkills) || !playerState.learnedSkills.includes(skillId)) {
+    return { ok: false, reason: 'skill_nao_aprendida' };
+  }
+
+  if (playerState.mp < skillDef.mpCost) {
+    return { ok: false, reason: 'mp_insuficiente' };
+  }
+
+  const now = performance.now();
+  if (!playerState.cooldowns) playerState.cooldowns = {};
+  if (playerState.cooldowns[skillId] && now < playerState.cooldowns[skillId]) {
+    return { ok: false, reason: 'em_cooldown' };
+  }
+
+  if (skillDef.targetType === 'enemy') {
+    if (!target) return { ok: false, reason: 'sem_alvo' };
+    if (_distXZ({ position: playerState.position }, target) > skillDef.range) {
+      return { ok: false, reason: 'fora_de_alcance' };
+    }
+  }
+
+  // Consome MP via evento (R8 — sem import direto de Player)
+  emit('mpConsumeRequest', { amount: skillDef.mpCost });
+
+  // Registra cooldown (em ms a partir de agora)
+  playerState.cooldowns[skillId] = now + skillDef.cooldown * 1000;
+
+  // Monta ctx e executa effect
+  const ctx = {
+    now,
+    emit,
+    getEntities: () => Array.from(_targets),
+  };
+
+  const result = Classes.executeSkill(skillId, playerState, target, ctx);
+
+  emit('skillCast', {
+    skillId,
+    casterId: playerState.name,
+    targetId: target ? target.instanceId : null,
+    success: result.ok,
+  });
+
+  return result;
+}
+
+/**
+ * Tick de DoTs e expiração de debuffs em todos os _targets registrados.
+ * Chamado no game loop por main.js.
+ * @param {number} _delta - tempo em ms desde o último frame (não usado; tick por timestamp absoluto)
+ */
+function update(_delta) {
+  const now = performance.now();
+  for (const entity of _targets) {
+    if (!Array.isArray(entity._activeDebuffs)) continue;
+
+    entity._activeDebuffs = entity._activeDebuffs.filter(debuff => {
+      if (now >= debuff.expiresAt) return false;
+
+      // Tick de poison
+      if (debuff.id === 'poison' && debuff.damagePerTick && debuff.tickRate) {
+        if (now - debuff.lastTick >= debuff.tickRate) {
+          debuff.lastTick = now;
+          entity.hp = Math.max(0, entity.hp - debuff.damagePerTick);
+          emit('damageDealt', {
+            attacker: null,
+            target: entity,
+            amount: debuff.damagePerTick,
+            isCritical: false,
+            source: 'poison',
+          });
+          if (entity.hp <= 0) {
+            unregisterTarget(entity);
+            emit('entityDied', { entity });
+            return false;
+          }
+        }
+      }
+
+      return true;
+    });
+  }
+}
 // ─── Exports ─────────────────────────────────────────────────────────────────
 
-export { registerTarget, unregisterTarget, findNearestTarget, canAttack, attack };
+export { registerTarget, unregisterTarget, findNearestTarget, canAttack, attack, castSkill, update };
