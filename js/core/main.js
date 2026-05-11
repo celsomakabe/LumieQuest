@@ -198,11 +198,22 @@ async function _onAssetsReady() {
     // Atualiza hotbar com skills equipadas (após Player.init populou _data)
     UI.updateHotbar();
 
-  Events.on('monsterAttackRequest', ({ attacker }) => {
+    Events.on('monsterAttackRequest', ({ attacker, ability, damage }) => {
       const player = Player.getInstance();
-      if (player.hp <= 0) return;
+      if (!player || player.hp <= 0) return;
+
+      if (ability === 'abyssPoison') {
+          Events.emit('bossAbyssPoison', { damagePerTick: 50, duration: 10000 });
+          return;
+      }
+
+      if (damage != null) {
+          Player.takeDamage(damage, `boss_${attacker.monsterId ?? attacker.id}_${ability}`);
+          return;
+      }
+
       Combat.attack(attacker, player);
-    });
+  });
  // ── Inventário ────────────────────────────────────────────────────────
     Events.on('itemPicked', ({ itemId, qty }) => {
         Inventory.addItem(itemId, qty);

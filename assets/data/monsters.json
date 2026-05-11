@@ -185,6 +185,96 @@
         { "itemId": "ouro", "chance": 1.0, "qty": { "min": 50, "max": 100 } }
       ],
       "soundProfile": {}
+    },
+    {
+      "id": "boss_lord_knight",
+      "name": "Lorde Cavaleiro Corrompido",
+      "hp": 3000,
+      "str": 55,
+      "def": 25,
+      "agi": 10,
+      "xp": 2000,
+      "aggroRange": 10,
+      "attackRange": 2.2,
+      "speed": 3.0,
+      "modelPlaceholder": "#aaaacc",
+      "isBoss": true,
+      "linkedQuest": "quest_evo2_lord_knight",
+      "abilities": ["aoeWindup", "summonAdds"],
+      "drops": [
+        { "itemId": "pocao-pequena", "chance": 1.0, "qty": { "min": 5, "max": 8 } },
+        { "itemId": "ouro", "chance": 1.0, "qty": { "min": 500, "max": 1000 } },
+        { "itemId": "cristal-arcano", "chance": 0.70, "qty": { "min": 3, "max": 6 } },
+        { "itemId": "espada-iniciante", "chance": 0.50 }
+      ],
+      "soundProfile": {}
+    },
+    {
+      "id": "boss_high_wizard",
+      "name": "Grande Bruxo das Trevas",
+      "hp": 2800,
+      "str": 65,
+      "def": 10,
+      "agi": 12,
+      "xp": 2000,
+      "aggroRange": 12,
+      "attackRange": 8.0,
+      "speed": 2.5,
+      "modelPlaceholder": "#3344cc",
+      "isBoss": true,
+      "linkedQuest": "quest_evo2_high_wizard",
+      "abilities": ["teleportStrike", "reflectShield"],
+      "drops": [
+        { "itemId": "pocao-azul", "chance": 1.0, "qty": { "min": 4, "max": 6 } },
+        { "itemId": "ouro", "chance": 1.0, "qty": { "min": 500, "max": 1000 } },
+        { "itemId": "cristal-arcano", "chance": 0.80, "qty": { "min": 4, "max": 8 } }
+      ],
+      "soundProfile": {}
+    },
+    {
+      "id": "boss_sniper",
+      "name": "Atirador Fantasma",
+      "hp": 2500,
+      "str": 48,
+      "def": 8,
+      "agi": 22,
+      "xp": 2000,
+      "aggroRange": 14,
+      "attackRange": 8.0,
+      "speed": 4.0,
+      "modelPlaceholder": "#224422",
+      "isBoss": true,
+      "linkedQuest": "quest_evo2_sniper",
+      "abilities": ["invisibility", "multishot"],
+      "drops": [
+        { "itemId": "pocao-pequena", "chance": 1.0, "qty": { "min": 4, "max": 6 } },
+        { "itemId": "ouro", "chance": 1.0, "qty": { "min": 500, "max": 1000 } },
+        { "itemId": "cristal-arcano", "chance": 0.60, "qty": { "min": 2, "max": 5 } }
+      ],
+      "soundProfile": {}
+    },
+    {
+      "id": "boss_shadow_assassin",
+      "name": "Assassino Sombra Ancestral",
+      "hp": 2600,
+      "str": 58,
+      "def": 12,
+      "agi": 20,
+      "xp": 2000,
+      "aggroRange": 10,
+      "attackRange": 2.0,
+      "speed": 5.0,
+      "modelPlaceholder": "#330033",
+      "isBoss": true,
+      "linkedQuest": "quest_evo2_shadow_assassin",
+      "abilities": ["stealthStrikeFirst", "spawnClones", "abyssPoison"],
+      "drops": [
+        { "itemId": "pocao-azul", "chance": 1.0, "qty": { "min": 3, "max": 5 } },
+        { "itemId": "ouro", "chance": 1.0, "qty": { "min": 500, "max": 1000 } },
+        { "itemId": "veneno-raro", "chance": 0.90, "qty": { "min": 3, "max": 6 } },
+        { "itemId": "cristal-arcano", "chance": 0.70, "qty": { "min": 3, "max": 6 } }
+      ],
+      "soundProfile": {}
     }
   ]
 }

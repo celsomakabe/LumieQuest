@@ -24,7 +24,15 @@ on('mpConsumeRequest', ({ amount }) => {
         emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
     }
 });
-
+on('bossAbyssPoison', ({ damagePerTick, duration }) => {
+    const ticks    = Math.floor(duration / 1000);
+    let ticksDone  = 0;
+    const interval = setInterval(() => {
+        if (ticksDone >= ticks || _isDead) { clearInterval(interval); return; }
+        takeDamage(damagePerTick, 'abyss_poison');
+        ticksDone++;
+    }, 1000);
+});
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
 const MOVE_SPEED        = 5;
@@ -157,7 +165,7 @@ export function takeDamage(amount, source) {
     if (_isDead) return;
     if (!_data) return;
     // ── redução de dano por buff 'endure' ─────────────────────────────────
-    let dmg = dmg;
+    let dmg = typeof amount === 'number' ? Math.max(0, amount) : 0;
     if (Array.isArray(_data._activeBuffs)) {
         const endureBuff = _data._activeBuffs.find(
             b => b.id === 'endure' && b.expiresAt > performance.now()

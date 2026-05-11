@@ -271,6 +271,28 @@ function update(_delta) {
       }
 
       return true;
+            // DoTs de boss (deadly_poison, abyss_poison)
+      if (
+        (debuff.id === 'deadly_poison' || debuff.id === 'abyss_poison') &&
+        debuff.damagePerTick && debuff.tickRate
+      ) {
+        if (now - debuff.lastTick >= debuff.tickRate) {
+          debuff.lastTick = now;
+          entity.hp = Math.max(0, entity.hp - debuff.damagePerTick);
+          emit('damageDealt', {
+            attacker:   null,
+            target:     entity,
+            amount:     debuff.damagePerTick,
+            isCritical: false,
+            source:     debuff.id,
+          });
+          if (entity.hp <= 0) {
+            unregisterTarget(entity);
+            emit('entityDied', { entity });
+            return false;
+          }
+        }
+      }
     });
   }
 }
