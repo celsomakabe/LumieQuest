@@ -16,7 +16,8 @@
         { "itemId": "pocao-pequena", "chance": 0.30 },
         { "itemId": "ouro", "chance": 0.80, "qty": { "min": 1, "max": 5 } },
         { "itemId": "cristal-arcano", "chance": 0.05 },
-        { "itemId": "veneno-raro", "chance": 0.05 }
+        { "itemId": "veneno-raro", "chance": 0.05 },
+        { "itemId": "fragment_high_wizard", "chance": 0.20 }
       ],
       "soundProfile": {}
     },
@@ -37,7 +38,8 @@
         { "itemId": "adaga-iniciante", "chance": 0.05 },
         { "itemId": "ouro", "chance": 0.90, "qty": { "min": 3, "max": 10 } },
         { "itemId": "cristal-arcano", "chance": 0.05 },
-        { "itemId": "veneno-raro", "chance": 0.05 }
+        { "itemId": "veneno-raro", "chance": 0.05 },
+        { "itemId": "fragment_sniper", "chance": 0.20 }
       ],
       "soundProfile": {}
     },
@@ -165,7 +167,8 @@
       "speed": 2.5,
       "modelPlaceholder": "#5a8a3c",
       "drops": [
-        { "itemId": "ouro", "chance": 1.0, "qty": { "min": 50, "max": 100 } }
+        { "itemId": "ouro", "chance": 1.0, "qty": { "min": 50, "max": 100 } },
+        { "itemId": "fragment_lord_knight", "chance": 0.25 }
       ],
       "soundProfile": {}
     },
@@ -182,7 +185,8 @@
       "speed": 4.0,
       "modelPlaceholder": "#2a1a3a",
       "drops": [
-        { "itemId": "ouro", "chance": 1.0, "qty": { "min": 50, "max": 100 } }
+        { "itemId": "ouro", "chance": 1.0, "qty": { "min": 50, "max": 100 } },
+        { "itemId": "fragment_shadow_assassin", "chance": 0.30 }
       ],
       "soundProfile": {}
     },

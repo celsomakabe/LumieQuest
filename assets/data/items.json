@@ -99,6 +99,46 @@
       "classRestriction": null,
       "sellPrice": 100,
       "modelPlaceholder": "#22ff44"
+    },
+    {
+      "id": "fragment_lord_knight",
+      "name": "Fragmento do Cavaleiro Corrompido",
+      "type": "material",
+      "stack": 99,
+      "effect": null,
+      "classRestriction": null,
+      "sellPrice": 0,
+      "modelPlaceholder": "#ccccff"
+    },
+    {
+      "id": "fragment_high_wizard",
+      "name": "Fragmento Arcano Corrompido",
+      "type": "material",
+      "stack": 99,
+      "effect": null,
+      "classRestriction": null,
+      "sellPrice": 0,
+      "modelPlaceholder": "#8888ff"
+    },
+    {
+      "id": "fragment_sniper",
+      "name": "Pena do Atirador Fantasma",
+      "type": "material",
+      "stack": 99,
+      "effect": null,
+      "classRestriction": null,
+      "sellPrice": 0,
+      "modelPlaceholder": "#44cc44"
+    },
+    {
+      "id": "fragment_shadow_assassin",
+      "name": "Essência das Sombras",
+      "type": "material",
+      "stack": 99,
+      "effect": null,
+      "classRestriction": null,
+      "sellPrice": 0,
+      "modelPlaceholder": "#440044"
     }
   ]
 }

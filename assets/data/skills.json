@@ -239,6 +239,126 @@
       "cooldown": 5,
       "range": 2,
       "targetType": "enemy"
+    },
+    {
+      "id": "spiralPierce",
+      "name": "Spiral Pierce",
+      "description": "Perfura inimigos em linha com uma estocada giratória devastadora.",
+      "classId": "lord_knight",
+      "mpCost": 40,
+      "cooldown": 8,
+      "range": 4.5,
+      "targetType": "enemy"
+    },
+    {
+      "id": "berserk",
+      "name": "Berserk",
+      "description": "Entra em fúria total: ATK +50% e DEF -30% por 20 segundos.",
+      "classId": "lord_knight",
+      "mpCost": 60,
+      "cooldown": 30,
+      "range": 0,
+      "targetType": "self"
+    },
+    {
+      "id": "holyCross",
+      "name": "Holy Cross",
+      "description": "Golpe sagrado em cruz que causa 300% de dano em área e atordoa por 2s.",
+      "classId": "lord_knight",
+      "mpCost": 80,
+      "cooldown": 15,
+      "range": 5,
+      "targetType": "aoe"
+    },
+    {
+      "id": "meteorStorm",
+      "name": "Meteor Storm",
+      "description": "Tempestade de meteoros: 3 hits de 500% INT em área (raio 4u).",
+      "classId": "high_wizard",
+      "mpCost": 120,
+      "cooldown": 20,
+      "range": 8,
+      "targetType": "aoe"
+    },
+    {
+      "id": "timeStop",
+      "name": "Time Stop",
+      "description": "Interrompe o fluxo do tempo: congela inimigos em área por 4 segundos.",
+      "classId": "high_wizard",
+      "mpCost": 100,
+      "cooldown": 25,
+      "range": 7,
+      "targetType": "aoe"
+    },
+    {
+      "id": "arcaneExplosion",
+      "name": "Arcane Explosion",
+      "description": "Explosão arcana concentrada: 450% de dano INT com knockback.",
+      "classId": "high_wizard",
+      "mpCost": 90,
+      "cooldown": 12,
+      "range": 7,
+      "targetType": "enemy"
+    },
+    {
+      "id": "phantomArrow",
+      "name": "Phantom Arrow",
+      "description": "Flecha espectral: 450% de dano ignorando 70% da defesa do alvo.",
+      "classId": "sniper",
+      "mpCost": 50,
+      "cooldown": 10,
+      "range": 9,
+      "targetType": "enemy"
+    },
+    {
+      "id": "sharpShoot",
+      "name": "Sharp Shoot",
+      "description": "Disparo de precisão extrema: 600% de dano com crítico garantido.",
+      "classId": "sniper",
+      "mpCost": 70,
+      "cooldown": 18,
+      "range": 10,
+      "targetType": "enemy"
+    },
+    {
+      "id": "windWalk",
+      "name": "Wind Walk",
+      "description": "Fusão com o vento: AGI e velocidade +60% por 15 segundos.",
+      "classId": "sniper",
+      "mpCost": 40,
+      "cooldown": 25,
+      "range": 0,
+      "targetType": "self"
+    },
+    {
+      "id": "soulReap",
+      "name": "Soul Reap",
+      "description": "Golpe sombrio: 400% de dano e drena 30% como HP.",
+      "classId": "shadow_assassin",
+      "mpCost": 60,
+      "cooldown": 12,
+      "range": 3,
+      "targetType": "enemy"
+    },
+    {
+      "id": "abyssPoison",
+      "name": "Abyss Poison",
+      "description": "Veneno abissal: 50 dano/s por 10 segundos, ignora resistência.",
+      "classId": "shadow_assassin",
+      "mpCost": 40,
+      "cooldown": 15,
+      "range": 3.5,
+      "targetType": "enemy"
+    },
+    {
+      "id": "voidStep",
+      "name": "Void Step",
+      "description": "Some no vazio e reaparece atrás do alvo: 500% de dano crítico instantâneo.",
+      "classId": "shadow_assassin",
+      "mpCost": 80,
+      "cooldown": 20,
+      "range": 6,
+      "targetType": "enemy"
     }
   ]
 }

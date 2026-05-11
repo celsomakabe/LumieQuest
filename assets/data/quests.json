@@ -124,5 +124,145 @@
       "gold": 0,
       "jobChange": "assassin_master"
     }
+  },
+  {
+    "id": "quest_evo2_lord_knight",
+    "name": "O Lorde das Batalhas",
+    "description": "Para se tornar Lord Knight, colete fragmentos dos Orc Warriors, consulte o Eremita Kael e derrote o Lorde Cavaleiro Corrompido.",
+    "giver": "mestre_lord_knight",
+    "completer": "mestre_lord_knight",
+    "reqClass": "knight",
+    "reqLevel": 70,
+    "objectives": [
+      {
+        "id": "collect_fragment_lk",
+        "type": "gather",
+        "target": "fragment_lord_knight",
+        "label": "Coletar Fragmentos do Cavaleiro Corrompido",
+        "required": 5
+      },
+      {
+        "id": "talkto_eremita_kael",
+        "type": "talkTo",
+        "target": "eremita_kael",
+        "label": "Consultar o Eremita Kael",
+        "required": 1
+      },
+      {
+        "id": "kill_boss_lord_knight",
+        "type": "kill",
+        "target": "boss_lord_knight",
+        "label": "Derrotar o Lorde Cavaleiro Corrompido",
+        "required": 1,
+        "bossId": "boss_lord_knight",
+        "bossPosition": { "x": 20, "y": 0.5, "z": 20 }
+      }
+    ],
+    "rewards": { "exp": 50000, "gold": 1000, "jobChange": "lord_knight" }
+  },
+  {
+    "id": "quest_evo2_high_wizard",
+    "name": "O Bruxo das Trevas",
+    "description": "Para se tornar High Wizard, colete fragmentos arcanos dos slimes, consulte o Oráculo Lyra e destrua o Grande Bruxo das Trevas.",
+    "giver": "mestre_high_wizard",
+    "completer": "mestre_high_wizard",
+    "reqClass": "wizard",
+    "reqLevel": 70,
+    "objectives": [
+      {
+        "id": "collect_fragment_hw",
+        "type": "gather",
+        "target": "fragment_high_wizard",
+        "label": "Coletar Fragmentos Arcanos Corrompidos",
+        "required": 5
+      },
+      {
+        "id": "talkto_oraculo_lyra",
+        "type": "talkTo",
+        "target": "oraculo_lyra",
+        "label": "Consultar o Oráculo Lyra",
+        "required": 1
+      },
+      {
+        "id": "kill_boss_high_wizard",
+        "type": "kill",
+        "target": "boss_high_wizard",
+        "label": "Destruir o Grande Bruxo das Trevas",
+        "required": 1,
+        "bossId": "boss_high_wizard",
+        "bossPosition": { "x": -20, "y": 0.5, "z": 20 }
+      }
+    ],
+    "rewards": { "exp": 50000, "gold": 1000, "jobChange": "high_wizard" }
+  },
+  {
+    "id": "quest_evo2_sniper",
+    "name": "O Atirador Fantasma",
+    "description": "Para se tornar Sniper, colete penas dos goblins, consulte o Batedor Thorn e elimine o Atirador Fantasma.",
+    "giver": "mestre_sniper",
+    "completer": "mestre_sniper",
+    "reqClass": "hunter",
+    "reqLevel": 70,
+    "objectives": [
+      {
+        "id": "collect_fragment_sn",
+        "type": "gather",
+        "target": "fragment_sniper",
+        "label": "Coletar Penas do Atirador Fantasma",
+        "required": 5
+      },
+      {
+        "id": "talkto_batedor_thorn",
+        "type": "talkTo",
+        "target": "batedor_thorn",
+        "label": "Consultar o Batedor Thorn",
+        "required": 1
+      },
+      {
+        "id": "kill_boss_sniper",
+        "type": "kill",
+        "target": "boss_sniper",
+        "label": "Eliminar o Atirador Fantasma",
+        "required": 1,
+        "bossId": "boss_sniper",
+        "bossPosition": { "x": 20, "y": 0.5, "z": -20 }
+      }
+    ],
+    "rewards": { "exp": 50000, "gold": 1000, "jobChange": "sniper" }
+  },
+  {
+    "id": "quest_evo2_shadow_assassin",
+    "name": "A Sombra Ancestral",
+    "description": "Para se tornar Shadow Assassin, colete essências do assassin_shadow, consulte o Informante Sable e destrua a Sombra Ancestral.",
+    "giver": "mestre_shadow_assassin",
+    "completer": "mestre_shadow_assassin",
+    "reqClass": "assassin_master",
+    "reqLevel": 70,
+    "objectives": [
+      {
+        "id": "collect_fragment_sa",
+        "type": "gather",
+        "target": "fragment_shadow_assassin",
+        "label": "Coletar Essências das Sombras",
+        "required": 5
+      },
+      {
+        "id": "talkto_informante_sable",
+        "type": "talkTo",
+        "target": "informante_sable",
+        "label": "Consultar o Informante Sable",
+        "required": 1
+      },
+      {
+        "id": "kill_boss_shadow_assassin",
+        "type": "kill",
+        "target": "boss_shadow_assassin",
+        "label": "Destruir a Sombra Ancestral",
+        "required": 1,
+        "bossId": "boss_shadow_assassin",
+        "bossPosition": { "x": -20, "y": 0.5, "z": -20 }
+      }
+    ],
+    "rewards": { "exp": 50000, "gold": 1000, "jobChange": "shadow_assassin" }
   }
 ]
