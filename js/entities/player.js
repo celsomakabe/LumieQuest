@@ -301,6 +301,7 @@ export async function applyJobChange(newJobId) {
     const oldClass = _data.class;
 
     _data.class      = newJobId;
+    _data.title      = meta.title ?? '';
     _data.jobLevel   = 1;
     _data.jobExp     = 0;
     _data.statPoints += 5;
@@ -520,6 +521,7 @@ function _buildData(saveData) {
     return {
         type:          'player',
         name:          saveData?.name          ?? 'Hero',
+        title:         saveData?.title         ?? '',
         class:         job,
         level:         level,
         jobLevel:      saveData?.jobLevel      ?? 1,

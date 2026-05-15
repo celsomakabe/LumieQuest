@@ -39,8 +39,9 @@ let _dirty = {
 let _hp    = { current: 100, max: 100 };
 let _mp    = { current:  50, max:  50 };
 let _xp    = { current:   0, needed: 100 };
-let _name  = 'Herói';
-let _level = 1;
+let _name        = 'Herói';
+let _playerTitle = '';
+let _level       = 1;
 // ─── estado do diálogo ───────────────────────────────────────────────────────
 let _dialogOpen     = false;
 let _currentNpcId   = null;
@@ -204,10 +205,17 @@ function _queryRefs() {
 /**
  * Inicializa a UI: cria DOM e registra listeners de eventos.
  */
+function _renderPlayerName() {
+    if (!_elName) return;
+    const title = (_playerTitle || '').trim();
+    const name  = (_name || 'Herói').trim();
+    _elName.textContent = title ? `[${title}] ${name}` : name;
+}
+
 export function init() {
     _buildDOM();
     _queryRefs();
-
+    _renderPlayerName();
     if (!document.getElementById('lumie-damage-style')) {
   const style = document.createElement('style');
   style.id = 'lumie-damage-style';
@@ -241,11 +249,20 @@ export function init() {
         _dirty.mp = true;
     });
 
-    Events.on('playerSpawned', ({ name, level, hp, mp } = {}) => {
-        if (name)  { _name  = name;  _elName.textContent  = name; }
+Events.on('playerSpawned', ({ name, level, hp, mp } = {}) => {
+        if (name)  { _name  = name; }
         if (level) { _level = level; _elLevel.textContent = `Lv ${level}`; }
         if (hp)    { _hp = hp;  _dirty.hp = true; }
         if (mp)    { _mp = mp;  _dirty.mp = true; }
+        const state = Player.getState?.();
+        if (state?.title !== undefined) _playerTitle = state.title ?? '';
+        _renderPlayerName();
+    });
+
+    Events.on('jobChanged', ({ player } = {}) => {
+        if (player?.title !== undefined) _playerTitle = player.title ?? '';
+        if (player?.name) _name = player.name;
+        _renderPlayerName();
     });
 
     Events.on('levelUp', ({ newLevel }) => {

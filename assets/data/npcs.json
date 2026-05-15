@@ -473,6 +473,350 @@
           }
         }
       }
+    },
+        {
+      "id": "mestre_lord_knight",
+      "name": "Grão-Mestre do Lorde Cavaleiro",
+      "position": { "x": 15, "y": 0, "z": 8 },
+      "modelPlaceholder": { "type": "capsule", "color": "#b08d57" },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "A honra da ordem exige mais do que força. Exige feitos dignos de uma lenda.",
+            "options": [
+              {
+                "text": "Continue seu caminho, Lord Knight.",
+                "next": "already_lord_knight",
+                "condition": { "type": "playerClassIs", "value": "lord_knight" }
+              },
+              {
+                "text": "Aceitar a Provação do Lorde Cavaleiro",
+                "next": "aceitar_prova",
+                "condition": { "type": "questNotStarted", "questId": "quest_evo2_lord_knight" },
+                "action": { "type": "offerQuest", "questId": "quest_evo2_lord_knight" }
+              },
+              {
+                "text": "Ainda estou cumprindo a provação.",
+                "next": "em_andamento",
+                "condition": { "type": "questActive", "questId": "quest_evo2_lord_knight" }
+              },
+              {
+                "text": "Completei a provação épica.",
+                "next": "completar_prova",
+                "condition": { "type": "questCompletable", "questId": "quest_evo2_lord_knight" },
+                "action": { "type": "completeQuest", "questId": "quest_evo2_lord_knight" }
+              },
+              {
+                "text": "Estou pronto para me tornar Lord Knight!",
+                "next": "confirmar_jobchange",
+                "condition": { "type": "questCompleted", "questId": "quest_evo2_lord_knight" },
+                "action": { "type": "doJobChange", "jobId": "lord_knight" }
+              },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "already_lord_knight": {
+            "text": "A honra da ordem agora vive em você, Lord Knight.",
+            "options": [{ "text": "Adeus.", "next": "end" }]
+          },
+          "aceitar_prova": {
+            "text": "Vá até Eremita Kael e prove que sua lâmina serve à ordem e ao destino.",
+            "options": [{ "text": "Aceito a provação.", "next": "end" }]
+          },
+          "em_andamento": {
+            "text": "Sua jornada ainda não terminou. Volte quando concluir cada etapa.",
+            "options": [{ "text": "Voltarei.", "next": "end" }]
+          },
+          "completar_prova": {
+            "text": "Você atravessou a provação como um verdadeiro campeão da ordem.",
+            "options": [{ "text": "Estou pronto.", "next": "end" }]
+          },
+          "confirmar_jobchange": {
+            "text": "Erga sua espada e assuma seu destino. Você agora é um Lord Knight!",
+            "options": [{ "text": "Obrigado, Grão-Mestre.", "next": "end" }]
+          }
+        }
+      }
+    },
+    {
+      "id": "mestre_high_wizard",
+      "name": "Grão-Mestre do Grande Bruxo",
+      "position": { "x": -15, "y": 0, "z": 8 },
+      "modelPlaceholder": { "type": "capsule", "color": "#7a6cff" },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "O verdadeiro arcano não se curva ao caos. Ele o domina.",
+            "options": [
+              {
+                "text": "Continue sua ascensão, High Wizard.",
+                "next": "already_high_wizard",
+                "condition": { "type": "playerClassIs", "value": "high_wizard" }
+              },
+              {
+                "text": "Aceitar o Rito do Grande Bruxo",
+                "next": "aceitar_prova",
+                "condition": { "type": "questNotStarted", "questId": "quest_evo2_high_wizard" },
+                "action": { "type": "offerQuest", "questId": "quest_evo2_high_wizard" }
+              },
+              {
+                "text": "Ainda estou cumprindo o rito.",
+                "next": "em_andamento",
+                "condition": { "type": "questActive", "questId": "quest_evo2_high_wizard" }
+              },
+              {
+                "text": "Concluí o rito arcano.",
+                "next": "completar_prova",
+                "condition": { "type": "questCompletable", "questId": "quest_evo2_high_wizard" },
+                "action": { "type": "completeQuest", "questId": "quest_evo2_high_wizard" }
+              },
+              {
+                "text": "Estou pronto para me tornar High Wizard!",
+                "next": "confirmar_jobchange",
+                "condition": { "type": "questCompleted", "questId": "quest_evo2_high_wizard" },
+                "action": { "type": "doJobChange", "jobId": "high_wizard" }
+              },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "already_high_wizard": {
+            "text": "Os fluxos arcanos já reconhecem seu nome, High Wizard.",
+            "options": [{ "text": "Adeus.", "next": "end" }]
+          },
+          "aceitar_prova": {
+            "text": "Procure Oráculo Lyra. Só então compreenderá o que o poder realmente exige.",
+            "options": [{ "text": "Seguirei o rito.", "next": "end" }]
+          },
+          "em_andamento": {
+            "text": "O conhecimento ainda não foi totalmente conquistado.",
+            "options": [{ "text": "Voltarei.", "next": "end" }]
+          },
+          "completar_prova": {
+            "text": "Seu domínio do arcano ultrapassou o limite dos magos comuns.",
+            "options": [{ "text": "Estou pronto.", "next": "end" }]
+          },
+          "confirmar_jobchange": {
+            "text": "Que os céus e os elementos respondam ao seu chamado. Você agora é um High Wizard!",
+            "options": [{ "text": "Obrigado, Grão-Mestre.", "next": "end" }]
+          }
+        }
+      }
+    },
+    {
+      "id": "mestre_sniper",
+      "name": "Grão-Mestre do Atirador de Elite",
+      "position": { "x": 15, "y": 0, "z": -8 },
+      "modelPlaceholder": { "type": "capsule", "color": "#5fae4a" },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "Um verdadeiro caçador não erra quando o destino depende de seu disparo.",
+            "options": [
+              {
+                "text": "Sua mira já é lendária, Sniper.",
+                "next": "already_sniper",
+                "condition": { "type": "playerClassIs", "value": "sniper" }
+              },
+              {
+                "text": "Aceitar o Julgamento do Sniper",
+                "next": "aceitar_prova",
+                "condition": { "type": "questNotStarted", "questId": "quest_evo2_sniper" },
+                "action": { "type": "offerQuest", "questId": "quest_evo2_sniper" }
+              },
+              {
+                "text": "Ainda estou em julgamento.",
+                "next": "em_andamento",
+                "condition": { "type": "questActive", "questId": "quest_evo2_sniper" }
+              },
+              {
+                "text": "Completei o julgamento.",
+                "next": "completar_prova",
+                "condition": { "type": "questCompletable", "questId": "quest_evo2_sniper" },
+                "action": { "type": "completeQuest", "questId": "quest_evo2_sniper" }
+              },
+              {
+                "text": "Estou pronto para me tornar Sniper!",
+                "next": "confirmar_jobchange",
+                "condition": { "type": "questCompleted", "questId": "quest_evo2_sniper" },
+                "action": { "type": "doJobChange", "jobId": "sniper" }
+              },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "already_sniper": {
+            "text": "Cada flecha sua já encontra o alvo antes mesmo de ser disparada.",
+            "options": [{ "text": "Adeus.", "next": "end" }]
+          },
+          "aceitar_prova": {
+            "text": "Encontre Batedor Thorn. Ele testará sua disciplina e seus instintos.",
+            "options": [{ "text": "Aceito o julgamento.", "next": "end" }]
+          },
+          "em_andamento": {
+            "text": "A presa ainda não caiu. Continue.",
+            "options": [{ "text": "Voltarei.", "next": "end" }]
+          },
+          "completar_prova": {
+            "text": "Sua precisão já não pertence ao mundo comum.",
+            "options": [{ "text": "Estou pronto.", "next": "end" }]
+          },
+          "confirmar_jobchange": {
+            "text": "Respire, mire e transcenda. Você agora é um Sniper!",
+            "options": [{ "text": "Obrigado, Grão-Mestre.", "next": "end" }]
+          }
+        }
+      }
+    },
+    {
+      "id": "mestre_shadow_assassin",
+      "name": "Grão-Mestre do Assassino das Sombras",
+      "position": { "x": -15, "y": 0, "z": -8 },
+      "modelPlaceholder": { "type": "capsule", "color": "#3a3a3a" },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "As sombras não acolhem os fracos. Elas os consomem.",
+            "options": [
+              {
+                "text": "As sombras já o reconhecem, Shadow Assassin.",
+                "next": "already_shadow_assassin",
+                "condition": { "type": "playerClassIs", "value": "shadow_assassin" }
+              },
+              {
+                "text": "Aceitar o Véu Final",
+                "next": "aceitar_prova",
+                "condition": { "type": "questNotStarted", "questId": "quest_evo2_shadow_assassin" },
+                "action": { "type": "offerQuest", "questId": "quest_evo2_shadow_assassin" }
+              },
+              {
+                "text": "Ainda caminho pelo véu.",
+                "next": "em_andamento",
+                "condition": { "type": "questActive", "questId": "quest_evo2_shadow_assassin" }
+              },
+              {
+                "text": "Completei o Véu Final.",
+                "next": "completar_prova",
+                "condition": { "type": "questCompletable", "questId": "quest_evo2_shadow_assassin" },
+                "action": { "type": "completeQuest", "questId": "quest_evo2_shadow_assassin" }
+              },
+              {
+                "text": "Estou pronto para me tornar Shadow Assassin!",
+                "next": "confirmar_jobchange",
+                "condition": { "type": "questCompleted", "questId": "quest_evo2_shadow_assassin" },
+                "action": { "type": "doJobChange", "jobId": "shadow_assassin" }
+              },
+              { "text": "Adeus.", "next": "end" }
+            ]
+          },
+          "already_shadow_assassin": {
+            "text": "Você já não caminha entre as sombras. Você é uma delas.",
+            "options": [{ "text": "Adeus.", "next": "end" }]
+          },
+          "aceitar_prova": {
+            "text": "Procure Informante Sable. Ele o conduzirá pela etapa que separa o mortal da lenda.",
+            "options": [{ "text": "Aceito o véu.", "next": "end" }]
+          },
+          "em_andamento": {
+            "text": "Ainda há sangue e silêncio entre você e seu destino.",
+            "options": [{ "text": "Voltarei.", "next": "end" }]
+          },
+          "completar_prova": {
+            "text": "Nem mesmo a noite negou sua passagem.",
+            "options": [{ "text": "Estou pronto.", "next": "end" }]
+          },
+          "confirmar_jobchange": {
+            "text": "Desapareça do mundo antigo. Você agora é um Shadow Assassin!",
+            "options": [{ "text": "Obrigado, Grão-Mestre.", "next": "end" }]
+          }
+        }
+      }
+    },
+    {
+      "id": "eremita_kael",
+      "name": "Eremita Kael",
+      "position": { "x": 25, "y": 0, "z": 15 },
+      "modelPlaceholder": { "type": "capsule", "color": "#8c6b3f" },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "A lâmina só alcança grandeza quando encontra propósito. Volte ao seu mestre e complete seu juramento.",
+            "options": [
+              {
+                "text": "Entendi.",
+                "next": "end",
+                "condition": { "type": "questActive", "questId": "quest_evo2_lord_knight" }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "oraculo_lyra",
+      "name": "Oráculo Lyra",
+      "position": { "x": -25, "y": 0, "z": 15 },
+      "modelPlaceholder": { "type": "capsule", "color": "#6f63d9" },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "O poder absoluto exige visão absoluta. Leve esta compreensão de volta ao Grão-Mestre.",
+            "options": [
+              {
+                "text": "Eu compreendo.",
+                "next": "end",
+                "condition": { "type": "questActive", "questId": "quest_evo2_high_wizard" }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "batedor_thorn",
+      "name": "Batedor Thorn",
+      "position": { "x": 25, "y": 0, "z": -15 },
+      "modelPlaceholder": { "type": "capsule", "color": "#4e8f3b" },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "Olhos atentos. Respiração firme. Agora volte e conclua sua prova.",
+            "options": [
+              {
+                "text": "Vou retornar.",
+                "next": "end",
+                "condition": { "type": "questActive", "questId": "quest_evo2_sniper" }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "informante_sable",
+      "name": "Informante Sable",
+      "position": { "x": -25, "y": 0, "z": -15 },
+      "modelPlaceholder": { "type": "capsule", "color": "#4a4a4a" },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "Você ouviu o sussurro certo. Agora desapareça e retorne ao Grão-Mestre.",
+            "options": [
+              {
+                "text": "Entendido.",
+                "next": "end",
+                "condition": { "type": "questActive", "questId": "quest_evo2_shadow_assassin" }
+              }
+            ]
+          }
+        }
+      }
     }
   ]
 }

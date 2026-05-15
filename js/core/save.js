@@ -13,7 +13,7 @@ const STORAGE_KEY = 'lumiequest_save';
  * v2 — PROMPT 3: adiciona bloco "player"
  * @type {number}
  */
-const CURRENT_SAVE_VERSION = 6;
+const CURRENT_SAVE_VERSION = 7;
 
 /** @type {Record<number, (data: Object) => Object>} */
 const MIGRATIONS = {
@@ -86,7 +86,32 @@ const MIGRATIONS = {
             }
         }
         return data;
-    }
+    },
+    /**
+     * v6 → v7: adiciona player.title baseado na classe atual.
+     */
+    7: (data) => {
+        if (data.player) {
+            const titleByClass = {
+                swordman: 'Espadachim',
+                knight: 'Cavaleiro',
+                lord_knight: 'Lorde Cavaleiro',
+                mage: 'Mago',
+                wizard: 'Bruxo',
+                high_wizard: 'Grande Bruxo',
+                archer: 'Arqueiro',
+                hunter: 'Caçador',
+                sniper: 'Atirador de Elite',
+                assassin: 'Assassino',
+                assassin_master: 'Mestre Assassino',
+                shadow_assassin: 'Assassino das Sombras',
+            };
+            if (typeof data.player.title !== 'string' || data.player.title.trim() === '') {
+                data.player.title = titleByClass[data.player.class] ?? '';
+            }
+        }
+        return data;
+    },
 };
 
 /**
