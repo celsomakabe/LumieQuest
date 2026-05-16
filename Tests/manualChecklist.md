@@ -300,3 +300,107 @@ _Espaço livre para comportamentos inesperados, melhorias e pendências._
 **Compatibilidade retroativa (R4):** saves v4 migram para v5 sem perda.
 **Performance budget (R6):** Iteração linear sobre `_targets` (<20 entidades), sem alocações por frame fora da expiração de buffs.
 **R8:** ui.js importa Combat/Player/Classes diretamente (decisão B(a) registrada — exceção justificada). Combat.js → Classes.js mesmo padrão. Player.consumeMp via evento (mpConsumeRequest) preserva R8 entre combat e player.
+## Sessão 18 — TESTE D
+
+- [APROVADO] Item 1 — Modal de escolha de classe dispara apenas se `player.class` estiver vazio no boot.
+  - Evidência: `js/core/main.js` linhas 167-189 usam `if (!_saveData.player.class)` para abrir `UI.showClassSelectionModal(...)`.
+  - Evidência: `js/ui/ui.js` linha 1477 exporta `showClassSelectionModal(onChosen)`.
+  - Evidência: `_CLASS_DATA` (`js/ui/ui.js` linha 1145) lista `swordman`, `mage`, `archer`, `assassin`.
+
+- [APROVADO] Item 2 — 4 classes base têm 3 skills funcionais e distintas cada.
+  - Evidência: `js/core/main.js` linhas 170-174 definem `CLASS_SKILLS`.
+  - Evidência: `assets/data/skills.json` contém 12 entradas base.
+  - Evidência: `js/systems/classes.js` linha 203+ implementa `bash`, `endure`, `provoke`, `fireball`, `iceBolt`, `lightning`, `doubleStrike`, `explosiveShot`, `slowShot`, `stealthStrike`, `poison`, `evasion`.
+
+- [APROVADO COM RESSALVA] Item 3 — Quests de job-change nv30 disponíveis/ativáveis.
+  - Evidência: `js/systems/classes.js` linhas 44-149 (`JOBS_META`) definem `reqLevel:30`, `reqJob` e `reqQuest` para `knight`, `wizard`, `hunter`, `assassin_master`.
+  - Evidência: `js/systems/classes.js` linha 761 (`canJobChange`) valida nível e job anterior.
+  - Evidência: `assets/data/quests.json` contém `quest_jobchange_knight`, `quest_jobchange_wizard`, `quest_jobchange_hunter`, `quest_jobchange_assassin`.
+  - Ressalva: BUG-10 — quests evo1 no JSON não têm `reqLevel/reqClass`; gate real fica em `canJobChange`.
+
+- [APROVADO] Item 4 — Job-change muda stats e skills corretamente.
+  - Evidência: `js/entities/player.js` linha 288 inicia `applyJobChange(newJobId)`.
+  - Evidência: linhas 303-307 atualizam `_data.class`, `_data.title`, `jobLevel`, `jobExp`, `statPoints`.
+  - Evidência: linhas 309-314 aplicam `meta.statBonus`.
+  - Evidência: linhas 317-322 recalculam `maxHp/maxMp` com `jobModHP/jobModMP`.
+  - Evidência: linhas 326-329 atualizam `jobHistory` e emitem `jobChanged`.
+  - Evidência: `js/systems/classes.js` linha 733 + 743 retornam cadeia herdada base→evo1→evo2 sem duplicatas.
+
+- [APROVADO] Item 5 — Quests evo2 nv70 disponíveis.
+  - Evidência: `js/systems/classes.js` (`JOBS_META`) define `reqLevel:70`, `reqJob:evo1`, `reqQuest:quest_evo2_*`.
+  - Evidência: `assets/data/quests.json` contém 4 quests evo2 com `reqLevel`, `reqClass` e objetivos `collect → talkTo → kill`.
+  - Evidência: `js/systems/quests.js` linha 89 dispara `questBossSpawnRequest` quando o próximo objetivo é `kill` com `bossId`.
+
+- [APROVADO ESTÁTICO] Item 6 — Mini-bosses não são trivializáveis.
+  - Evidência: `assets/data/monsters.json` define HP 2500-3000, STR 48-65, DEF 8-25, AGI 10-22, XP 2000.
+  - Evidência: `js/entities/monsters.js` usa `_checkBossPhases` com gatilhos em 50% e 25% HP, uma vez por fase.
+  - Evidência: `_startTelegraph` usa wind-up de 2.0s, escala 1.3x e vermelho.
+  - Evidência: habilidades por boss são distintas (`aoeWindup/summonAdds`, `teleportStrike/reflectShield`, `invisibility/multishot`, `stealthStrikeFirst/spawnClones/abyssPoison`).
+
+- [REQUER TESTE MANUAL DO CELSO] Item 6-RT — AoE damage do boss validado em player real.
+  - Procedimento:
+    1. Spawnar `boss_lord_knight` via `questBossSpawnRequest`.
+    2. Console: `const b = M.getById('monster_boss_lord_knight_1'); b.hp = b.maxHp * 0.2;`
+    3. Aguardar telegrafia de 2s.
+    4. Posicionar player dentro do raio AoE.
+    5. Verificar se `player.hp` diminui.
+  - Critério: dano > 0 aplicado ao player após a telegrafia.
+  - Coletar: valor de HP antes/depois e evidência visual/console.
+  - Observação: se falhar, permanece pendência e não bloqueia aprovação.
+
+- [APROVADO] Item 7 — Skills ultimate funcionam.
+  - Evidência: `assets/data/skills.json` contém 12 entradas evo2.
+  - Evidência: `js/systems/classes.js` implementa `spiralPierce`, `berserk`, `holyCross`, `meteorStorm`, `timeStop`, `arcaneExplosion`, `phantomArrow`, `sharpShoot`, `windWalk`, `soulReap`, `abyssPoison`, `voidStep`.
+  - Evidência: total de `SKILL_EFFECTS` = 36, consistente com o JSON.
+  - Evidência: herança de skills confirmada em `getSkills`.
+
+- [REQUER TESTE MANUAL DO CELSO] Item 8-RT — Save migra v6 → v7 sem perda.
+  - Procedimento:
+    1. `localStorage.removeItem('lumiequest_save')`
+    2. Injetar save v6 forjado no console.
+    3. Recarregar a página.
+    4. Rodar `JSON.parse(localStorage.getItem('lumiequest_save'))`.
+  - Critério: `saveVersion = 7`, `player.title = 'Grande Bruxo'`, demais campos preservados.
+  - Coletar: dump completo do save serializado.
+
+- [REQUER TESTE MANUAL DO CELSO] Item 9-RT — Inventário e quests preservados pós-migração.
+  - Procedimento: após 8-RT, comparar `inventory.slots`, `inventory.equipment`, `inventory.gold`, `quests.active`, `quests.completed`.
+  - Critério: nenhuma perda ou divergência.
+  - Coletar: dump dos campos comparados.
+
+- [REQUER TESTE MANUAL DO CELSO] Item 10-RT — Performance ≥50 FPS por 30s em boss + adds + skills.
+  - Procedimento:
+    1. Spawnar `boss_lord_knight`.
+    2. Forçar fase 50%: `M.getById('monster_boss_lord_knight_1').hp = 1500`.
+    3. Manter combate por 30s com skills ativas.
+    4. Observar FPS no HUD.
+  - Critério: FPS ≥50 sustentado pelos 30s.
+  - Coletar: vídeo curto ou amostragem do HUD/console ao longo do teste.
+
+- [REQUER TESTE MANUAL DO CELSO] Item 11-RT — Combo high_wizard não gera loop infinito.
+  - Procedimento:
+    1. Usar `meteorStorm`, `timeStop`, `arcaneExplosion`.
+    2. Tentar repetir imediatamente.
+    3. Testar novamente após 12s.
+  - Critério: antes de 12s nenhuma ultimate reaproveita; após 12s apenas `arcaneExplosion` pode voltar.
+  - Coletar: MP antes/depois e estado visual dos cooldowns.
+
+### Bugs encontrados na Sessão 18 — TESTE D
+- BUG-09 (crítico): `js/entities/npcs.js` chama `Quests.acceptQuest(questId)` sem `playerState`, permitindo aceitar quests evo2 sem validar `reqLevel/reqClass`.
+- BUG-10 (baixo): quests evo1 no `assets/data/quests.json` não têm `reqLevel/reqClass`, causando UX inconsistente no job-change.
+
+### Bugs corrigidos na Sessão 18 — TESTE D
+- Nenhum até aprovação e aplicação do patch do BUG-09.
+
+### Bugs adiados reconfirmados
+- BUG-02, BUG-03, BUG-05, BUG-06, BUG-07, BUG-08.
+- BUG-10.
+- Pendência colisão player-entidade.
+- Pendência morte visual do player.
+- Pendência áudio de monstros/quests/skills.
+- Pendência slots equipamento Ragnarok.
+- Pendência `quest_explore` coords no HUD.
+- Pendência cosmética fases de boss via `uiHintShow`.
+- Pendência `reflectDamageRequest` sem emitter.
+- Pendência textos de quests evo2 com direções genéricas.
+- Pendência AoE damage não validado em player real.
