@@ -202,6 +202,9 @@ function _executeAction(action) {
             PlayerMod.applyJobChange(action.jobId);
         });
     }
+    if (type === 'refine') {
+        Events.emit('uiWindowToggle', { id: 'refine' });
+    }
 }
 
 Events.on('dialogOptionSelected', ({ npcId, nodeId, optionIndex }) => {

@@ -1,0 +1,34 @@
+﻿
+>       "id": "blacksmith",
+        "name": "Ferreiro Bram",
+        "position": { "x": 4, "y": 0, "z": -3 },
+        "modelPlaceholder": { "type": "capsule", "color": "#FFD700" },
+        "dialogTree": {
+          "root": "root",
+          "nodes": {
+            "root": {
+              "text": "Oi! Ocupado com as forjas agora. Tem algo pra mim?",
+              "options": [
+                {
+                  "text": "[Entregar] Aqui estÃ¡ o pacote do prefeito.",
+                  "next": "receber_pacote",
+                  "condition": { "type": "questCompletable", "questId": "quest_delivery" },
+                  "action":    { "type": "completeQuest",    "questId": "quest_delivery" }
+                },
+                { "text": "SÃ³ vim dar uma olhada.", "next": "end" }
+              ]
+            },
+            "receber_pacote": {
+              "text": "Ah, finalmente chegou! Estava esperando por isso. Aqui estÃ¡ sua recompensa pelo trabalho.",
+              "options": [
+                { "text": "Disponha, ferreiro!", "next": "end" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "merchant",
+        "name": "Comerciante Lyra",
+
+

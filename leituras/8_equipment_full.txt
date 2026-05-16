@@ -1,6 +1,6 @@
-/**
+﻿/**
  * @module equipment
- * @description Sistema de sets e bônus por threshold 2/3/4 para equipamentos.
+ * @description Sistema de sets e bÃ´nus por threshold 2/3/4 para equipamentos.
  */
 
 import { emit, on } from '../core/events.js';
@@ -37,7 +37,7 @@ function _createEmptyStats() {
 }
 
 /**
- * Soma stats válidos no acumulador.
+ * Soma stats vÃ¡lidos no acumulador.
  * @param {{ str:number, agi:number, vit:number, int:number, dex:number, luk:number }} target
  * @param {Object|null|undefined} source
  */
@@ -61,8 +61,7 @@ function _getEquippedSlotsForSet(equipment, pieceSlots) {
     const equipped = [];
 
     for (const slotName of pieceSlots) {
-        const equipObj = equipment[slotName];
-        const itemId = equipObj?.itemId ?? (typeof equipObj === 'string' ? equipObj : null);
+        const itemId = equipment[slotName];
         if (!itemId) continue;
 
         const def = Inventory.getItemDef(itemId);
@@ -99,7 +98,7 @@ function _recalculateAndEmit() {
 
         if (prevCount < 4 && nextCount >= 4) {
             emit('setAuraActivated', { setId });
-            console.log(`[equipment] Aura set ${setId} ativa — SESSÃO 26: implementar mesh aura visual`);
+            console.log(`[equipment] Aura set ${setId} ativa â€” SESSÃƒO 26: implementar mesh aura visual`);
         } else if (prevCount >= 4 && nextCount < 4) {
             emit('setAuraDeactivated', { setId });
         }
@@ -109,7 +108,7 @@ function _recalculateAndEmit() {
 }
 
 /**
- * Registra catálogo de sets carregado de assets/data/sets.json.
+ * Registra catÃ¡logo de sets carregado de assets/data/sets.json.
  * @param {Array<Object>} setsArray
  */
 export function setCatalogue(setsArray) {
@@ -124,7 +123,7 @@ export function setCatalogue(setsArray) {
 }
 
 /**
- * Retorna a definição de um set pelo id.
+ * Retorna a definiÃ§Ã£o de um set pelo id.
  * @param {string} setId
  * @returns {Object|null}
  */
@@ -166,7 +165,7 @@ export function canEquip(itemId, playerClass) {
 }
 
 /**
- * Retorna quantas peças equipadas do set informado o player possui.
+ * Retorna quantas peÃ§as equipadas do set informado o player possui.
  * @param {string} setId
  * @returns {number}
  */
@@ -177,7 +176,7 @@ export function getEquippedSetCount(setId) {
 }
 
 /**
- * Calcula bônus ativos de sets e stats individuais das peças equipadas.
+ * Calcula bÃ´nus ativos de sets e stats individuais das peÃ§as equipadas.
  * @param {Object|null} _player
  * @returns {{
  *   sets: Array<{ setId:string, name:string, tier:string, pieceCount:number, activeBonus:Object|null, allPieceSlots:string[], equippedSlots:string[] }>,
@@ -194,8 +193,7 @@ export function getActiveSetBonuses(_player) {
     let mpPctBonus = 0;
 
     for (const slotName of SET_PIECE_SLOTS) {
-        const equipObj = equipment[slotName];
-        const itemId = equipObj?.itemId ?? (typeof equipObj === 'string' ? equipObj : null);
+        const itemId = equipment[slotName];
         if (!itemId) continue;
 
         const def = Inventory.getItemDef(itemId);
@@ -261,7 +259,7 @@ export function getActiveSetBonuses(_player) {
 }
 
 /**
- * Inicializa listeners de atualização automática dos bônus de set.
+ * Inicializa listeners de atualizaÃ§Ã£o automÃ¡tica dos bÃ´nus de set.
  */
 export function init() {
     if (_initialized) return;

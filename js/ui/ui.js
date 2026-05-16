@@ -15,7 +15,7 @@ import * as Combat from '../systems/combat.js';
 import * as Player from '../entities/player.js';
 import * as Classes from '../systems/classes.js';
 import * as Monsters from '../entities/monsters.js';
-
+import * as Refine from '../systems/refine.js';
 
 const EQUIPMENT_SLOT_META = [
     { slot: 'weapon',          label: 'Arma',    icon: '⚔️', title: 'Arma' },
@@ -32,6 +32,9 @@ const EQUIPMENT_SLOT_META = [
 
 let _inventoryWindowEl = null;
 let _equipmentWindowEl = null;
+let _refineWindowEl = null;
+let _selectedRefineTarget = null;
+let _selectedRefineMeta = null;
 
 function _formatStatsLine(stats) {
     if (!stats) return 'Sem bônus ativo';
@@ -55,6 +58,15 @@ function _getTierBadgeColor(tier) {
     if (tier === 'legendary') return '#a020f0';
     return '#5aa9e6';
 }
+
+export function getRefineColor(level) {
+    const lv = Number(level ?? 0);
+    if (lv >= 15) return '#F44336';
+    if (lv >= 10) return '#FF9800';
+    if (lv >= 7) return '#4CAF50';
+    return '';
+}
+
 // ─── Referências DOM ──────────────────────────────────────────────────────────
 
 let _elHP        = null;
@@ -83,6 +95,7 @@ let _xp    = { current:   0, needed: 100 };
 let _name        = 'Herói';
 let _playerTitle = '';
 let _level       = 1;
+
 // ─── estado do diálogo ───────────────────────────────────────────────────────
 let _dialogOpen     = false;
 let _currentNpcId   = null;
@@ -99,14 +112,16 @@ const _npcIndicators = new Map();
 // elementos DOM (criados em _buildDialogWindow / _buildHintElement)
 let _dialogEl       = null;
 let _hintEl         = null;
+
 // ── Estado de skills/hotbar (PROMPT 10) ──────────────────────────────────
 let _skillWindowOpen   = false;
 let _hotbarEl          = null;
-let _hotbarSlotEls     = [];   // cache de refs DOM dos 4 slots (perf)
+let _hotbarSlotEls     = [];
 let _skillWindowEl     = null;
 let _classModalEl      = null;
 let _classModalCb      = null;
-let _selectedSkillId   = null; // skill clicada na lista, esperando slot
+let _selectedSkillId   = null;
+
 // ─── Helpers privados ─────────────────────────────────────────────────────────
 
 /**
@@ -148,18 +163,15 @@ function _buildDOM() {
     `;
     document.body.appendChild(hud);
 
-    // Wrapper de notificações
     const notifWrap = document.createElement('div');
     notifWrap.id = 'notif-wrap';
     document.body.appendChild(notifWrap);
 
-    // Mensagem central
     const center = document.createElement('div');
     center.id = 'center-msg';
     center.style.display = 'none';
     document.body.appendChild(center);
 
-    // Estilos inline (evita dependência de CSS externo)
     const style = document.createElement('style');
     style.textContent = `
         #hud {
@@ -252,6 +264,7 @@ function _renderPlayerName() {
     const name  = (_name || 'Herói').trim();
     _elName.textContent = title ? `[${title}] ${name}` : name;
 }
+
 export function isEquipmentWindowOpen() {
     return !!_equipmentWindowEl && _equipmentWindowEl.style.display !== 'none';
 }
@@ -269,31 +282,33 @@ export function toggleEquipmentWindow() {
         Events.emit('uiWindowClosed', { id: 'equipment' });
     }
 }
+
 export function init() {
     _buildDOM();
     _queryRefs();
     _renderPlayerName();
+
     if (!document.getElementById('lumie-damage-style')) {
-  const style = document.createElement('style');
-  style.id = 'lumie-damage-style';
-  style.textContent = `
-    @keyframes lumie-dmg-float {
-      0%   { transform: translateY(0px);   opacity: 1; }
-      100% { transform: translateY(-40px); opacity: 0; }
-    }
-    .lumie-dmg {
-      position: absolute;
-      pointer-events: none;
-      font-family: sans-serif;
-      font-weight: bold;
-      text-shadow: 1px 1px 2px #000;
-      animation: lumie-dmg-float 800ms ease-out forwards;
-      white-space: nowrap;
-    }
-    .lumie-dmg.critical { color: #ffcc00; font-size: 1.5em; }
-    .lumie-dmg.normal   { color: #ff3333; font-size: 1em; }
-  `;
-  document.head.appendChild(style);
+        const style = document.createElement('style');
+        style.id = 'lumie-damage-style';
+        style.textContent = `
+            @keyframes lumie-dmg-float {
+              0%   { transform: translateY(0px);   opacity: 1; }
+              100% { transform: translateY(-40px); opacity: 0; }
+            }
+            .lumie-dmg {
+              position: absolute;
+              pointer-events: none;
+              font-family: sans-serif;
+              font-weight: bold;
+              text-shadow: 1px 1px 2px #000;
+              animation: lumie-dmg-float 800ms ease-out forwards;
+              white-space: nowrap;
+            }
+            .lumie-dmg.critical { color: #ffcc00; font-size: 1.5em; }
+            .lumie-dmg.normal   { color: #ff3333; font-size: 1em; }
+        `;
+        document.head.appendChild(style);
     }
 
     Events.on('playerHpChanged', ({ current, max }) => {
@@ -306,11 +321,11 @@ export function init() {
         _dirty.mp = true;
     });
 
-Events.on('playerSpawned', ({ name, level, hp, mp } = {}) => {
-        if (name)  { _name  = name; }
+    Events.on('playerSpawned', ({ name, level, hp, mp } = {}) => {
+        if (name)  _name = name;
         if (level) { _level = level; _elLevel.textContent = `Lv ${level}`; }
-        if (hp)    { _hp = hp;  _dirty.hp = true; }
-        if (mp)    { _mp = mp;  _dirty.mp = true; }
+        if (hp)    { _hp = hp; _dirty.hp = true; }
+        if (mp)    { _mp = mp; _dirty.mp = true; }
         const state = Player.getState?.();
         if (state?.title !== undefined) _playerTitle = state.title ?? '';
         _renderPlayerName();
@@ -328,16 +343,18 @@ Events.on('playerSpawned', ({ name, level, hp, mp } = {}) => {
         showNotification(`🎉 Level Up! Nível ${newLevel}`, 'success');
         Audio.playSFX('assets/audio/sfx/sfx_levelup.ogg');
     });
+
     Events.on('expChanged', ({ current, needed }) => {
         _xp = { current, needed };
         _dirty.xp = true;
     });
+
     Events.on('damageDealt', ({ target, amount, isCritical }) => {
         if (!target?.position) return;
         if (target.type === 'player') return;
         showDamagePopup(target.position, amount, isCritical);
     });
-    // ── HUD de Ouro ───────────────────────────────────────────────────────
+
     const goldHud = document.createElement('div');
     goldHud.id = 'ui-gold-hud';
     goldHud.style.cssText = `
@@ -350,7 +367,6 @@ Events.on('playerSpawned', ({ name, level, hp, mp } = {}) => {
     goldHud.textContent = '🪙 0';
     document.body.appendChild(goldHud);
 
-// ── Painel de Inventário ──────────────────────────────────────────────
     const invPanel = document.createElement('div');
     invPanel.id = 'ui-inventory';
     invPanel.style.cssText = `
@@ -407,81 +423,82 @@ Events.on('playerSpawned', ({ name, level, hp, mp } = {}) => {
             _refreshInventoryUI();
         });
     });
+
     const equipmentPanel = document.createElement('div');
-equipmentPanel.id = 'ui-equipment';
-equipmentPanel.style.cssText = `
-    display:none;
-    position:fixed;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    background:rgba(20,18,14,0.97);
-    border:1px solid #5a4a2a;
-    border-radius:8px;
-    padding:16px;
-    z-index:210;
-    width:760px;
-    max-width:95vw;
-    max-height:85vh;
-    overflow:auto;
-    color:#e8d8a0;
-    font-family:monospace;
-    font-size:15px;
-    box-shadow:0 8px 32px rgba(0,0,0,0.7);
-    user-select:none;
-`;
+    equipmentPanel.id = 'ui-equipment';
+    equipmentPanel.style.cssText = `
+        display:none;
+        position:fixed;
+        top:50%;
+        left:50%;
+        transform:translate(-50%,-50%);
+        background:rgba(20,18,14,0.97);
+        border:1px solid #5a4a2a;
+        border-radius:8px;
+        padding:16px;
+        z-index:210;
+        width:760px;
+        max-width:95vw;
+        max-height:85vh;
+        overflow:auto;
+        color:#e8d8a0;
+        font-family:monospace;
+        font-size:15px;
+        box-shadow:0 8px 32px rgba(0,0,0,0.7);
+        user-select:none;
+    `;
 
-equipmentPanel.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <span style="font-size:15px;font-weight:bold;">🛡️ Equipamentos</span>
-        <span id="ui-equip-close" style="cursor:pointer;font-size:18px;line-height:1;">✕</span>
-    </div>
+    equipmentPanel.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <span style="font-size:15px;font-weight:bold;">🛡️ Equipamentos</span>
+            <span id="ui-equip-close" style="cursor:pointer;font-size:18px;line-height:1;">✕</span>
+        </div>
 
-    <div style="font-size:11px;color:#a08040;margin-bottom:6px;">EQUIPAMENTO</div>
-    <div id="ui-eq-grid" style="display:grid;grid-template-columns:repeat(5,72px);gap:6px;margin-bottom:14px;">
-        ${EQUIPMENT_SLOT_META.map(({ slot, label, title }) => `
-            <div class="ui-equipment-slot" data-slot="${slot}" title="${title}" style="width:72px;height:72px;border:1px solid #5a4a2a;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#2a2010;font-size:12px;text-align:center;">${label}</div>
-        `).join('')}
-    </div>
+        <div style="font-size:11px;color:#a08040;margin-bottom:6px;">EQUIPAMENTO</div>
+        <div id="ui-eq-grid" style="display:grid;grid-template-columns:repeat(5,72px);gap:6px;margin-bottom:14px;">
+            ${EQUIPMENT_SLOT_META.map(({ slot, label, title }) => `
+                <div class="ui-equipment-slot" data-slot="${slot}" title="${title}" style="width:72px;height:72px;border:1px solid #5a4a2a;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#2a2010;font-size:12px;text-align:center;">${label}</div>
+            `).join('')}
+        </div>
 
-    <div style="font-size:13px;color:#c8a84a;margin-bottom:8px;">Sets Ativos</div>
-    <div id="ui-active-sets" style="display:flex;flex-direction:column;gap:10px;"></div>
+        <div style="font-size:13px;color:#c8a84a;margin-bottom:8px;">Sets Ativos</div>
+        <div id="ui-active-sets" style="display:flex;flex-direction:column;gap:10px;"></div>
 
-    <div style="margin-top:8px;font-size:10px;color:#706050;">C = fechar</div>
-`;
+        <div style="margin-top:8px;font-size:10px;color:#706050;">C = fechar</div>
+    `;
 
-document.body.appendChild(equipmentPanel);
-_equipmentWindowEl = equipmentPanel;
+    document.body.appendChild(equipmentPanel);
+    _equipmentWindowEl = equipmentPanel;
 
-document.getElementById('ui-equip-close').addEventListener('click', () => {
-    equipmentPanel.style.display = 'none';
-    Events.emit('uiWindowClosed', { id: 'equipment' });
-});
-
-equipmentPanel.querySelectorAll('.ui-equipment-slot').forEach(el => {
-    el.addEventListener('click', () => {
-        Inventory.unequipItem(el.dataset.slot);
-        _refreshInventoryUI();
-        _refreshEquipmentWindowUI();
+    document.getElementById('ui-equip-close').addEventListener('click', () => {
+        equipmentPanel.style.display = 'none';
+        Events.emit('uiWindowClosed', { id: 'equipment' });
     });
-});
-    // ── Listeners de Inventário ───────────────────────────────────────────
-Events.on('itemAdded', () => _refreshInventoryUI());
-Events.on('itemRemoved', () => _refreshInventoryUI());
 
-Events.on('itemEquipped', () => {
-    _refreshInventoryUI();
-    if (isEquipmentWindowOpen()) _refreshEquipmentWindowUI();
-});
+    equipmentPanel.querySelectorAll('.ui-equipment-slot').forEach(el => {
+        el.addEventListener('click', () => {
+            Inventory.unequipItem(el.dataset.slot);
+            _refreshInventoryUI();
+            _refreshEquipmentWindowUI();
+        });
+    });
 
-Events.on('itemUnequipped', () => {
-    _refreshInventoryUI();
-    if (isEquipmentWindowOpen()) _refreshEquipmentWindowUI();
-});
+    Events.on('itemAdded', () => _refreshInventoryUI());
+    Events.on('itemRemoved', () => _refreshInventoryUI());
 
-Events.on('setBonusChanged', () => {
-    if (isEquipmentWindowOpen()) _refreshEquipmentWindowUI();
-});
+    Events.on('itemEquipped', () => {
+        _refreshInventoryUI();
+        if (isEquipmentWindowOpen()) _refreshEquipmentWindowUI();
+    });
+
+    Events.on('itemUnequipped', () => {
+        _refreshInventoryUI();
+        if (isEquipmentWindowOpen()) _refreshEquipmentWindowUI();
+    });
+
+    Events.on('setBonusChanged', () => {
+        if (isEquipmentWindowOpen()) _refreshEquipmentWindowUI();
+    });
 
     Events.on('goldChanged', ({ total }) => {
         const gh = document.getElementById('ui-gold-hud');
@@ -492,6 +509,33 @@ Events.on('setBonusChanged', () => {
 
     Events.on('inventoryFull', ({ itemId }) => {
         showNotification(`Inventário cheio! (${itemId})`, 'warning');
+    });
+
+    Events.on('refineSuccess', ({ itemId, newLevel }) => {
+        const def = Inventory.getItemDef(itemId);
+        const name = def?.name ?? itemId;
+        showNotification(`Refino concluído: +${newLevel} ${name}`, 'success');
+        _renderRefineList();
+    });
+
+    Events.on('refineFail', ({ itemId, newLevel, broke }) => {
+        const def = Inventory.getItemDef(itemId);
+        const name = def?.name ?? itemId;
+
+        if (broke) {
+            showNotification(`Falha no refino: ${name} foi destruído!`, 'error');
+        } else {
+            showNotification(`Falha no refino: agora em +${newLevel} ${name}`, 'warning');
+        }
+
+        _renderRefineList();
+    });
+
+    Events.on('refineMax', ({ itemId }) => {
+        const def = Inventory.getItemDef(itemId);
+        const name = def?.name ?? itemId;
+        showCenterMessage(`+15 ${name}`);
+        _renderRefineList();
     });
 
     Events.on('uiWindowToggle', ({ id }) => {
@@ -515,10 +559,20 @@ Events.on('setBonusChanged', () => {
         if (id === 'equipment') {
             Audio.playSFX('assets/audio/sfx/sfx_ui_click.ogg');
             toggleEquipmentWindow();
+            return;
+        }
+
+        if (id === 'refine') {
+            Audio.playSFX('assets/audio/sfx/sfx_ui_click.ogg');
+            const opening = !_refineWindowEl || _refineWindowEl.style.display === 'none';
+            if (opening) {
+                _openRefineWindow();
+            } else {
+                _closeRefineWindow();
+            }
         }
     });
 
-    // ── diálogo de NPC ───────────────────────────────────────────────────
     _buildDialogWindow();
     _buildHintElement();
 
@@ -526,11 +580,11 @@ Events.on('setBonusChanged', () => {
     Events.on('uiHintShow',    _onHintShow);
     Events.on('uiHintHide',    _onHintHide);
 
-// ESC fecha diálogo / Quest Log
     Events.on('keyPressed', ({ code, action }) => {
         if (code === 'Escape' && _dialogOpen) _closeDialog();
         if (code === 'Escape' && _questLogOpen && !_dialogOpen) toggleQuestLog();
         if (code === 'Escape' && _skillWindowOpen && !_dialogOpen) toggleSkillWindow();
+        if (code === 'Escape' && _refineWindowEl && _refineWindowEl.style.display !== 'none' && !_dialogOpen) _closeRefineWindow();
 
         if (action === 'questLog') {
             if (!_dialogOpen) toggleQuestLog();
@@ -542,7 +596,6 @@ Events.on('setBonusChanged', () => {
         }
     });
 
-    // ── Quest Log ─────────────────────────────────────────
     _createQuestLogPanel();
     _createQuestNotificationContainer();
 
@@ -550,7 +603,6 @@ Events.on('setBonusChanged', () => {
         if (id === 'questLog' || name === 'questLog') _questLogOpen = false;
     });
 
-    // Listeners de notificação de quest (payloads confirmados em quests.js)
     Events.on('questAccepted', ({ quest }) =>
         showQuestNotification(`Quest aceita: ${quest.name}`, 'quest-accepted'));
 
@@ -565,10 +617,10 @@ Events.on('setBonusChanged', () => {
 
     Events.on('questCompletable', ({ quest }) =>
         showQuestNotification(`${quest.name}: fale com o NPC!`, 'quest-completable'));
-Events.on('questCompleted', ({ quest }) =>
+
+    Events.on('questCompleted', ({ quest }) =>
         showQuestNotification(`Quest completa: ${quest.name}`, 'quest-completed'));
 
-    // ── PROMPT 10: Hotbar, Janela K, hotkeys de skill ─────────────────────
     _injectSkillStyles();
     _buildHotbar();
     _buildSkillWindow();
@@ -587,10 +639,8 @@ Events.on('questCompleted', ({ quest }) =>
         }
     });
 
-    // Atualiza hotbar ao spawn (modal de classe popula equippedSkills antes do spawn)
     Events.on('playerSpawned', () => updateHotbar());
 
-    // ── Barras de HP de monstros ──────────────────────────────────────────
     Events.on('monsterSpawned', ({ id }) => _createMonsterHpBar(id));
     Events.on('monsterDied',    ({ id }) => _removeMonsterHpBar(id));
 }
@@ -697,6 +747,7 @@ function _onDialogStarted({ npcId, npcName, dialogTree }) {
 
     _renderDialogNode(_currentNodeId);
 }
+
 function _evaluateDialogCondition(condition) {
     if (!condition) return true;
 
@@ -721,6 +772,7 @@ function _evaluateDialogCondition(condition) {
 
     return true;
 }
+
 function _renderDialogNode(nodeId) {
     const node = _currentTree.nodes[nodeId];
     if (!node) { _closeDialog(); return; }
@@ -733,6 +785,7 @@ function _renderDialogNode(nodeId) {
 
     node.options.forEach((opt, index) => {
         if (!_evaluateDialogCondition(opt.condition)) return;
+
         const btn = document.createElement('button');
         btn.textContent = `› ${opt.text}`;
         btn.style.cssText = `
@@ -747,14 +800,17 @@ function _renderDialogNode(nodeId) {
             transition: color 0.15s, border-color 0.15s;
             font-family: inherit;
         `;
+
         btn.addEventListener('mouseenter', () => {
             btn.style.color       = '#fff9e6';
             btn.style.borderColor = '#c8a227';
         });
+
         btn.addEventListener('mouseleave', () => {
             btn.style.color       = '#d4c48a';
             btn.style.borderColor = 'transparent';
         });
+
         btn.addEventListener('click', () => {
             Events.emit('dialogOptionSelected', {
                 npcId:       _currentNpcId,
@@ -797,11 +853,7 @@ function _onHintShow({ message }) {
 function _onHintHide() {
     _hintEl.style.display = 'none';
 }
-/**
- * Atualiza barras de HP/MP quando dirty flag ativo.
- * Chamado a cada frame pelo game loop.
- * @param {number} _delta
- */
+
 /**
  * Cria o painel HTML do Quest Log (oculto por padrão).
  */
@@ -811,33 +863,33 @@ function _createQuestLogPanel() {
     const panel = document.createElement('div');
     panel.id = 'quest-log';
     panel.style.cssText = `
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 420px;
-    max-height: 520px;
-    background: rgba(10, 10, 10, 0.92);
-    border: 1px solid #a08040;
-    border-radius: 6px;
-    padding: 16px;
-    color: #e8d8a0;
-    font-family: sans-serif;
-    font-size: 14px;
-    z-index: 900;
-    overflow-y: auto;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.7);
-  `;
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 420px;
+        max-height: 520px;
+        background: rgba(10, 10, 10, 0.92);
+        border: 1px solid #a08040;
+        border-radius: 6px;
+        padding: 16px;
+        color: #e8d8a0;
+        font-family: sans-serif;
+        font-size: 14px;
+        z-index: 900;
+        overflow-y: auto;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.7);
+    `;
     panel.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;
-                margin-bottom:12px;border-bottom:1px solid #a08040;padding-bottom:8px;">
-      <span style="font-size:16px;font-weight:bold;">📋 Diário de Quests</span>
-      <span style="cursor:pointer;font-size:18px;color:#a08040;"
-            id="quest-log-close">✕</span>
-    </div>
-    <div id="quest-log-body"></div>
-  `;
+        <div style="display:flex;justify-content:space-between;align-items:center;
+                    margin-bottom:12px;border-bottom:1px solid #a08040;padding-bottom:8px;">
+          <span style="font-size:16px;font-weight:bold;">📋 Diário de Quests</span>
+          <span style="cursor:pointer;font-size:18px;color:#a08040;"
+                id="quest-log-close">✕</span>
+        </div>
+        <div id="quest-log-body"></div>
+    `;
     document.body.appendChild(panel);
 
     document.getElementById('quest-log-close')
@@ -853,15 +905,15 @@ function _createQuestNotificationContainer() {
     const container = document.createElement('div');
     container.id = 'quest-notifications';
     container.style.cssText = `
-    position: fixed;
-    top: 80px;
-    right: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    z-index: 950;
-    pointer-events: none;
-  `;
+        position: fixed;
+        top: 80px;
+        right: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 950;
+        pointer-events: none;
+    `;
     document.body.appendChild(container);
 }
 
@@ -875,8 +927,7 @@ function _renderQuestLog() {
     const active = Quests.getActiveQuests();
 
     if (active.length === 0) {
-        body.innerHTML = `<p style="color:#888;text-align:center;margin-top:16px;">
-      Nenhuma quest ativa.</p>`;
+        body.innerHTML = `<p style="color:#888;text-align:center;margin-top:16px;">Nenhuma quest ativa.</p>`;
         return;
     }
 
@@ -889,38 +940,34 @@ function _renderQuestLog() {
             const barColor = pct >= 100 ? '#4caf50' : '#a08040';
 
             return `
-        <div style="margin:6px 0;">
-          <div style="display:flex;justify-content:space-between;
-                      font-size:12px;color:#bbb;margin-bottom:2px;">
-            <span>${obj.label}</span>
-            <span>${current}/${obj.required}</span>
-          </div>
-          <div style="background:#333;border-radius:3px;height:6px;overflow:hidden;">
-            <div style="width:${pct}%;height:100%;
-                        background:${barColor};transition:width 0.3s;"></div>
-          </div>
-        </div>
-      `;
+                <div style="margin:6px 0;">
+                  <div style="display:flex;justify-content:space-between;
+                              font-size:12px;color:#bbb;margin-bottom:2px;">
+                    <span>${obj.label}</span>
+                    <span>${current}/${obj.required}</span>
+                  </div>
+                  <div style="background:#333;border-radius:3px;height:6px;overflow:hidden;">
+                    <div style="width:${pct}%;height:100%;
+                                background:${barColor};transition:width 0.3s;"></div>
+                  </div>
+                </div>
+            `;
         }).join('');
 
         const turnInHint = completable
-            ? `<div style="color:#4caf50;font-size:12px;margin-top:6px;">
-           ✔ Fale com o NPC para completar!</div>`
+            ? `<div style="color:#4caf50;font-size:12px;margin-top:6px;">✔ Fale com o NPC para completar!</div>`
             : '';
 
         return `
-      <div style="margin-bottom:16px;padding-bottom:12px;
-                  border-bottom:1px solid #333;">
-        <div style="font-weight:bold;margin-bottom:4px;
-                    color:${completable ? '#4caf50' : '#e8d8a0'};">
-          ${q.name}
-        </div>
-        <div style="font-size:12px;color:#aaa;margin-bottom:8px;
-                    line-height:1.4;">${q.description}</div>
-        ${objectivesHtml}
-        ${turnInHint}
-      </div>
-    `;
+            <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #333;">
+                <div style="font-weight:bold;margin-bottom:4px;color:${completable ? '#4caf50' : '#e8d8a0'};">
+                    ${q.name}
+                </div>
+                <div style="font-size:12px;color:#aaa;margin-bottom:8px;line-height:1.4;">${q.description}</div>
+                ${objectivesHtml}
+                ${turnInHint}
+            </div>
+        `;
     }).join('');
 }
 
@@ -930,21 +977,16 @@ function _renderQuestLog() {
  * @returns {{ symbol: string, color: string }|null}
  */
 function _getNpcIndicatorStyle(npcId) {
-    // "?" amarelo — turn-in disponível
     if (Quests.getTurnInQuestForNpc(npcId)) {
         return { symbol: '?', color: '#f0c040' };
     }
 
-    // "?" cinza — quest ativa (não completável)
     const active = Quests.getActiveQuests();
-    const hasActiveQuest = active.some(
-        ({ definition: q }) => q.completer === npcId
-    );
+    const hasActiveQuest = active.some(({ definition: q }) => q.completer === npcId);
     if (hasActiveQuest) {
         return { symbol: '?', color: '#888888' };
     }
 
-    // "!" amarelo — quest disponível para aceitar
     if (Quests.getOfferableQuestForNpc(npcId)) {
         return { symbol: '!', color: '#f0c040' };
     }
@@ -992,16 +1034,16 @@ export function updateNpcQuestIndicator(npcId, mesh, camera, renderer) {
     if (!el) {
         el = document.createElement('div');
         el.style.cssText = `
-      position: fixed;
-      pointer-events: none;
-      font-size: 24px !important;
-      font-weight: bold;
-      text-shadow: 0 1px 4px #000, 0 0 8px #000;
-      z-index: 500;
-      transform: translate(-50%, -100%);
-      transition: opacity 0.2s;
-      user-select: none;
-    `;
+            position: fixed;
+            pointer-events: none;
+            font-size: 24px !important;
+            font-weight: bold;
+            text-shadow: 0 1px 4px #000, 0 0 8px #000;
+            z-index: 500;
+            transform: translate(-50%, -100%);
+            transition: opacity 0.2s;
+            user-select: none;
+        `;
         document.body.appendChild(el);
         _npcIndicators.set(npcId, el);
     }
@@ -1016,14 +1058,12 @@ export function updateNpcQuestIndicator(npcId, mesh, camera, renderer) {
     const pos3D = new THREE.Vector3();
     mesh.getWorldPosition(pos3D);
     pos3D.y += 0.9;
-
     pos3D.project(camera);
 
     const canvas = renderer.domElement;
     const screenX = (pos3D.x * 0.5 + 0.5) * canvas.clientWidth;
     const screenY = (pos3D.y * -0.5 + 0.5) * canvas.clientHeight;
 
-    // Ocultar se fora do frustum / atrás
     if (pos3D.z > 1) {
         el.style.display = 'none';
         return;
@@ -1056,18 +1096,18 @@ export function showQuestNotification(message, type) {
 
     const el = document.createElement('div');
     el.style.cssText = `
-    background: rgba(10,10,10,0.88);
-    border-left: 3px solid ${color};
-    color: ${color};
-    padding: 8px 14px;
-    border-radius: 4px;
-    font-family: sans-serif;
-    font-size: 13px;
-    max-width: 280px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.6);
-    animation: questNotifIn 0.25s ease;
-    pointer-events: none;
-  `;
+        background: rgba(10,10,10,0.88);
+        border-left: 3px solid ${color};
+        color: ${color};
+        padding: 8px 14px;
+        border-radius: 4px;
+        font-family: sans-serif;
+        font-size: 13px;
+        max-width: 280px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        animation: questNotifIn 0.25s ease;
+        pointer-events: none;
+    `;
     el.textContent = message;
     container.appendChild(el);
 
@@ -1075,11 +1115,11 @@ export function showQuestNotification(message, type) {
         const style = document.createElement('style');
         style.id = 'quest-notif-style';
         style.textContent = `
-      @keyframes questNotifIn {
-        from { opacity: 0; transform: translateX(24px); }
-        to   { opacity: 1; transform: translateX(0); }
-      }
-    `;
+            @keyframes questNotifIn {
+                from { opacity: 0; transform: translateX(24px); }
+                to   { opacity: 1; transform: translateX(0); }
+            }
+        `;
         document.head.appendChild(style);
     }
 
@@ -1089,6 +1129,7 @@ export function showQuestNotification(message, type) {
         setTimeout(() => el.remove(), 320);
     }, 4000);
 }
+
 export function update(_delta) {
     if (_dirty.hp) {
         const pct = _hp.max > 0 ? (_hp.current / _hp.max) * 100 : 0;
@@ -1096,6 +1137,7 @@ export function update(_delta) {
         _elHPBar.style.width = `${pct}%`;
         _dirty.hp = false;
     }
+
     if (_dirty.mp) {
         const pct = _mp.max > 0 ? (_mp.current / _mp.max) * 100 : 0;
         _elMP.textContent    = `${_mp.current}/${_mp.max}`;
@@ -1103,20 +1145,19 @@ export function update(_delta) {
         _dirty.mp = false;
     }
 
-// DEPOIS:
     if (_dirty.xp) {
         const pct = _xp.needed > 0 ? (_xp.current / _xp.needed) * 100 : 0;
         if (_elXPBar) _elXPBar.style.width = `${pct}%`;
         if (_elXP)    _elXP.textContent    = `${_xp.current}/${_xp.needed}`;
         _dirty.xp = false;
     }
-    // Atualiza Quest Log se aberto
+
     if (_questLogOpen) _renderQuestLog();
 }
 
 /**
  * Exibe notificação toast temporária (2.8s) e toca SFX de click.
- * @param {string} msg              - Texto da notificação
+ * @param {string} msg
  * @param {'info'|'success'|'warning'|'error'} [type='info']
  */
 export function showNotification(msg, type = 'info') {
@@ -1139,7 +1180,6 @@ export function showCenterMessage(msg) {
     _elCenter.textContent = msg;
     _elCenter.style.display = 'block';
     _elCenter.style.animation = 'none';
-    // Força reflow para reiniciar animação
     void _elCenter.offsetWidth;
     _elCenter.style.animation = 'centerFade 3s forwards';
     setTimeout(() => { _elCenter.style.display = 'none'; }, 3100);
@@ -1154,7 +1194,7 @@ export function setFPS(fps) {
 }
 
 /**
- * Exibe uma janela de UI pelo id (stub — implementação completa em prompts futuros).
+ * Exibe uma janela de UI pelo id.
  * @param {string} id
  */
 export function showWindow(id) {
@@ -1162,104 +1202,117 @@ export function showWindow(id) {
 }
 
 /**
- * Fecha uma janela de UI pelo id (stub).
+ * Fecha uma janela de UI pelo id.
  * @param {string} id
  */
 export function hideWindow(id) {
     Events.emit('uiWindowClosed', { id });
 }
+
 /**
  * Retorna true se uma janela de diálogo de NPC estiver aberta.
- * Consultado por player.js e npcs.js para bloquear input durante diálogo.
  * @returns {boolean}
  */
 export function isDialogOpen() {
     return _dialogOpen;
 }
-/**
- * Re-renderiza grid + equipment slots + ouro do painel de inventário.
- */
 
+/**
+ * Re-renderiza grid, equipment slots e ouro do painel de inventário.
+ */
 function _refreshInventoryUI() {
-    const slots   = Inventory.getSlots();
-    const equip   = Inventory.getEquipment();
-    const gold    = Inventory.getGold();
-    const grid    = document.getElementById('ui-inv-grid');
+    const slots = Inventory.getSlots();
+    const equip = Inventory.getEquipment();
+    const gold  = Inventory.getGold();
+    const grid  = document.getElementById('ui-inv-grid');
     const goldInv = document.getElementById('ui-gold-inv');
     const goldHud = document.getElementById('ui-gold-hud');
 
     if (goldInv) goldInv.textContent = gold;
     if (goldHud) goldHud.textContent = '🪙 ' + gold;
 
-    if (grid) {
-        grid.innerHTML = '';
-        for (let i = 0; i < 30; i++) {
-            const slot = slots[i];
-            const cell = document.createElement('div');
-            cell.style.cssText = `
-                width:64px;height:64px;border:1px solid #3a2a10;border-radius:3px;
-                display:flex;align-items:center;justify-content:center;
-                background:#1a1408;cursor:${slot ? 'pointer' : 'default'};
-                font-size:10px;text-align:center;color:#c8a84a;position:relative;
-                box-sizing:border-box;
+    if (grid) grid.innerHTML = '';
+
+    for (let i = 0; i < 30; i++) {
+        const slot = slots[i];
+        const cell = document.createElement('div');
+        cell.style.cssText = `
+            width:64px;height:64px;border:1px solid #3a2a10;border-radius:3px;
+            display:flex;align-items:center;justify-content:center;
+            background:#1a1408;cursor:${slot ? 'pointer' : 'default'};
+            font-size:10px;text-align:center;color:#c8a84a;position:relative;
+            box-sizing:border-box;
+        `;
+
+        if (slot) {
+            const def = Inventory.getItemDef(slot.itemId);
+            const icon =
+                def?.type === 'weapon'     ? '⚔️' :
+                def?.type === 'armor'      ? '🛡️' :
+                def?.type === 'accessory'  ? '💍' :
+                def?.type === 'consumable' ? '🧪' :
+                def?.type === 'material'   ? '⛏️' :
+                '📦';
+
+            const refineLevel = slot.refineLevel ?? 0;
+            const refinePrefix = refineLevel > 0 ? `+${refineLevel} ` : '';
+            const refineColor = getRefineColor(refineLevel) || '#c8a84a';
+
+            cell.innerHTML = `
+                <span style="font-size:16px;">${icon}</span>
+                <span style="position:absolute;left:2px;top:2px;font-size:9px;color:${refineColor};">${refineLevel > 0 ? `+${refineLevel}` : ''}</span>
             `;
 
-            if (slot) {
-                const def = Inventory.getItemDef(slot.itemId);
-                const icon = def?.type === 'weapon'     ? '⚔️'
-                           : def?.type === 'armor'      ? '🛡️'
-                           : def?.type === 'accessory'  ? '💍'
-                           : def?.type === 'consumable' ? '🧪'
-                           : '📦';
-
-                cell.innerHTML = `<span style="font-size:16px;">${icon}</span>`;
-
-                if (def && def.stack > 1) {
-                    const qtyEl = document.createElement('span');
-                    qtyEl.style.cssText = 'position:absolute;bottom:1px;right:3px;font-size:9px;color:#ffd700;';
-                    qtyEl.textContent = slot.qty;
-                    cell.appendChild(qtyEl);
-                }
-
-                cell.title = (def?.name ?? slot.itemId) + (slot.qty > 1 ? ` x${slot.qty}` : '');
-
-                cell.addEventListener('contextmenu', (e) => {
-                    e.preventDefault();
-                    const d = Inventory.getItemDef(slot.itemId);
-                    if (!d) return;
-
-                    if (d.type === 'consumable') {
-                        Inventory.useItem(i);
-                        Audio.playSFX('assets/audio/sfx/sfx_ui_click.ogg');
-                    } else if (
-                        d.type === 'weapon' ||
-                        d.type === 'armor' ||
-                        d.type === 'accessory' ||
-                        d.type === 'shield' ||
-                        d.type === 'headgear' ||
-                        d.type === 'garment' ||
-                        d.type === 'footgear'
-                    ) {
-                        Inventory.equipItem(i);
-                    }
-
-                    _refreshInventoryUI();
-                });
+            if (def?.stackable && slot.qty > 1) {
+                const qtyEl = document.createElement('span');
+                qtyEl.style.cssText = 'position:absolute;bottom:1px;right:3px;font-size:9px;color:#ffd700;';
+                qtyEl.textContent = slot.qty;
+                cell.appendChild(qtyEl);
             }
 
-            grid.appendChild(cell);
+            cell.title = `${refinePrefix}${def?.name ?? slot.itemId}${slot.qty > 1 ? ` x${slot.qty}` : ''}`;
+
+            cell.addEventListener('contextmenu', e => {
+                e.preventDefault();
+                const d = Inventory.getItemDef(slot.itemId);
+                if (!d) return;
+
+                if (d.type === 'consumable') {
+                    Inventory.useItem(i);
+                    Audio.playSFX('assets/audio/sfx/sfx_ui_click.ogg');
+                } else if (
+                    d.type === 'weapon' ||
+                    d.type === 'armor' ||
+                    d.type === 'accessory' ||
+                    d.type === 'shield' ||
+                    d.type === 'headgear' ||
+                    d.type === 'garment' ||
+                    d.type === 'footgear'
+                ) {
+                    Inventory.equipItem(i);
+                    _refreshInventoryUI();
+                }
+            });
         }
+
+        grid?.appendChild(cell);
     }
 
     document.querySelectorAll('#ui-inv-equip-grid .ui-equip-slot').forEach(el => {
         const slotName = el.dataset.slot;
         const meta = EQUIPMENT_SLOT_META.find(s => s.slot === slotName);
-        const itemId = equip[slotName];
+
+        const equipObj = equip[slotName];
+        const itemId = equipObj?.itemId ?? (typeof equipObj === 'string' ? equipObj : null);
+        const refineLevel = equipObj?.refineLevel ?? 0;
 
         if (itemId) {
             const def = Inventory.getItemDef(itemId);
             const icon = meta?.icon ?? '📦';
-            el.innerHTML = `<span style="font-size:18px;">${icon}</span><br><span style="font-size:9px;">${def?.name ?? itemId}</span>`;
+            const refinePrefix = refineLevel > 0 ? `+${refineLevel} ` : '';
+            const refineColor = getRefineColor(refineLevel) || '#e8d8a0';
+
+            el.innerHTML = `<span style="font-size:18px;">${icon}</span><br><span style="font-size:9px;color:${refineColor};">${refinePrefix}${def?.name ?? itemId}</span>`;
             el.style.borderColor = '#c8a84a';
         } else {
             el.textContent = meta?.label ?? slotName;
@@ -1272,17 +1325,23 @@ function _refreshEquipmentWindowUI() {
     if (!_equipmentWindowEl) return;
 
     const equip = Inventory.getEquipment();
-    const activeSets = Equipment.getActiveSetBonuses(null);
+    const activeSets = Equipment.getActiveSetBonuses?.() ?? { sets: [] };
 
     _equipmentWindowEl.querySelectorAll('#ui-eq-grid .ui-equipment-slot').forEach(el => {
         const slotName = el.dataset.slot;
         const meta = EQUIPMENT_SLOT_META.find(s => s.slot === slotName);
-        const itemId = equip[slotName];
+
+        const equipObj = equip[slotName];
+        const itemId = equipObj?.itemId ?? (typeof equipObj === 'string' ? equipObj : null);
+        const refineLevel = equipObj?.refineLevel ?? 0;
 
         if (itemId) {
             const def = Inventory.getItemDef(itemId);
             const icon = meta?.icon ?? '📦';
-            el.innerHTML = `<span style="font-size:18px;">${icon}</span><br><span style="font-size:9px;">${def?.name ?? itemId}</span>`;
+            const refinePrefix = refineLevel > 0 ? `+${refineLevel} ` : '';
+            const refineColor = getRefineColor(refineLevel) || '#e8d8a0';
+
+            el.innerHTML = `<span style="font-size:18px;">${icon}</span><br><span style="font-size:9px;color:${refineColor};">${refinePrefix}${def?.name ?? itemId}</span>`;
             el.style.borderColor = '#c8a84a';
         } else {
             el.textContent = meta?.label ?? slotName;
@@ -1307,24 +1366,25 @@ function _refreshEquipmentWindowUI() {
         const tierColor = _getTierBadgeColor(setInfo.tier);
         const bonusText = _formatStatsLine(setInfo.activeBonus);
 
-        const piecesHtml = (setDef?.pieceSlots || []).map(slotName => {
-            const slotMeta = EQUIPMENT_SLOT_META.find(s => s.slot === slotName);
-            const equipped = setInfo.equippedSlots.includes(slotName);
-
-            return `
-                <div style="
-                    padding:6px 8px;
-                    border:1px solid ${equipped ? '#c8a84a' : '#4e4e4e'};
-                    border-radius:4px;
-                    background:${equipped ? '#2d2210' : '#1b1b1b'};
-                    color:${equipped ? '#f0e6d2' : '#9a9a9a'};
-                    opacity:${equipped ? '1' : '0.4'};
-                    font-size:11px;
-                ">
-                    ${slotMeta?.label ?? slotName}
-                </div>
-            `;
-        }).join('');
+        const piecesHtml = setDef?.pieceSlots
+            ?.map(slotName => {
+                const slotMeta = EQUIPMENT_SLOT_META.find(s => s.slot === slotName);
+                const equipped = setInfo.equippedSlots.includes(slotName);
+                return `
+                    <div style="
+                        padding:6px 8px;
+                        border:1px solid ${equipped ? '#c8a84a' : '#4e4e4e'};
+                        border-radius:4px;
+                        background:${equipped ? '#2d2210' : '#1b1b1b'};
+                        color:${equipped ? '#f0e6d2' : '#9a9a9a'};
+                        opacity:${equipped ? 1 : 0.4};
+                        font-size:11px;
+                    ">
+                        ${slotMeta?.label ?? slotName}
+                    </div>
+                `;
+            })
+            .join('');
 
         return `
             <div style="padding:10px;border:1px solid #5a4a2a;border-radius:6px;background:#21180d;">
@@ -1337,79 +1397,450 @@ function _refreshEquipmentWindowUI() {
                         <span style="font-size:11px;color:#c9b07a;">${setInfo.pieceCount}/4</span>
                     </div>
                 </div>
-
                 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px;">
                     ${piecesHtml}
                 </div>
-
-                <div style="font-size:11px;color:#e7d7ad;">
-                    ${bonusText}
-                </div>
+                <div style="font-size:11px;color:#e7d7ad;">${bonusText}</div>
             </div>
         `;
     }).join('');
 }
+
+function _ensureRefineWindow() {
+    if (_refineWindowEl) return;
+
+    const style = document.createElement('style');
+    style.id = 'lumie-refine-style';
+    style.textContent = `
+        #refine-window {
+            display:none;
+            position:fixed;
+            top:50%;
+            left:50%;
+            transform:translate(-50%,-50%);
+            width:920px;
+            max-width:96vw;
+            max-height:86vh;
+            background:rgba(20,18,14,0.97);
+            border:1px solid #5a4a2a;
+            border-radius:8px;
+            padding:16px;
+            z-index:240;
+            color:#e8d8a0;
+            font-family:monospace;
+            font-size:14px;
+            box-shadow:0 8px 32px rgba(0,0,0,0.7);
+            user-select:none;
+            overflow:hidden;
+        }
+        #refine-window.refine-flash-success {
+            box-shadow:0 0 0 2px rgba(76,175,80,0.85), 0 8px 32px rgba(0,0,0,0.7);
+        }
+        #refine-window.refine-flash-fail {
+            box-shadow:0 0 0 2px rgba(244,67,54,0.85), 0 8px 32px rgba(0,0,0,0.7);
+        }
+        .refine-layout {
+            display:grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap:14px;
+            min-height:480px;
+        }
+        .refine-list-wrap,
+        .refine-detail {
+            background:#17110a;
+            border:1px solid #4b3920;
+            border-radius:6px;
+            padding:12px;
+            min-height:0;
+        }
+        .refine-list-wrap {
+            display:flex;
+            flex-direction:column;
+        }
+        .refine-list {
+            overflow:auto;
+            display:flex;
+            flex-direction:column;
+            gap:8px;
+            min-height:0;
+            padding-right:4px;
+        }
+        .refine-item {
+            border:1px solid #4b3920;
+            border-radius:6px;
+            background:#21180d;
+            padding:10px;
+            cursor:pointer;
+            transition:background 0.12s, border-color 0.12s, transform 0.08s;
+        }
+        .refine-item:hover {
+            background:#2a1e10;
+            border-color:#8c6d34;
+        }
+        .refine-item.selected {
+            border-color:#c8a84a;
+            background:#2c210f;
+        }
+        .refine-item-row {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:8px;
+        }
+        .refine-item-name {
+            font-size:13px;
+            font-weight:bold;
+        }
+        .refine-item-meta {
+            font-size:11px;
+            color:#a89368;
+            margin-top:4px;
+        }
+        .refine-badge {
+            font-size:10px;
+            color:#111;
+            background:#c8a84a;
+            border-radius:999px;
+            padding:2px 6px;
+            font-weight:bold;
+        }
+        .refine-detail-empty {
+            color:#9f8b62;
+            font-size:12px;
+            line-height:1.6;
+        }
+        .refine-title {
+            font-size:15px;
+            font-weight:bold;
+            color:#ffd27a;
+            margin-bottom:10px;
+        }
+        .refine-stat {
+            font-size:12px;
+            color:#d9c38b;
+            margin-bottom:8px;
+        }
+        .refine-risk {
+            margin-top:10px;
+            color:#ff8a65;
+            font-size:12px;
+            font-weight:bold;
+        }
+        .refine-actions {
+            display:flex;
+            gap:8px;
+            margin-top:14px;
+        }
+        .refine-btn {
+            border:1px solid #7c6432;
+            background:#2a2010;
+            color:#f1dfb0;
+            border-radius:6px;
+            padding:8px 12px;
+            cursor:pointer;
+            font-family:inherit;
+            font-size:12px;
+        }
+        .refine-btn:hover {
+            background:#382914;
+        }
+        .refine-btn.primary {
+            background:#6b4a16;
+            border-color:#c8a84a;
+            color:#fff4cc;
+            font-weight:bold;
+        }
+        .refine-btn.primary:hover {
+            background:#845a1a;
+        }
+    `;
+    document.head.appendChild(style);
+
+    _refineWindowEl = document.createElement('div');
+    _refineWindowEl.id = 'refine-window';
+    _refineWindowEl.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <span style="font-size:15px;font-weight:bold;">🔨 Refino de Equipamento</span>
+            <span id="ui-refine-close" style="cursor:pointer;font-size:18px;line-height:1;">✕</span>
+        </div>
+
+        <div class="refine-layout">
+            <div class="refine-list-wrap">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <div style="font-size:12px;color:#c8a84a;">ITENS REFINÁVEIS</div>
+                    <div style="font-size:11px;color:#8f7a4f;">Selecione um item</div>
+                </div>
+                <div id="refine-list" class="refine-list"></div>
+            </div>
+
+            <div class="refine-detail">
+                <div id="refine-detail"></div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(_refineWindowEl);
+
+    document.getElementById('ui-refine-close').addEventListener('click', () => {
+        _closeRefineWindow();
+    });
+}
+
+function _flashRefineWindow(type) {
+    if (!_refineWindowEl) return;
+    _refineWindowEl.classList.remove('refine-flash-success', 'refine-flash-fail');
+    void _refineWindowEl.offsetWidth;
+    _refineWindowEl.classList.add(type === 'success' ? 'refine-flash-success' : 'refine-flash-fail');
+    setTimeout(() => {
+        _refineWindowEl?.classList.remove('refine-flash-success', 'refine-flash-fail');
+    }, 260);
+}
+
+function _getRefineEntries() {
+    const entries = [];
+    const slots = Inventory.getSlots();
+    const equipment = Inventory.getEquipment();
+
+    for (let i = 0; i < slots.length; i++) {
+        const slot = slots[i];
+        const check = Refine.canRefine(slot);
+        if (!check.ok) continue;
+
+        const def = Inventory.getItemDef(slot.itemId);
+        if (!def) continue;
+
+        entries.push({
+            key: `inv-${i}`,
+            sourceLabel: `Inventário #${i + 1}`,
+            itemId: slot.itemId,
+            itemName: def.name ?? slot.itemId,
+            refineLevel: slot.refineLevel ?? 0,
+            target: { type: 'inventory', index: i },
+            detailType: 'inventory'
+        });
+    }
+
+    for (const meta of EQUIPMENT_SLOT_META) {
+        const equipObj = equipment[meta.slot];
+        const check = Refine.canRefine(equipObj);
+        if (!check.ok) continue;
+
+        const def = Inventory.getItemDef(equipObj.itemId);
+        if (!def) continue;
+
+        entries.push({
+            key: `eq-${meta.slot}`,
+            sourceLabel: `Equipado: ${meta.title}`,
+            itemId: equipObj.itemId,
+            itemName: def.name ?? equipObj.itemId,
+            refineLevel: equipObj.refineLevel ?? 0,
+            target: { type: 'equipment', slot: meta.slot },
+            detailType: 'equipment'
+        });
+    }
+
+    return entries;
+}
+
+function _formatRefineItemName(name, level) {
+    const lv = Number(level ?? 0);
+    return lv > 0 ? `+${lv} ${name}` : name;
+}
+
+function _renderRefineDetail(meta) {
+    const detailEl = document.getElementById('refine-detail');
+    if (!detailEl) return;
+
+    if (!meta) {
+        detailEl.innerHTML = `
+            <div class="refine-title">Seleção</div>
+            <div class="refine-detail-empty">
+                Escolha um equipamento da lista para ver custo, chance e iniciar o refino.
+            </div>
+        `;
+        return;
+    }
+
+    const cost = Refine.getRefineCost(meta.refineLevel);
+    const rate = Refine.getSuccessRate(meta.refineLevel);
+    const nextLevel = (meta.refineLevel ?? 0) + 1;
+    const color = getRefineColor(meta.refineLevel) || '#f1dfb0';
+    const riskHtml = meta.refineLevel >= 10
+        ? `<div class="refine-risk">⚠️ Risco de quebra!</div>`
+        : '';
+
+    detailEl.innerHTML = `
+        <div class="refine-title" style="color:${color};">
+            ${_formatRefineItemName(meta.itemName, meta.refineLevel)}
+        </div>
+        <div class="refine-stat"><strong>Origem:</strong> ${meta.sourceLabel}</div>
+        <div class="refine-stat"><strong>Próximo nível:</strong> +${nextLevel}</div>
+        <div class="refine-stat"><strong>Custo:</strong> ${cost.ore} Minério + ${cost.gold} gold</div>
+        <div class="refine-stat"><strong>Chance:</strong> ${Math.round(rate * 100)}%</div>
+        ${riskHtml}
+        <div class="refine-actions">
+            <button id="refine-confirm-btn" class="refine-btn primary">Refinar</button>
+            <button id="refine-cancel-btn" class="refine-btn">Fechar</button>
+        </div>
+    `;
+
+    document.getElementById('refine-confirm-btn')?.addEventListener('click', () => {
+        if (!_selectedRefineTarget) return;
+        const result = Refine.attemptRefine(_selectedRefineTarget);
+        _flashRefineWindow(result.success ? 'success' : 'fail');
+        _openRefineWindow();
+    });
+
+    document.getElementById('refine-cancel-btn')?.addEventListener('click', () => {
+        _closeRefineWindow();
+    });
+}
+
+function _renderRefineList() {
+    const listEl = document.getElementById('refine-list');
+    if (!listEl) return;
+
+    const entries = _getRefineEntries();
+
+    if (entries.length === 0) {
+        _selectedRefineTarget = null;
+        _selectedRefineMeta = null;
+        listEl.innerHTML = `
+            <div style="padding:10px;border:1px solid #4e3b1f;border-radius:6px;background:#21180d;color:#a89368;font-size:12px;">
+                Nenhum item refinável disponível no momento.
+            </div>
+        `;
+        _renderRefineDetail(null);
+        return;
+    }
+
+    const selectedKey = _selectedRefineMeta?.key;
+    const stillExists = entries.find(e => e.key === selectedKey);
+    if (!stillExists) {
+        _selectedRefineMeta = entries[0];
+        _selectedRefineTarget = entries[0].target;
+    } else {
+        _selectedRefineMeta = stillExists;
+        _selectedRefineTarget = stillExists.target;
+    }
+
+    listEl.innerHTML = '';
+
+    entries.forEach(entry => {
+        const color = getRefineColor(entry.refineLevel) || '#f1dfb0';
+        const card = document.createElement('div');
+        card.className = 'refine-item' + (_selectedRefineMeta?.key === entry.key ? ' selected' : '');
+        card.innerHTML = `
+            <div class="refine-item-row">
+                <div class="refine-item-name" style="color:${color};">
+                    ${_formatRefineItemName(entry.itemName, entry.refineLevel)}
+                </div>
+                <span class="refine-badge">${entry.detailType === 'equipment' ? 'Equipado' : 'Bolsa'}</span>
+            </div>
+            <div class="refine-item-meta">${entry.sourceLabel}</div>
+        `;
+        card.addEventListener('click', () => {
+            _selectedRefineMeta = entry;
+            _selectedRefineTarget = entry.target;
+            _renderRefineList();
+            _renderRefineDetail(entry);
+        });
+        listEl.appendChild(card);
+    });
+
+    _renderRefineDetail(_selectedRefineMeta);
+}
+
+function _openRefineWindow() {
+    _ensureRefineWindow();
+    _refineWindowEl.style.display = 'block';
+    _renderRefineList();
+    Events.emit('uiWindowOpened', { id: 'refine' });
+}
+
+function _closeRefineWindow() {
+    if (!_refineWindowEl) return;
+    _refineWindowEl.style.display = 'none';
+    _selectedRefineTarget = null;
+    _selectedRefineMeta = null;
+    Events.emit('uiWindowClosed', { id: 'refine' });
+}
+
 /**
  * Exibe número de dano flutuante sobre a posição world do alvo.
  * @param {{ x: number, y: number, z: number }} worldPosition
- * @param {number}  amount
+ * @param {number} amount
  * @param {boolean} isCritical
  */
 function showDamagePopup(worldPosition, amount, isCritical) {
-  const camera   = getCamera();
-  const renderer = getRenderer();
-  if (!camera || !renderer) return;
+    const camera = getCamera();
+    const renderer = getRenderer();
+    if (!camera || !renderer) return;
 
-  const canvas = renderer.domElement;
-  const vec = new THREE.Vector3(
-    worldPosition.x,
-    (worldPosition.y ?? 0) + 1.2,
-    worldPosition.z
-  );
-  vec.project(camera);
+    const canvas = renderer.domElement;
+    const vec = new THREE.Vector3(worldPosition.x, (worldPosition.y ?? 0) + 1.2, worldPosition.z);
+    vec.project(camera);
 
-  const hw = canvas.clientWidth  / 2;
-  const hh = canvas.clientHeight / 2;
-  const sx = Math.round( vec.x * hw + hw);
-  const sy = Math.round(-vec.y * hh + hh);
+    const hw = canvas.clientWidth / 2;
+    const hh = canvas.clientHeight / 2;
+    const sx = Math.round((vec.x * hw) + hw);
+    const sy = Math.round((-vec.y * hh) + hh);
 
-  const div = document.createElement('div');
-  div.className  = `lumie-dmg ${isCritical ? 'critical' : 'normal'}`;
-  div.textContent = isCritical ? `★${amount}` : `${amount}`;
-  div.style.left = `${sx}px`;
-  div.style.top  = `${sy}px`;
+    const div = document.createElement('div');
+    div.className = `lumie-dmg ${isCritical ? 'critical' : 'normal'}`;
+    div.textContent = isCritical ? `${amount}!` : `${amount}`;
+    div.style.left = `${sx}px`;
+    div.style.top = `${sy}px`;
 
-  const root = document.getElementById('ui-root') ?? document.body;
-  root.appendChild(div);
-
-  div.addEventListener('animationend', () => div.remove(), { once: true });
+    const root = document.getElementById('ui-root') ?? document.body;
+    root.appendChild(div);
+    div.addEventListener('animationend', () => div.remove(), { once: true });
 }
-// ═══════════════════════════════════════════════════════════════════════════
-// PROMPT 10 — Hotbar, Janela de Skills, Modal de Classe
-// ═══════════════════════════════════════════════════════════════════════════
+
+// PROMPT 10 ────────────────────────────────────────────────────────────────
 
 const _CLASS_COLORS = {
     swordman: '#e07a3a',
-    mage:     '#6a9fe8',
-    archer:   '#6db56d',
+    mage: '#6a9fe8',
+    archer: '#6db56d',
     assassin: '#b06ab3',
 };
 
 const _CLASS_DATA = [
-    { id: 'swordman', name: 'Swordman', desc: 'Guerreiro resistente, mestre de espadas e lanças.', skills: ['Bash', 'Endure', 'Provoke'] },
-    { id: 'mage',     name: 'Mage',     desc: 'Conjurador de feitiços elementais devastadores.',   skills: ['Fire Ball', 'Ice Bolt', 'Lightning'] },
-    { id: 'archer',   name: 'Archer',   desc: 'Atirador preciso com grande alcance de combate.',   skills: ['Double Strike', 'Explosive Shot', 'Slow Shot'] },
-    { id: 'assassin', name: 'Assassin', desc: 'Especialista em golpes furtivos e venenos.',        skills: ['Stealth Strike', 'Poison', 'Evasion'] },
+    {
+        id: 'swordman',
+        name: 'Swordman',
+        desc: 'Guerreiro resistente, mestre de espadas e lanças.',
+        skills: ['Bash', 'Endure', 'Provoke']
+    },
+    {
+        id: 'mage',
+        name: 'Mage',
+        desc: 'Conjurador de feitiços elementais devastadores.',
+        skills: ['Fire Ball', 'Ice Bolt', 'Lightning']
+    },
+    {
+        id: 'archer',
+        name: 'Archer',
+        desc: 'Atirador preciso com grande alcance de combate.',
+        skills: ['Double Strike', 'Explosive Shot', 'Slow Shot']
+    },
+    {
+        id: 'assassin',
+        name: 'Assassin',
+        desc: 'Especialista em golpes furtivos e venenos.',
+        skills: ['Stealth Strike', 'Poison', 'Evasion']
+    },
 ];
 
 /**
- * Constrói o HTML da hotbar (4 slots) e injeta no body.
- * Cacheia refs em _hotbarSlotEls (perf — evita querySelectorAll a 60fps).
+ * Constrói o HTML da hotbar.
  */
 function _buildHotbar() {
     if (_hotbarEl) return;
+
     _hotbarEl = document.createElement('div');
     _hotbarEl.id = 'hotbar';
+
     for (let i = 0; i < 4; i++) {
         const slot = document.createElement('div');
         slot.className = 'hotbar-slot empty';
@@ -1423,33 +1854,38 @@ function _buildHotbar() {
         _hotbarEl.appendChild(slot);
         _hotbarSlotEls.push(slot);
     }
+
     document.body.appendChild(_hotbarEl);
 }
 
 /**
- * Constrói a janela de skills (tecla K). display:none até toggleSkillWindow().
+ * Constrói a janela de skills.
  */
 function _buildSkillWindow() {
     if (_skillWindowEl) return;
+
     _skillWindowEl = document.createElement('div');
     _skillWindowEl.id = 'skill-window';
     _skillWindowEl.style.display = 'none';
     _skillWindowEl.innerHTML = `
-        <div class="sw-header"><span>Skills</span><button class="sw-close" aria-label="Fechar">✕</button></div>
+        <div class="sw-header">
+            <span>Skills</span>
+            <button class="sw-close" aria-label="Fechar">✕</button>
+        </div>
         <div class="sw-hotbar-slots">
-            <div class="sw-slot" data-slot="0"><span class="sw-slot-label">1</span><span class="sw-slot-name">—</span><button class="sw-clear" data-slot="0">✕</button></div>
-            <div class="sw-slot" data-slot="1"><span class="sw-slot-label">2</span><span class="sw-slot-name">—</span><button class="sw-clear" data-slot="1">✕</button></div>
-            <div class="sw-slot" data-slot="2"><span class="sw-slot-label">3</span><span class="sw-slot-name">—</span><button class="sw-clear" data-slot="2">✕</button></div>
-            <div class="sw-slot" data-slot="3"><span class="sw-slot-label">4</span><span class="sw-slot-name">—</span><button class="sw-clear" data-slot="3">✕</button></div>
+            <div class="sw-slot" data-slot="0"><span class="sw-slot-label">1</span><span class="sw-slot-name"></span><button class="sw-clear" data-slot="0">✕</button></div>
+            <div class="sw-slot" data-slot="1"><span class="sw-slot-label">2</span><span class="sw-slot-name"></span><button class="sw-clear" data-slot="1">✕</button></div>
+            <div class="sw-slot" data-slot="2"><span class="sw-slot-label">3</span><span class="sw-slot-name"></span><button class="sw-clear" data-slot="2">✕</button></div>
+            <div class="sw-slot" data-slot="3"><span class="sw-slot-label">4</span><span class="sw-slot-name"></span><button class="sw-clear" data-slot="3">✕</button></div>
         </div>
         <div class="sw-skill-list" id="sw-skill-list"></div>
     `;
     document.body.appendChild(_skillWindowEl);
 
-    _skillWindowEl.querySelector('.sw-close').addEventListener('click', () => toggleSkillWindow());
+    _skillWindowEl.querySelector('.sw-close').addEventListener('click', toggleSkillWindow);
 
     _skillWindowEl.querySelectorAll('.sw-clear').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', e => {
             e.stopPropagation();
             const slot = parseInt(e.currentTarget.dataset.slot, 10);
             _clearSkillSlot(slot);
@@ -1462,8 +1898,10 @@ function _buildSkillWindow() {
             const slot = parseInt(slotEl.dataset.slot, 10);
             const state = Player.getState();
             if (!state) return;
+
             state.equippedSkills[slot] = _selectedSkillId;
             _selectedSkillId = null;
+
             _skillWindowEl.querySelectorAll('.sw-skill-item').forEach(el => el.classList.remove('selecting'));
             updateHotbar();
             _renderSkillWindowSlots(state);
@@ -1472,64 +1910,285 @@ function _buildSkillWindow() {
 }
 
 /**
- * Injeta o CSS da hotbar, janela K e modal de classe (uma única vez).
+ * Injeta CSS da hotbar, janela de skills e modal.
  */
 function _injectSkillStyles() {
     if (document.getElementById('lumie-skill-styles')) return;
+
     const style = document.createElement('style');
     style.id = 'lumie-skill-styles';
     style.textContent = `
-        #hotbar { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 100; }
-        .hotbar-slot { position: relative; width: 60px; height: 60px; background: rgba(10,10,10,0.72); border: 2px solid rgba(255,255,255,0.18); border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; box-sizing: border-box; }
-        .hotbar-slot.empty { border-style: dashed; border-color: rgba(255,255,255,0.10); }
-        .hb-key { position: absolute; bottom: 3px; right: 5px; font-size: 10px; color: rgba(255,255,255,0.55); pointer-events: none; z-index: 2; }
-        .hb-mpcost { position: absolute; top: 3px; left: 4px; font-size: 9px; color: #7ec8e3; pointer-events: none; z-index: 2; }
-        .hb-icon { width: 40px; height: 40px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: bold; color: #fff; pointer-events: none; }
-        .hb-cooldown-overlay { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: rgba(0,0,0,0.62); pointer-events: none; z-index: 3; transition: height 0.05s linear; }
-
-        #skill-window { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 320px; max-height: 480px; background: rgba(15,15,20,0.96); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; z-index: 200; display: flex; flex-direction: column; overflow: hidden; }
-        .sw-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.10); font-size: 13px; font-weight: bold; color: #e0e0e0; }
-        .sw-close { background: none; border: none; color: #aaa; cursor: pointer; font-size: 14px; padding: 2px 6px; }
+        #hotbar {
+            position: fixed;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+        .hotbar-slot {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            background: rgba(10,10,10,0.72);
+            border: 2px solid rgba(255,255,255,0.18);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        .hotbar-slot.empty {
+            border-style: dashed;
+            border-color: rgba(255,255,255,0.10);
+        }
+        .hb-key {
+            position: absolute;
+            bottom: 3px;
+            right: 5px;
+            font-size: 10px;
+            color: rgba(255,255,255,0.55);
+            pointer-events: none;
+            z-index: 2;
+        }
+        .hb-mpcost {
+            position: absolute;
+            top: 3px;
+            left: 4px;
+            font-size: 9px;
+            color: #7ec8e3;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .hb-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            font-weight: bold;
+            color: #fff;
+            pointer-events: none;
+        }
+        .hb-cooldown-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0;
+            background: rgba(0,0,0,0.62);
+            pointer-events: none;
+            z-index: 3;
+            transition: height 0.05s linear;
+        }
+        #skill-window {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 320px;
+            max-height: 480px;
+            background: rgba(15,15,20,0.96);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .sw-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.10);
+            font-size: 13px;
+            font-weight: bold;
+            color: #e0e0e0;
+        }
+        .sw-close {
+            background: none;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px 6px;
+        }
         .sw-close:hover { color: #fff; }
-        .sw-hotbar-slots { display: flex; gap: 6px; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-        .sw-slot { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 5px; padding: 5px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; }
-        .sw-slot-label { font-size: 9px; color: rgba(255,255,255,0.4); }
-        .sw-slot-name { font-size: 10px; color: #e0e0e0; text-align: center; word-break: break-word; }
-        .sw-clear { background: none; border: none; color: rgba(255,100,100,0.6); cursor: pointer; font-size: 9px; padding: 0; line-height: 1; }
+        .sw-hotbar-slots {
+            display: flex;
+            gap: 6px;
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .sw-slot {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 5px;
+            padding: 5px 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            cursor: pointer;
+        }
+        .sw-slot-label {
+            font-size: 9px;
+            color: rgba(255,255,255,0.4);
+        }
+        .sw-slot-name {
+            font-size: 10px;
+            color: #e0e0e0;
+            text-align: center;
+            word-break: break-word;
+        }
+        .sw-clear {
+            background: none;
+            border: none;
+            color: rgba(255,100,100,0.6);
+            cursor: pointer;
+            font-size: 9px;
+            padding: 0;
+            line-height: 1;
+        }
         .sw-clear:hover { color: #ff6464; }
-        .sw-skill-list { overflow-y: auto; flex: 1; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
-        .sw-skill-item { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09); border-radius: 5px; padding: 8px 10px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; transition: background 0.15s; }
+        .sw-skill-list {
+            overflow-y: auto;
+            flex: 1;
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .sw-skill-item {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.09);
+            border-radius: 5px;
+            padding: 8px 10px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            transition: background 0.15s;
+        }
         .sw-skill-item:hover { background: rgba(255,255,255,0.10); }
-        .sw-skill-item.selecting { border-color: #7ec8e3; background: rgba(126,200,227,0.10); }
-        .sw-skill-name { font-size: 12px; font-weight: bold; color: #e8e8e8; }
-        .sw-skill-desc { font-size: 10px; color: #999; line-height: 1.3; }
-        .sw-skill-meta { font-size: 10px; color: #7ec8e3; margin-top: 1px; }
-
-        #class-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 500; display: flex; align-items: center; justify-content: center; }
-        #class-modal { background: rgba(15,15,22,0.98); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 36px 32px 32px; width: min(95vw, 980px); max-height: 92vh; overflow-y: auto; }
-        #class-modal h2 { text-align: center; color: #e8e8e8; margin-bottom: 28px; font-size: 26px; letter-spacing: 1px; }
-        .class-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-        .class-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 24px 20px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: background 0.18s, border-color 0.18s; }
-        .class-card:hover { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.28); }
-        .class-card-name { font-size: 20px; font-weight: bold; color: #e8e8e8; text-align: center; margin-bottom: 4px; }
-        .class-card-desc { font-size: 13px; color: #b8b8b8; text-align: center; line-height: 1.5; }
-        .class-card-skills { font-size: 13px; color: #7ec8e3; line-height: 1.7; margin-top: 8px; text-align: center; }
-        .class-card-btn { margin-top: 14px; padding: 12px 0; background: rgba(126,200,227,0.15); border: 1px solid rgba(126,200,227,0.35); border-radius: 6px; color: #7ec8e3; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s; width: 100%; }
+        .sw-skill-item.selecting {
+            border-color: #7ec8e3;
+            background: rgba(126,200,227,0.10);
+        }
+        .sw-skill-name {
+            font-size: 12px;
+            font-weight: bold;
+            color: #e8e8e8;
+        }
+        .sw-skill-desc {
+            font-size: 10px;
+            color: #999;
+            line-height: 1.3;
+        }
+        .sw-skill-meta {
+            font-size: 10px;
+            color: #7ec8e3;
+            margin-top: 1px;
+        }
+        #class-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.88);
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #class-modal {
+            background: rgba(15,15,22,0.98);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 12px;
+            padding: 36px 32px 32px;
+            width: min(95vw, 980px);
+            max-height: 92vh;
+            overflow-y: auto;
+        }
+        #class-modal h2 {
+            text-align: center;
+            color: #e8e8e8;
+            margin-bottom: 28px;
+            font-size: 26px;
+            letter-spacing: 1px;
+        }
+        .class-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .class-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            cursor: pointer;
+            transition: background 0.18s, border-color 0.18s;
+        }
+        .class-card:hover {
+            background: rgba(255,255,255,0.10);
+            border-color: rgba(255,255,255,0.28);
+        }
+        .class-card-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #e8e8e8;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+        .class-card-desc {
+            font-size: 13px;
+            color: #b8b8b8;
+            text-align: center;
+            line-height: 1.5;
+        }
+        .class-card-skills {
+            font-size: 13px;
+            color: #7ec8e3;
+            line-height: 1.7;
+            margin-top: 8px;
+            text-align: center;
+        }
+        .class-card-btn {
+            margin-top: 14px;
+            padding: 12px 0;
+            background: rgba(126,200,227,0.15);
+            border: 1px solid rgba(126,200,227,0.35);
+            border-radius: 6px;
+            color: #7ec8e3;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+            width: 100%;
+        }
         .class-card-btn:hover { background: rgba(126,200,227,0.30); }
     `;
     document.head.appendChild(style);
 }
 
 /**
- * Dispara skill do slot N. Resolve alvo via Combat.findNearestTarget se a skill
- * exigir alvo, e chama Combat.castSkill.
- * Bloqueado se _dialogOpen.
- * @param {number} slotIndex - 0 a 3
+ * Dispara skill do slot.
+ * @param {number} slotIndex
  */
 function _triggerSkillSlot(slotIndex) {
     if (_dialogOpen) return;
+
     const state = Player.getState();
     if (!state || !Array.isArray(state.equippedSkills)) return;
+
     const skillId = state.equippedSkills[slotIndex];
     if (!skillId) return;
 
@@ -1554,19 +2213,19 @@ function _triggerSkillSlot(slotIndex) {
  */
 function _skillFailMessage(reason) {
     switch (reason) {
-        case 'sem_alvo':           return 'Sem alvo no alcance.';
-        case 'fora_de_alcance':    return 'Alvo fora de alcance.';
-        case 'mp_insuficiente':    return 'MP insuficiente.';
-        case 'em_cooldown':        return 'Skill em recarga.';
-        case 'skill_nao_aprendida':return 'Skill não aprendida.';
-        case 'classe_incorreta':   return 'Skill de outra classe.';
-        default:                   return 'Não foi possível usar a skill.';
+        case 'sem-alvo': return 'Sem alvo no alcance.';
+        case 'fora-de-alcance': return 'Alvo fora de alcance.';
+        case 'mp-insuficiente': return 'MP insuficiente.';
+        case 'em-cooldown': return 'Skill em recarga.';
+        case 'skill-nao-aprendida': return 'Skill não aprendida.';
+        case 'classe-incorreta': return 'Skill de outra classe.';
+        default: return 'Não foi possível usar a skill.';
     }
 }
 
 /**
- * Limpa o skill de um slot da hotbar.
- * @param {number} slotIndex - 0 a 3
+ * Limpa skill de um slot.
+ * @param {number} slotIndex
  */
 function _clearSkillSlot(slotIndex) {
     const state = Player.getState();
@@ -1577,17 +2236,18 @@ function _clearSkillSlot(slotIndex) {
 }
 
 /**
- * Renderiza a lista de skills aprendidas na janela K.
- * @param {Object} state - Player.getState()
+ * Renderiza lista de skills aprendidas.
+ * @param {Object} state
  */
 function _renderSkillWindowList(state) {
     const list = document.getElementById('sw-skill-list');
     if (!list) return;
+
     list.innerHTML = '';
     _selectedSkillId = null;
 
     if (!Array.isArray(state.learnedSkills) || state.learnedSkills.length === 0) {
-        list.innerHTML = '<p style="color:#666;font-size:11px;text-align:center;padding:16px">Nenhuma skill aprendida.</p>';
+        list.innerHTML = `<p style="color:#666;font-size:11px;text-align:center;padding:16px;">Nenhuma skill aprendida.</p>`;
         return;
     }
 
@@ -1601,51 +2261,57 @@ function _renderSkillWindowList(state) {
         item.innerHTML = `
             <span class="sw-skill-name">${def.name}</span>
             <span class="sw-skill-desc">${def.description}</span>
-            <span class="sw-skill-meta">MP: ${def.mpCost} · CD: ${def.cooldown}s · Alcance: ${def.range}u</span>
+            <span class="sw-skill-meta">MP ${def.mpCost} · CD ${def.cooldown}s · Alcance ${def.range ?? 0}u</span>
         `;
+
         item.addEventListener('click', () => {
             _skillWindowEl.querySelectorAll('.sw-skill-item').forEach(el => el.classList.remove('selecting'));
+
             if (_selectedSkillId === skillId) {
                 _selectedSkillId = null;
                 return;
             }
+
             _selectedSkillId = skillId;
             item.classList.add('selecting');
         });
+
         list.appendChild(item);
     });
 }
 
 /**
- * Renderiza nomes nos slots do topo da janela K.
+ * Renderiza nomes dos slots no topo da janela K.
  * @param {Object} state
  */
 function _renderSkillWindowSlots(state) {
     if (!_skillWindowEl) return;
+
     _skillWindowEl.querySelectorAll('.sw-slot').forEach(slotEl => {
         const slot = parseInt(slotEl.dataset.slot, 10);
         const skillId = state.equippedSkills[slot];
         const nameEl = slotEl.querySelector('.sw-slot-name');
         if (nameEl) {
             const def = skillId ? Classes.getSkillDef(skillId) : null;
-            nameEl.textContent = def ? def.name : '—';
+            nameEl.textContent = def ? def.name : '';
         }
     });
 }
 
 /**
- * Atualiza visualmente os 4 slots da hotbar com base em state.equippedSkills.
+ * Atualiza hotbar.
  */
 export function updateHotbar() {
     const state = Player.getState();
+
     _hotbarSlotEls.forEach((slot, i) => {
-        const skillId = state ? state.equippedSkills[i] : null;
+        const skillId = state ? state.equippedSkills?.[i] : null;
         const def = skillId ? Classes.getSkillDef(skillId) : null;
         const iconEl = slot.querySelector('.hb-icon');
         const costEl = slot.querySelector('.hb-mpcost');
 
         if (def && state) {
-            const color = _CLASS_COLORS[state.class] || '#888';
+            const color = _CLASS_COLORS[state.class] ?? '#888';
             iconEl.style.background = color;
             iconEl.textContent = def.name.charAt(0);
             costEl.textContent = def.mpCost;
@@ -1660,8 +2326,7 @@ export function updateHotbar() {
 }
 
 /**
- * Atualiza overlay de cooldown em cada slot. Chamado no game loop.
- * Usa cache _hotbarSlotEls (sem querySelectorAll por frame).
+ * Atualiza overlay de cooldown da hotbar.
  * @param {number} _delta
  */
 export function updateCooldownVisuals(_delta) {
@@ -1669,36 +2334,45 @@ export function updateCooldownVisuals(_delta) {
     if (!state || !state.cooldowns) {
         _hotbarSlotEls.forEach(slot => {
             const ov = slot.querySelector('.hb-cooldown-overlay');
-            if (ov) ov.style.height = '0%';
+            if (ov) ov.style.height = '0';
         });
         return;
     }
+
     const now = performance.now();
+
     _hotbarSlotEls.forEach((slot, i) => {
-        const skillId = state.equippedSkills[i];
+        const skillId = state.equippedSkills?.[i];
         const overlay = slot.querySelector('.hb-cooldown-overlay');
         if (!overlay) return;
-        if (!skillId) { overlay.style.height = '0%'; return; }
+
+        if (!skillId) {
+            overlay.style.height = '0';
+            return;
+        }
 
         const def = Classes.getSkillDef(skillId);
         const cdEnd = state.cooldowns[skillId];
+
         if (!cdEnd || !def || now >= cdEnd) {
-            overlay.style.height = '0%';
+            overlay.style.height = '0';
             return;
         }
+
         const total = def.cooldown * 1000;
         const remaining = cdEnd - now;
         const pct = Math.min(100, (remaining / total) * 100);
-        overlay.style.height = pct.toFixed(1) + '%';
+        overlay.style.height = `${pct.toFixed(1)}%`;
     });
 }
 
 /**
- * Abre/fecha a janela de skills (tecla K). Bloqueada durante diálogo.
+ * Abre/fecha a janela de skills.
  */
 export function toggleSkillWindow() {
     if (_dialogOpen) return;
     if (!_skillWindowEl) return;
+
     _skillWindowOpen = !_skillWindowOpen;
 
     if (_skillWindowOpen) {
@@ -1716,21 +2390,18 @@ export function toggleSkillWindow() {
     }
 }
 
-/**
- * @returns {boolean}
- */
 export function isSkillWindowOpen() {
     return _skillWindowOpen;
 }
 
 /**
- * Exibe modal de escolha de classe. Não fecha por ESC.
- * @param {(classId: string) => void} onChosen - callback ao escolher
+ * Exibe modal de escolha de classe.
+ * @param {(classId: string) => void} onChosen
  */
 export function showClassSelectionModal(onChosen) {
     if (_classModalEl) return;
-    _classModalCb = onChosen;
 
+    _classModalCb = onChosen;
     _classModalEl = document.createElement('div');
     _classModalEl.id = 'class-modal-overlay';
 
@@ -1739,6 +2410,7 @@ export function showClassSelectionModal(onChosen) {
     modal.innerHTML = `<h2>Escolha sua Classe</h2><div class="class-cards"></div>`;
 
     const cardsEl = modal.querySelector('.class-cards');
+
     _CLASS_DATA.forEach(cls => {
         const card = document.createElement('div');
         card.className = 'class-card';
@@ -1748,6 +2420,7 @@ export function showClassSelectionModal(onChosen) {
             <div class="class-card-skills">${cls.skills.join('<br>')}</div>
             <button class="class-card-btn">Escolher</button>
         `;
+
         card.querySelector('.class-card-btn').addEventListener('click', () => {
             const cb = _classModalCb;
             _classModalEl.remove();
@@ -1755,23 +2428,22 @@ export function showClassSelectionModal(onChosen) {
             _classModalCb = null;
             if (cb) cb(cls.id);
         });
+
         cardsEl.appendChild(card);
     });
 
     _classModalEl.appendChild(modal);
     document.body.appendChild(_classModalEl);
 }
-// ═══════════════════════════════════════════════════════════════════════════
-// Barras de HP de monstros (HUD flutuante 3D)
-// ═══════════════════════════════════════════════════════════════════════════
+
+// ─── Barras de HP de monstros ─────────────────────────────────────────────
 
 /** @type {Map<string, HTMLDivElement>} */
 const _monsterHpBars = new Map();
 
 /**
- * Cria barra de HP flutuante para um monstro.
- * Chamada via listener de monsterSpawned.
- * @param {string} monsterId - id (uid) do monstro
+ * Cria barra de HP flutuante.
+ * @param {string} monsterId
  */
 function _createMonsterHpBar(monsterId) {
     if (_monsterHpBars.has(monsterId)) return;
@@ -1791,6 +2463,7 @@ function _createMonsterHpBar(monsterId) {
         overflow: hidden;
         display: none;
     `;
+
     const fill = document.createElement('div');
     fill.className = 'monster-hpbar-fill';
     fill.style.cssText = `
@@ -1800,31 +2473,31 @@ function _createMonsterHpBar(monsterId) {
         transition: width 0.15s linear;
     `;
     el.appendChild(fill);
+
     document.body.appendChild(el);
     _monsterHpBars.set(monsterId, el);
 }
 
 /**
- * Remove barra de HP de monstro morto.
+ * Remove barra de HP do monstro.
  * @param {string} monsterId
  */
 function _removeMonsterHpBar(monsterId) {
     const el = _monsterHpBars.get(monsterId);
-    if (el) {
-        el.remove();
-        _monsterHpBars.delete(monsterId);
-    }
+    if (el) el.remove();
+    _monsterHpBars.delete(monsterId);
 }
 
 /**
- * Atualiza posição e largura de todas as barras de HP de monstros.
- * Chamada no game loop por main.js (ou pelo update interno da ui.js).
+ * Atualiza barras de HP dos monstros.
  */
 export function updateMonsterHpBars() {
     if (_monsterHpBars.size === 0) return;
-    const camera   = getCamera();
+
+    const camera = getCamera();
     const renderer = getRenderer();
     if (!camera || !renderer) return;
+
     const canvas = renderer.domElement;
 
     _monsterHpBars.forEach((el, monsterId) => {
@@ -1836,7 +2509,7 @@ export function updateMonsterHpBars() {
 
         const pos3D = new THREE.Vector3();
         monster.mesh.getWorldPosition(pos3D);
-        pos3D.y += 1.2; // acima da cabeça do monstro
+        pos3D.y += 1.2;
         pos3D.project(camera);
 
         if (pos3D.z > 1) {
@@ -1844,17 +2517,17 @@ export function updateMonsterHpBars() {
             return;
         }
 
-        const screenX = (pos3D.x *  0.5 + 0.5) * canvas.clientWidth;
+        const screenX = (pos3D.x * 0.5 + 0.5) * canvas.clientWidth;
         const screenY = (pos3D.y * -0.5 + 0.5) * canvas.clientHeight;
 
         el.style.display = 'block';
         el.style.left = `${screenX}px`;
-        el.style.top  = `${screenY}px`;
+        el.style.top = `${screenY}px`;
 
         const fill = el.firstChild;
         if (fill) {
             const pct = Math.max(0, Math.min(100, (monster.hp / monster.maxHp) * 100));
-            fill.style.width = pct.toFixed(1) + '%';
+            fill.style.width = `${pct.toFixed(1)}%`;
         }
     });
 }

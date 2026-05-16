@@ -60,7 +60,7 @@
       "slot": "weapon",
       "stack": 1,
       "effect": { "type": "weapon_bonus", "agi": 2, "str": 1 },
-      "classRestriction": ["thief"],
+      "classRestriction": ["assassin"],
       "sellPrice": 30,
       "modelPlaceholder": "#b8860b"
     },
@@ -732,6 +732,17 @@
       "classRestriction": "assassin",
       "sellPrice": 2300,
       "modelPlaceholder": "#493abd"
+    },
+    {
+      "id": "minerio",
+      "name": "Minério de Refino",
+      "type": "material",
+      "description": "Minério usado para refinar equipamentos.",
+      "icon": "ore",
+      "stackable": true,
+      "stack": 99,
+      "value": 50
     }
   ]
-}
+    }
+  
