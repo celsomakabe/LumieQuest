@@ -518,11 +518,15 @@ export function init() {
         _renderRefineList();
     });
 
-    Events.on('refineFail', ({ itemId, newLevel, broke }) => {
+    Events.on('refineFail', ({ itemId, newLevel, broke, blessed, protected: wasProtected }) => {
         const def = Inventory.getItemDef(itemId);
         const name = def?.name ?? itemId;
 
-        if (broke) {
+        if (blessed) {
+            showNotification('Abençoado! Item protegido.', 'info');
+        } else if (wasProtected) {
+            showNotification('Protetor ativado! Item não quebrou.', 'info');
+        } else if (broke) {
             showNotification(`Falha no refino: ${name} foi destruído!`, 'error');
         } else {
             showNotification(`Falha no refino: agora em +${newLevel} ${name}`, 'warning');
@@ -1661,12 +1665,44 @@ function _renderRefineDetail(meta) {
     }
 
     const cost = Refine.getRefineCost(meta.refineLevel);
-    const rate = Refine.getSuccessRate(meta.refineLevel);
+    const baseRate = Refine.getSuccessRate(meta.refineLevel);
     const nextLevel = (meta.refineLevel ?? 0) + 1;
     const color = getRefineColor(meta.refineLevel) || '#f1dfb0';
-    const riskHtml = meta.refineLevel >= 10
-        ? `<div class="refine-risk">⚠️ Risco de quebra!</div>`
-        : '';
+
+    const slots = Inventory.getSlots();
+    const hasEnriched = slots.some(slot => slot?.itemId === 'minerio_enriquecido' && (slot.qty ?? 0) > 0);
+    const hasProtector = slots.some(slot => slot?.itemId === 'minerio_protetor' && (slot.qty ?? 0) > 0);
+    const hasBlessed = slots.some(slot => slot?.itemId === 'minerio_abencoado' && (slot.qty ?? 0) > 0);
+
+    let riskText = '';
+    if (meta.refineLevel >= 13) {
+        riskText = '⚠️ 70% de chance de quebra';
+    } else if (meta.refineLevel >= 10) {
+        riskText = '⚠️ 50% de chance de quebra';
+    } else if (meta.refineLevel >= 7) {
+        riskText = '⚠️ 25% de chance de quebra';
+    }
+
+    const helperHtml = `
+        ${hasEnriched ? `
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#d9c38b;margin-bottom:6px;cursor:pointer;">
+                <input type="checkbox" id="refine-use-enriched">
+                <span>Minério Enriquecido (+15% chance)</span>
+            </label>
+        ` : ''}
+        ${hasProtector ? `
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#d9c38b;margin-bottom:6px;cursor:pointer;">
+                <input type="checkbox" id="refine-use-protector">
+                <span>Minério Protetor (impede quebra)</span>
+            </label>
+        ` : ''}
+        ${hasBlessed ? `
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#d9c38b;margin-bottom:6px;cursor:pointer;">
+                <input type="checkbox" id="refine-use-blessed">
+                <span>Minério Abençoado (sem penalidade)</span>
+            </label>
+        ` : ''}
+    `;
 
     detailEl.innerHTML = `
         <div class="refine-title" style="color:${color};">
@@ -1675,17 +1711,53 @@ function _renderRefineDetail(meta) {
         <div class="refine-stat"><strong>Origem:</strong> ${meta.sourceLabel}</div>
         <div class="refine-stat"><strong>Próximo nível:</strong> +${nextLevel}</div>
         <div class="refine-stat"><strong>Custo:</strong> ${cost.ore} Minério + ${cost.gold} gold</div>
-        <div class="refine-stat"><strong>Chance:</strong> ${Math.round(rate * 100)}%</div>
-        ${riskHtml}
+        <div class="refine-stat" id="refine-chance-line"><strong>Chance:</strong> ${Math.round(baseRate * 100)}%</div>
+        ${riskText ? `<div class="refine-risk">${riskText}</div>` : ''}
+        <div style="margin-top:12px;margin-bottom:4px;">
+            ${helperHtml}
+        </div>
         <div class="refine-actions">
             <button id="refine-confirm-btn" class="refine-btn primary">Refinar</button>
             <button id="refine-cancel-btn" class="refine-btn">Fechar</button>
         </div>
     `;
 
+    const enrichedEl = document.getElementById('refine-use-enriched');
+    const protectorEl = document.getElementById('refine-use-protector');
+    const blessedEl = document.getElementById('refine-use-blessed');
+    const chanceLineEl = document.getElementById('refine-chance-line');
+
+    const updateChanceLine = () => {
+        const enrichedBonus = enrichedEl?.checked ? 0.15 : 0;
+        const boostedRate = Math.min(1, baseRate + enrichedBonus);
+
+        if (!chanceLineEl) return;
+
+        if (enrichedEl?.checked) {
+            chanceLineEl.innerHTML = `<strong>Chance:</strong> ${Math.round(baseRate * 100)}% → ${Math.round(boostedRate * 100)}%`;
+        } else {
+            chanceLineEl.innerHTML = `<strong>Chance:</strong> ${Math.round(baseRate * 100)}%`;
+        }
+    };
+
+    enrichedEl?.addEventListener('change', updateChanceLine);
+    protectorEl?.addEventListener('change', () => {});
+    blessedEl?.addEventListener('change', () => {});
+    updateChanceLine();
+
     document.getElementById('refine-confirm-btn')?.addEventListener('click', () => {
         if (!_selectedRefineTarget) return;
-        const result = Refine.attemptRefine(_selectedRefineTarget);
+
+        const useEnriched = !!document.getElementById('refine-use-enriched')?.checked;
+        const useProtector = !!document.getElementById('refine-use-protector')?.checked;
+        const useBlessed = !!document.getElementById('refine-use-blessed')?.checked;
+
+        const result = Refine.attemptRefine(_selectedRefineTarget, {
+            useEnriched,
+            useProtector,
+            useBlessed
+        });
+
         _flashRefineWindow(result.success ? 'success' : 'fail');
         _openRefineWindow();
     });

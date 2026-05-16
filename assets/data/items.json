@@ -742,7 +742,37 @@
       "stackable": true,
       "stack": 99,
       "value": 50
+    },
+    {
+      "id": "minerio_enriquecido",
+      "name": "Minério Enriquecido",
+      "type": "material",
+      "description": "Aumenta a chance de sucesso do refino em 15%.",
+      "icon": "ore_enriched",
+      "stackable": true,
+      "stack": 99,
+      "value": 200
+    },
+    {
+      "id": "minerio_protetor",
+      "name": "Minério Protetor",
+      "type": "material",
+      "description": "Impede que o item quebre em caso de falha.",
+      "icon": "ore_protector",
+      "stackable": true,
+      "stack": 99,
+      "value": 500
+    },
+    {
+      "id": "minerio_abencoado",
+      "name": "Minério Abençoado",
+      "type": "material",
+      "description": "Impede qualquer penalidade em caso de falha.",
+      "icon": "ore_blessed",
+      "stackable": true,
+      "stack": 99,
+      "value": 1000
     }
   ]
-    }
+ }
   
