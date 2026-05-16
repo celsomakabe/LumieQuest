@@ -191,7 +191,11 @@ function _executeAction(action) {
     if (!action) return;
     const { type, questId } = action;
 
-    if (type === 'offerQuest')    Quests.acceptQuest(questId);
+    if (type === 'offerQuest') {
+        import('../entities/player.js').then(PlayerMod => {
+            Quests.acceptQuest(questId, PlayerMod.getState?.() ?? null);
+        });
+    }
     if (type === 'completeQuest') Quests.completeQuest(questId);
     if (type === 'doJobChange') {
         import('../entities/player.js').then(PlayerMod => {
