@@ -1,40 +1,18 @@
-/**
+﻿/**
  * @module Inventory
- * @description Sistema de inventário: 30 slots, equipamento, ouro, uso de itens.
- * Comunicação com player.js exclusivamente via event bus (R8).
+ * @description Sistema de inventÃ¡rio: 30 slots, equipamento, ouro, uso de itens.
+ * ComunicaÃ§Ã£o com player.js exclusivamente via event bus (R8).
  */
 
 import { on, emit } from '../core/events.js';
 
-// ─── Estado interno ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Estado interno â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /** @type {Array<{itemId: string, qty: number}|null>} */
 let _slots = new Array(30).fill(null);
 
-/** @type {{
- *  weapon: string|null,
- *  shield: string|null,
- *  upper_headgear: string|null,
- *  mid_headgear: string|null,
- *  lower_headgear: string|null,
- *  armor: string|null,
- *  garment: string|null,
- *  footgear: string|null,
- *  accessory_left: string|null,
- *  accessory_right: string|null
- * }} */
-let _equipment = {
-    weapon: null,
-    shield: null,
-    upper_headgear: null,
-    mid_headgear: null,
-    lower_headgear: null,
-    armor: null,
-    garment: null,
-    footgear: null,
-    accessory_left: null,
-    accessory_right: null
-};
+/** @type {{ weapon: string|null, armor: string|null, accessory: string|null }} */
+let _equipment = { weapon: null, armor: null, accessory: null };
 
 /** @type {number} */
 let _gold = 0;
@@ -44,19 +22,8 @@ let _catalogue = {};
 
 /** @type {boolean} */
 let _initialized = false;
-const VALID_EQUIP_SLOTS = [
-    'weapon',
-    'shield',
-    'upper_headgear',
-    'mid_headgear',
-    'lower_headgear',
-    'armor',
-    'garment',
-    'footgear',
-    'accessory_left',
-    'accessory_right'
-];
-// ─── Helpers internos ─────────────────────────────────────────────────────────
+
+// â”€â”€â”€ Helpers internos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function _buildCatalogue(itemsArray) {
     _catalogue = {};
@@ -75,7 +42,7 @@ function _findStackableSlot(itemId) {
     return _slots.findIndex(s => s !== null && s.itemId === itemId && s.qty < def.stack);
 }
 
-// ─── API pública ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ API pÃºblica â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function init(saveData) {
     if (_initialized) return;
@@ -85,18 +52,7 @@ export async function init(saveData) {
     _buildCatalogue(json.items);
 
     _slots = new Array(30).fill(null);
-    _equipment = {
-    weapon: null,
-    shield: null,
-    upper_headgear: null,
-    mid_headgear: null,
-    lower_headgear: null,
-    armor: null,
-    garment: null,
-    footgear: null,
-    accessory_left: null,
-    accessory_right: null
-};
+    _equipment = { weapon: null, armor: null, accessory: null };
     _gold = 0;
 
     if (saveData) {
@@ -112,11 +68,11 @@ export function hydrate(data) {
             _slots[i] = data.slots[i] ?? null;
         }
     }
-
-    for (const slot of VALID_EQUIP_SLOTS) {
-        _equipment[slot] = data.equipment?.[slot] ?? null;
+    if (data.equipment) {
+        _equipment.weapon    = data.equipment.weapon    ?? null;
+        _equipment.armor     = data.equipment.armor     ?? null;
+        _equipment.accessory = data.equipment.accessory ?? null;
     }
-
     _gold = typeof data.gold === 'number' ? data.gold : 0;
 }
 
@@ -203,14 +159,13 @@ export function equipItem(slotIndex) {
     if (!slot) return false;
 
     const def = _catalogue[slot.itemId];
-    if (!def) return false;
-
-    const equipSlot = def.slot;
-    if (!def.slot || !VALID_EQUIP_SLOTS.includes(def.slot)) {
+    if (!def || (def.type !== 'weapon' && def.type !== 'armor' && def.type !== 'accessory')) {
         return false;
     }
 
-    // Remove do inventário PRIMEIRO para abrir espaço ao item antigo
+    const equipSlot = def.type;
+
+    // Remove do inventÃ¡rio PRIMEIRO para abrir espaÃ§o ao item antigo
     const itemId = slot.itemId;
     _slots[slotIndex] = null;
 
@@ -238,8 +193,6 @@ export function equipItem(slotIndex) {
 }
 
 export function unequipItem(equipmentSlot) {
-    if (!VALID_EQUIP_SLOTS.includes(equipmentSlot)) return false;
-
     const itemId = _equipment[equipmentSlot];
     if (!itemId) return false;
 

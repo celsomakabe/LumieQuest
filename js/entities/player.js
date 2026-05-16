@@ -51,7 +51,16 @@ let _attackAnimTimer = null;
 let _isDead = false;
 /** @type {Object|null} */
 let _data = null;
-
+/** @type {{
+ *  totalStats: { str:number, agi:number, vit:number, int:number, dex:number, luk:number },
+ *  hp_pct: number,
+ *  mp_pct: number
+ * }} */
+let _setBonusCache = {
+    totalStats: { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 },
+    hp_pct: 0,
+    mp_pct: 0
+};
 let _rotationY   = 0;
 let _lastMouseX  = null; // null = primeiro frame, evita salto de rotação
 let _cameraDistance = 5; // distância da câmera, ajustável via roda do mouse
@@ -82,6 +91,11 @@ const FOOTSTEP_SFXS = [
  * @returns {void}
  */
 export function init(saveData = null) {
+    _setBonusCache = {
+        totalStats: { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 },
+        hp_pct: 0,
+        mp_pct: 0
+    };
    _data = _buildData(saveData);
 
     // Restaurar HP/MP cheios no boot (estilo MMO: relogar = full)
@@ -100,6 +114,7 @@ export function init(saveData = null) {
 
     // Bônus de equipamento via bus — sem import direto de equipment.js (R8)
     on('itemEquipped', _onItemEquipped);
+    on('setBonusChanged', _onSetBonusChanged);
     on('playerMoved', _onPlayerMoved);
     on('mouseScrolled', ({ deltaY }) => {
         const dir = deltaY > 0 ? 1 : -1;
@@ -243,12 +258,8 @@ export function addExp(amount) {
         // Pre-Renewal: floor((BaseLv-1)/5) + 3 statPoints por level
         _data.statPoints += Math.floor((_data.level - 1) / 5) + 3;
 
-        // Recalcular maxHp/maxMp via fórmula Ragnarok-like (não mexer em baseStats)
-        const meta = getJobMeta(_data.class);
-        const jobModHP = meta?.jobModHP ?? 1.0;
-        const jobModMP = meta?.jobModMP ?? 1.0;
-        _data.maxHp = Math.floor((35 + _data.level * 8) * (1 + _data.baseStats.vit / 100) * jobModHP);
-        _data.maxMp = Math.floor((40 + _data.level * 5) * (1 + _data.baseStats.int / 100) * jobModMP);
+        _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache);
+        _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache);
         _data.hp = _data.maxHp;
         _data.mp = _data.maxMp;
         emit('levelUp', { newLevel: _data.level });
@@ -313,11 +324,8 @@ export async function applyJobChange(newJobId) {
             }
         });
     }
-// Recalcular maxHp/maxMp com novo jobMod (HP/MP escalam por classe)
-    const jobModHP = meta.jobModHP ?? 1.0;
-    const jobModMP = meta.jobModMP ?? 1.0;
-    _data.maxHp = Math.floor((35 + _data.level * 8) * (1 + _data.baseStats.vit / 100) * jobModHP);
-    _data.maxMp = Math.floor((40 + _data.level * 5) * (1 + _data.baseStats.int / 100) * jobModMP);
+    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache);
+    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache);
     _data.hp = _data.maxHp;
     _data.mp = _data.maxMp;
     emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
@@ -495,10 +503,13 @@ function _updateCamera() {
  * @param {{vit:number}} stats
  * @returns {number}
  */
-function _calcMaxHp(job, level, stats) {
+function _calcMaxHp(job, level, stats, setBonus = null) {
     const meta = getJobMeta(job);
     const jobModHP = meta?.jobModHP ?? 1.0;
-    return Math.floor((35 + level * 8) * (1 + stats.vit / 100) * jobModHP);
+    const hpPct = Number(setBonus?.hp_pct || 0);
+    const effectiveVit = (stats.vit ?? 0) + (setBonus?.totalStats?.vit ?? 0);
+
+    return Math.floor((35 + level * 8) * (1 + effectiveVit / 100) * jobModHP * (1 + hpPct / 100));
 }
 
 /**
@@ -508,10 +519,13 @@ function _calcMaxHp(job, level, stats) {
  * @param {{int:number}} stats
  * @returns {number}
  */
-function _calcMaxMp(job, level, stats) {
+function _calcMaxMp(job, level, stats, setBonus = null) {
     const meta = getJobMeta(job);
     const jobModMP = meta?.jobModMP ?? 1.0;
-    return Math.floor((40 + level * 5) * (1 + stats.int / 100) * jobModMP);
+    const mpPct = Number(setBonus?.mp_pct || 0);
+    const effectiveInt = (stats.int ?? 0) + (setBonus?.totalStats?.int ?? 0);
+
+    return Math.floor((40 + level * 5) * (1 + effectiveInt / 100) * jobModMP * (1 + mpPct / 100));
 }
 function _buildData(saveData) {
     const job   = saveData?.class ?? 'swordman';
@@ -527,10 +541,10 @@ function _buildData(saveData) {
         jobLevel:      saveData?.jobLevel      ?? 1,
         exp:           saveData?.exp           ?? 0,
         jobExp:        saveData?.jobExp        ?? 0,
-        hp:            saveData?.hp            ?? _calcMaxHp(job, level, stats),
-        maxHp:         saveData?.maxHp         ?? _calcMaxHp(job, level, stats),
-        mp:            saveData?.mp            ?? _calcMaxMp(job, level, stats),
-        maxMp:         saveData?.maxMp         ?? _calcMaxMp(job, level, stats),
+        hp:            saveData?.hp            ?? _calcMaxHp(job, level, stats, _setBonusCache),
+        maxHp:         saveData?.maxHp         ?? _calcMaxHp(job, level, stats, _setBonusCache),
+        mp:            saveData?.mp            ?? _calcMaxMp(job, level, stats, _setBonusCache),
+        maxMp:         saveData?.maxMp         ?? _calcMaxMp(job, level, stats, _setBonusCache),
         baseStats:     saveData?.baseStats     ?? stats,
         statPoints:    saveData?.statPoints    ?? 0,
         skillPoints:   saveData?.skillPoints   ?? 0,
@@ -558,7 +572,36 @@ function _onItemEquipped(_payload) {
     // PROMPT 11: aplicar bônus de stats ao player
     console.log('[player] itemEquipped recebido — bônus aplicado no PROMPT 11');
 }
+/**
+ * Atualiza cache de bônus percentuais e stats de set, depois recalcula HP/MP máximos.
+ * @param {{ totalStats?: Object, hpPctBonus?: number, mpPctBonus?: number }} payload
+ */
+function _onSetBonusChanged(payload) {
+    if (!_data) return;
 
+    _setBonusCache.totalStats = {
+        str: Number(payload?.totalStats?.str || 0),
+        agi: Number(payload?.totalStats?.agi || 0),
+        vit: Number(payload?.totalStats?.vit || 0),
+        int: Number(payload?.totalStats?.int || 0),
+        dex: Number(payload?.totalStats?.dex || 0),
+        luk: Number(payload?.totalStats?.luk || 0)
+    };
+    _setBonusCache.hp_pct = Number(payload?.hpPctBonus || 0);
+    _setBonusCache.mp_pct = Number(payload?.mpPctBonus || 0);
+
+    const hpRatio = _data.maxHp > 0 ? (_data.hp / _data.maxHp) : 1;
+    const mpRatio = _data.maxMp > 0 ? (_data.mp / _data.maxMp) : 1;
+
+    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache);
+    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache);
+
+    _data.hp = Math.max(1, Math.min(_data.maxHp, Math.floor(_data.maxHp * hpRatio)));
+    _data.mp = Math.max(0, Math.min(_data.maxMp, Math.floor(_data.maxMp * mpRatio)));
+
+    emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+    emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+}
 /**
  * Toca SFX de footstep alternado ao detectar deslocamento real no plano XZ.
  * @param {{ position: THREE.Vector3, previousPosition: THREE.Vector3, mapId: string }} data

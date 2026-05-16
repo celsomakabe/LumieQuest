@@ -9,11 +9,52 @@ import * as THREE from 'three';
 import { getCamera, getRenderer } from '../world/scene.js';
 import * as Audio  from '../core/audio.js';
 import * as Inventory from '../systems/inventory.js';
+import * as Equipment from '../systems/equipment.js';
 import * as Quests from '../systems/quests.js';
 import * as Combat from '../systems/combat.js';
 import * as Player from '../entities/player.js';
 import * as Classes from '../systems/classes.js';
 import * as Monsters from '../entities/monsters.js';
+
+
+const EQUIPMENT_SLOT_META = [
+    { slot: 'weapon',          label: 'Arma',    icon: '⚔️', title: 'Arma' },
+    { slot: 'shield',          label: 'Escudo',  icon: '🛡️', title: 'Escudo' },
+    { slot: 'upper_headgear',  label: 'Topo',    icon: '👒', title: 'Cabeça (Topo)' },
+    { slot: 'mid_headgear',    label: 'Meio',    icon: '🎭', title: 'Cabeça (Meio)' },
+    { slot: 'lower_headgear',  label: 'Baixo',   icon: '😷', title: 'Cabeça (Baixo)' },
+    { slot: 'armor',           label: 'Arm.',    icon: '🥋', title: 'Armadura' },
+    { slot: 'garment',         label: 'Capa',    icon: '🧥', title: 'Capa' },
+    { slot: 'footgear',        label: 'Botas',   icon: '🥾', title: 'Calçado' },
+    { slot: 'accessory_left',  label: 'Aces. E', icon: '💍', title: 'Acessório Esquerdo' },
+    { slot: 'accessory_right', label: 'Aces. D', icon: '💍', title: 'Acessório Direito' }
+];
+
+let _inventoryWindowEl = null;
+let _equipmentWindowEl = null;
+
+function _formatStatsLine(stats) {
+    if (!stats) return 'Sem bônus ativo';
+
+    const parts = [];
+
+    if (stats.str) parts.push(`+${stats.str} STR`);
+    if (stats.agi) parts.push(`+${stats.agi} AGI`);
+    if (stats.vit) parts.push(`+${stats.vit} VIT`);
+    if (stats.int) parts.push(`+${stats.int} INT`);
+    if (stats.dex) parts.push(`+${stats.dex} DEX`);
+    if (stats.luk) parts.push(`+${stats.luk} LUK`);
+    if (stats.hp_pct) parts.push(`+${stats.hp_pct}% HP`);
+    if (stats.mp_pct) parts.push(`+${stats.mp_pct}% MP`);
+
+    return parts.length ? parts.join(', ') : 'Sem bônus ativo';
+}
+
+function _getTierBadgeColor(tier) {
+    if (tier === 'divine') return '#d4af37';
+    if (tier === 'legendary') return '#a020f0';
+    return '#5aa9e6';
+}
 // ─── Referências DOM ──────────────────────────────────────────────────────────
 
 let _elHP        = null;
@@ -211,7 +252,23 @@ function _renderPlayerName() {
     const name  = (_name || 'Herói').trim();
     _elName.textContent = title ? `[${title}] ${name}` : name;
 }
+export function isEquipmentWindowOpen() {
+    return !!_equipmentWindowEl && _equipmentWindowEl.style.display !== 'none';
+}
 
+export function toggleEquipmentWindow() {
+    if (!_equipmentWindowEl) return;
+
+    const opening = _equipmentWindowEl.style.display === 'none';
+    _equipmentWindowEl.style.display = opening ? 'block' : 'none';
+
+    if (opening) {
+        _refreshEquipmentWindowUI();
+        Events.emit('uiWindowOpened', { id: 'equipment' });
+    } else {
+        Events.emit('uiWindowClosed', { id: 'equipment' });
+    }
+}
 export function init() {
     _buildDOM();
     _queryRefs();
@@ -293,15 +350,25 @@ Events.on('playerSpawned', ({ name, level, hp, mp } = {}) => {
     goldHud.textContent = '🪙 0';
     document.body.appendChild(goldHud);
 
-    // ── Painel de Inventário ──────────────────────────────────────────────
+// ── Painel de Inventário ──────────────────────────────────────────────
     const invPanel = document.createElement('div');
     invPanel.id = 'ui-inventory';
     invPanel.style.cssText = `
-        display:none; position:fixed; top:50%; left:50%;
+        display:none;
+        position:fixed;
+        top:50%;
+        left:50%;
         transform:translate(-50%,-50%);
-        background:rgba(20,18,14,0.97); border:1px solid #5a4a2a;
-        border-radius:8px; padding:16px; z-index:200;
-        width:480px; color:#e8d8a0; font-family:monospace; font-size:15px;
+        background:rgba(20,18,14,0.97);
+        border:1px solid #5a4a2a;
+        border-radius:8px;
+        padding:16px;
+        z-index:200;
+        width:720px;
+        max-width:95vw;
+        color:#e8d8a0;
+        font-family:monospace;
+        font-size:15px;
         box-shadow:0 8px 32px rgba(0,0,0,0.7);
         user-select:none;
     `;
@@ -310,22 +377,24 @@ Events.on('playerSpawned', ({ name, level, hp, mp } = {}) => {
             <span style="font-size:15px;font-weight:bold;">🎒 Inventário</span>
             <span id="ui-inv-close" style="cursor:pointer;font-size:18px;line-height:1;">✕</span>
         </div>
-        <div style="margin-bottom:10px;font-size:12px;color:#c8a84a;">
-            🪙 <span id="ui-gold-inv">0</span>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12px;color:#c8a84a;">
+            <div>Equipamentos</div>
+            <div>🪙 <span id="ui-gold-inv">0</span></div>
         </div>
-        <div style="margin-bottom:10px;">
-            <div style="font-size:11px;color:#a08040;margin-bottom:6px;">EQUIPAMENTO</div>
-            <div style="display:flex;gap:6px;">
-                <div class="ui-equip-slot" data-slot="weapon"    title="Arma"      style="width:72px;height:72px;border:1px solid #5a4a2a;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#2a2010;font-size:12px;text-align:center;">Arma</div>
-                <div class="ui-equip-slot" data-slot="armor"     title="Armadura"  style="width:72px;height:72px;border:1px solid #5a4a2a;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#2a2010;font-size:12px;text-align:center;">Arm.</div>
-                <div class="ui-equip-slot" data-slot="accessory" title="Acessório" style="width:72px;height:72px;border:1px solid #5a4a2a;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#2a2010;font-size:12px;text-align:center;">Aces.</div>
-            </div>
+
+        <div id="ui-inv-equip-grid" style="display:grid;grid-template-columns:repeat(5,72px);gap:6px;margin-bottom:10px;">
+            ${EQUIPMENT_SLOT_META.map(({ slot, label, title }) => `
+                <div class="ui-equip-slot" data-slot="${slot}" title="${title}" style="width:72px;height:72px;border:1px solid #5a4a2a;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#2a2010;font-size:12px;text-align:center;">${label}</div>
+            `).join('')}
         </div>
+
         <div style="font-size:11px;color:#a08040;margin-bottom:6px;">ITENS (clique-dir: usar/equipar)</div>
         <div id="ui-inv-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;"></div>
         <div style="margin-top:8px;font-size:10px;color:#706050;">E = pegar item | I = fechar</div>
     `;
     document.body.appendChild(invPanel);
+    _inventoryWindowEl = invPanel;
 
     document.getElementById('ui-inv-close').addEventListener('click', () => {
         invPanel.style.display = 'none';
@@ -338,12 +407,81 @@ Events.on('playerSpawned', ({ name, level, hp, mp } = {}) => {
             _refreshInventoryUI();
         });
     });
+    const equipmentPanel = document.createElement('div');
+equipmentPanel.id = 'ui-equipment';
+equipmentPanel.style.cssText = `
+    display:none;
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:rgba(20,18,14,0.97);
+    border:1px solid #5a4a2a;
+    border-radius:8px;
+    padding:16px;
+    z-index:210;
+    width:760px;
+    max-width:95vw;
+    max-height:85vh;
+    overflow:auto;
+    color:#e8d8a0;
+    font-family:monospace;
+    font-size:15px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.7);
+    user-select:none;
+`;
 
+equipmentPanel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <span style="font-size:15px;font-weight:bold;">🛡️ Equipamentos</span>
+        <span id="ui-equip-close" style="cursor:pointer;font-size:18px;line-height:1;">✕</span>
+    </div>
+
+    <div style="font-size:11px;color:#a08040;margin-bottom:6px;">EQUIPAMENTO</div>
+    <div id="ui-eq-grid" style="display:grid;grid-template-columns:repeat(5,72px);gap:6px;margin-bottom:14px;">
+        ${EQUIPMENT_SLOT_META.map(({ slot, label, title }) => `
+            <div class="ui-equipment-slot" data-slot="${slot}" title="${title}" style="width:72px;height:72px;border:1px solid #5a4a2a;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#2a2010;font-size:12px;text-align:center;">${label}</div>
+        `).join('')}
+    </div>
+
+    <div style="font-size:13px;color:#c8a84a;margin-bottom:8px;">Sets Ativos</div>
+    <div id="ui-active-sets" style="display:flex;flex-direction:column;gap:10px;"></div>
+
+    <div style="margin-top:8px;font-size:10px;color:#706050;">C = fechar</div>
+`;
+
+document.body.appendChild(equipmentPanel);
+_equipmentWindowEl = equipmentPanel;
+
+document.getElementById('ui-equip-close').addEventListener('click', () => {
+    equipmentPanel.style.display = 'none';
+    Events.emit('uiWindowClosed', { id: 'equipment' });
+});
+
+equipmentPanel.querySelectorAll('.ui-equipment-slot').forEach(el => {
+    el.addEventListener('click', () => {
+        Inventory.unequipItem(el.dataset.slot);
+        _refreshInventoryUI();
+        _refreshEquipmentWindowUI();
+    });
+});
     // ── Listeners de Inventário ───────────────────────────────────────────
-    Events.on('itemAdded',      () => _refreshInventoryUI());
-    Events.on('itemRemoved',    () => _refreshInventoryUI());
-    Events.on('itemEquipped',   () => _refreshInventoryUI());
-    Events.on('itemUnequipped', () => _refreshInventoryUI());
+Events.on('itemAdded', () => _refreshInventoryUI());
+Events.on('itemRemoved', () => _refreshInventoryUI());
+
+Events.on('itemEquipped', () => {
+    _refreshInventoryUI();
+    if (isEquipmentWindowOpen()) _refreshEquipmentWindowUI();
+});
+
+Events.on('itemUnequipped', () => {
+    _refreshInventoryUI();
+    if (isEquipmentWindowOpen()) _refreshEquipmentWindowUI();
+});
+
+Events.on('setBonusChanged', () => {
+    if (isEquipmentWindowOpen()) _refreshEquipmentWindowUI();
+});
 
     Events.on('goldChanged', ({ total }) => {
         const gh = document.getElementById('ui-gold-hud');
@@ -357,17 +495,26 @@ Events.on('playerSpawned', ({ name, level, hp, mp } = {}) => {
     });
 
     Events.on('uiWindowToggle', ({ id }) => {
-        if (id !== 'inventory') return;
-        const panel = document.getElementById('ui-inventory');
-        const isOpen = panel.style.display !== 'none';
-        if (isOpen) {
-            panel.style.display = 'none';
-            Events.emit('uiWindowClosed', { id: 'inventory' });
-        } else {
+        if (id === 'inventory') {
+            const panel = document.getElementById('ui-inventory');
+            if (!panel) return;
+
+            const isOpen = panel.style.display !== 'none';
+            if (isOpen) {
+                panel.style.display = 'none';
+                Events.emit('uiWindowClosed', { id: 'inventory' });
+            } else {
+                Audio.playSFX('assets/audio/sfx/sfx_ui_click.ogg');
+                _refreshInventoryUI();
+                panel.style.display = 'block';
+                Events.emit('uiWindowOpened', { id: 'inventory' });
+            }
+            return;
+        }
+
+        if (id === 'equipment') {
             Audio.playSFX('assets/audio/sfx/sfx_ui_click.ogg');
-            _refreshInventoryUI();
-            panel.style.display = 'block';
-            Events.emit('uiWindowOpened', { id: 'inventory' });
+            toggleEquipmentWindow();
         }
     });
 
@@ -384,8 +531,14 @@ Events.on('playerSpawned', ({ name, level, hp, mp } = {}) => {
         if (code === 'Escape' && _dialogOpen) _closeDialog();
         if (code === 'Escape' && _questLogOpen && !_dialogOpen) toggleQuestLog();
         if (code === 'Escape' && _skillWindowOpen && !_dialogOpen) toggleSkillWindow();
+
         if (action === 'questLog') {
             if (!_dialogOpen) toggleQuestLog();
+        }
+
+        if (typeof isDialogOpen === 'function' && isDialogOpen()) return;
+        if ((code === 'KeyC' || action === 'equipmentWindow') && !_dialogOpen) {
+            toggleEquipmentWindow();
         }
     });
 
@@ -1026,6 +1179,7 @@ export function isDialogOpen() {
 /**
  * Re-renderiza grid + equipment slots + ouro do painel de inventário.
  */
+
 function _refreshInventoryUI() {
     const slots   = Inventory.getSlots();
     const equip   = Inventory.getEquipment();
@@ -1049,6 +1203,7 @@ function _refreshInventoryUI() {
                 font-size:10px;text-align:center;color:#c8a84a;position:relative;
                 box-sizing:border-box;
             `;
+
             if (slot) {
                 const def = Inventory.getItemDef(slot.itemId);
                 const icon = def?.type === 'weapon'     ? '⚔️'
@@ -1056,45 +1211,143 @@ function _refreshInventoryUI() {
                            : def?.type === 'accessory'  ? '💍'
                            : def?.type === 'consumable' ? '🧪'
                            : '📦';
+
                 cell.innerHTML = `<span style="font-size:16px;">${icon}</span>`;
+
                 if (def && def.stack > 1) {
                     const qtyEl = document.createElement('span');
                     qtyEl.style.cssText = 'position:absolute;bottom:1px;right:3px;font-size:9px;color:#ffd700;';
                     qtyEl.textContent = slot.qty;
                     cell.appendChild(qtyEl);
                 }
+
                 cell.title = (def?.name ?? slot.itemId) + (slot.qty > 1 ? ` x${slot.qty}` : '');
+
                 cell.addEventListener('contextmenu', (e) => {
                     e.preventDefault();
                     const d = Inventory.getItemDef(slot.itemId);
                     if (!d) return;
+
                     if (d.type === 'consumable') {
                         Inventory.useItem(i);
                         Audio.playSFX('assets/audio/sfx/sfx_ui_click.ogg');
-                    } else if (d.type === 'weapon' || d.type === 'armor' || d.type === 'accessory') {
+                    } else if (
+                        d.type === 'weapon' ||
+                        d.type === 'armor' ||
+                        d.type === 'accessory' ||
+                        d.type === 'shield' ||
+                        d.type === 'headgear' ||
+                        d.type === 'garment' ||
+                        d.type === 'footgear'
+                    ) {
                         Inventory.equipItem(i);
                     }
+
                     _refreshInventoryUI();
                 });
             }
+
             grid.appendChild(cell);
         }
     }
 
-    document.querySelectorAll('.ui-equip-slot').forEach(el => {
+    document.querySelectorAll('#ui-inv-equip-grid .ui-equip-slot').forEach(el => {
         const slotName = el.dataset.slot;
+        const meta = EQUIPMENT_SLOT_META.find(s => s.slot === slotName);
         const itemId = equip[slotName];
+
         if (itemId) {
             const def = Inventory.getItemDef(itemId);
-            const icon = slotName === 'weapon' ? '⚔️' : slotName === 'armor' ? '🛡️' : '💍';
+            const icon = meta?.icon ?? '📦';
             el.innerHTML = `<span style="font-size:18px;">${icon}</span><br><span style="font-size:9px;">${def?.name ?? itemId}</span>`;
             el.style.borderColor = '#c8a84a';
         } else {
-            const label = slotName === 'weapon' ? 'Arma' : slotName === 'armor' ? 'Arm.' : 'Aces.';
-            el.textContent = label;
+            el.textContent = meta?.label ?? slotName;
             el.style.borderColor = '#5a4a2a';
         }
     });
+}
+
+function _refreshEquipmentWindowUI() {
+    if (!_equipmentWindowEl) return;
+
+    const equip = Inventory.getEquipment();
+    const activeSets = Equipment.getActiveSetBonuses(null);
+
+    _equipmentWindowEl.querySelectorAll('#ui-eq-grid .ui-equipment-slot').forEach(el => {
+        const slotName = el.dataset.slot;
+        const meta = EQUIPMENT_SLOT_META.find(s => s.slot === slotName);
+        const itemId = equip[slotName];
+
+        if (itemId) {
+            const def = Inventory.getItemDef(itemId);
+            const icon = meta?.icon ?? '📦';
+            el.innerHTML = `<span style="font-size:18px;">${icon}</span><br><span style="font-size:9px;">${def?.name ?? itemId}</span>`;
+            el.style.borderColor = '#c8a84a';
+        } else {
+            el.textContent = meta?.label ?? slotName;
+            el.style.borderColor = '#5a4a2a';
+        }
+    });
+
+    const setsWrap = document.getElementById('ui-active-sets');
+    if (!setsWrap) return;
+
+    if (!activeSets.sets.length) {
+        setsWrap.innerHTML = `
+            <div style="padding:10px;border:1px solid #4e3b1f;border-radius:6px;background:#21180d;color:#a89368;">
+                Nenhum set ativo no momento.
+            </div>
+        `;
+        return;
+    }
+
+    setsWrap.innerHTML = activeSets.sets.map(setInfo => {
+        const setDef = Equipment.getSetDef(setInfo.setId);
+        const tierColor = _getTierBadgeColor(setInfo.tier);
+        const bonusText = _formatStatsLine(setInfo.activeBonus);
+
+        const piecesHtml = (setDef?.pieceSlots || []).map(slotName => {
+            const slotMeta = EQUIPMENT_SLOT_META.find(s => s.slot === slotName);
+            const equipped = setInfo.equippedSlots.includes(slotName);
+
+            return `
+                <div style="
+                    padding:6px 8px;
+                    border:1px solid ${equipped ? '#c8a84a' : '#4e4e4e'};
+                    border-radius:4px;
+                    background:${equipped ? '#2d2210' : '#1b1b1b'};
+                    color:${equipped ? '#f0e6d2' : '#9a9a9a'};
+                    opacity:${equipped ? '1' : '0.4'};
+                    font-size:11px;
+                ">
+                    ${slotMeta?.label ?? slotName}
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <div style="padding:10px;border:1px solid #5a4a2a;border-radius:6px;background:#21180d;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+                    <div style="font-size:14px;color:#ffd27a;font-weight:bold;">${setInfo.name}</div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span style="font-size:10px;padding:2px 6px;border-radius:999px;background:${tierColor};color:#111;font-weight:bold;text-transform:uppercase;">
+                            ${setInfo.tier}
+                        </span>
+                        <span style="font-size:11px;color:#c9b07a;">${setInfo.pieceCount}/4</span>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px;">
+                    ${piecesHtml}
+                </div>
+
+                <div style="font-size:11px;color:#e7d7ad;">
+                    ${bonusText}
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 /**
  * Exibe número de dano flutuante sobre a posição world do alvo.

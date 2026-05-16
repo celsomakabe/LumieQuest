@@ -1,0 +1,40 @@
+﻿
+>         const skillsRes  = await fetch('./assets/data/skills.json');
+          const skillsData = await skillsRes.json();
+          Classes.setSkillDefs(skillsData.skills || []);
+      } catch (err) {
+> export async function init() {
+      const canvas = document.getElementById('game-canvas');
+      if (!canvas) {
+          console.error('[Main] #game-canvas nÃ£o encontrado.');
+>     Input.init();
+>     Assets.init();
+      Scene.init(canvas);
+  
+      // Ãudio apÃ³s cena (precisa da cÃ¢mera)
+>     Classes.init();
+>     UI.init();
+  
+  // SESSÃƒO 24: mover para world.js (mapsConfig['map_inicial'].monsters)
+>     await Monsters.init();
+      Monsters.spawnGroup('slime',  5, { center: { x:  5, z:  5 }, radius: 4 });
+      Monsters.spawnGroup('goblin', 3, { center: { x: -5, z:  5 }, radius: 3 });
+      Monsters.spawnMonster('orc_warrior',     { x:  20, y: 0.5, z:  20 });
+>         const res  = await fetch('./assets/data/npcs.json');
+          const data = await res.json();
+          NPCs.spawnFromConfig(data);
+      } catch (err) {
+>     Save.init();
+  
+      // Quando assets prontos, inicializa jogo
+      Events.on('assetsReady', _onAssetsReady);
+>     // Preload â€” texturas procedurais nÃ£o precisam de entry aqui;
+      // Ã¡udios sÃ£o prÃ©-carregados para cache imediato
+>     Assets.preloadAll([
+          { type: 'audio', url: 'assets/audio/bgm/bgm_city.ogg'     },
+          { type: 'audio', url: 'assets/audio/sfx/sfx_ui_click.ogg' },
+          { type: 'audio', url: 'assets/audio/sfx/sfx_ui_hover.ogg' },
+>     init();
+  }
+
+

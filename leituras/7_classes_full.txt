@@ -837,25 +837,7 @@ export function executeSkill(skillId, caster, target, ctx) {
         return { ok: false, reason: 'erro_interno' };
     }
 }
-/**
- * Retorna a linhagem completa de uma classe, da raiz até a classe atual.
- * Ex.: 'lord_knight' -> ['swordman', 'knight', 'lord_knight'].
- * @param {string} classId
- * @returns {string[]}
- */
-export function getClassLineage(classId) {
-    if (!classId || !JOBS_META[classId]) return [];
 
-    const lineage = [];
-    let current = classId;
-
-    while (current && JOBS_META[current]) {
-        lineage.unshift(current);
-        current = JOBS_META[current].reqJob ?? null;
-    }
-
-    return lineage;
-}
 /**
  * Retorna metadata pública de um job.
  * Inclui: skills[], allowedWeapons, jobModHP/MP, statBonus, baseClass,

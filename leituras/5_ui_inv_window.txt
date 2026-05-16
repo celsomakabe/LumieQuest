@@ -1,0 +1,65 @@
+﻿
+>                 <div class="ui-equip-slot" data-slot="weapon"    title="Arma"      style="width:72px;height:72px;border:1px solid 
+#5a4a2a;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#2a2010;font-size:12px;text-align:center;">Arma</div>
+>                 <div class="ui-equip-slot" data-slot="armor"     title="Armadura"  style="width:72px;height:72px;border:1px solid 
+#5a4a2a;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#2a2010;font-size:12px;text-align:center;">Arm.</div>
+>                 <div class="ui-equip-slot" data-slot="accessory" title="AcessÃ³rio" style="width:72px;height:72px;border:1px solid 
+#5a4a2a;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#2a2010;font-size:12px;text-align:center;">Aces.</div>
+              </div>
+          </div>
+          <div style="font-size:11px;color:#a08040;margin-bottom:6px;">ITENS (clique-dir: usar/equipar)</div>
+          <div id="ui-inv-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;"></div>
+          <div style="margin-top:8px;font-size:10px;color:#706050;">E = pegar item | I = fechar</div>
+      `;
+      document.body.appendChild(invPanel);
+  
+      document.getElementById('ui-inv-close').addEventListener('click', () => {
+          invPanel.style.display = 'none';
+          Events.emit('uiWindowClosed', { id: 'inventory' });
+      });
+  
+>     invPanel.querySelectorAll('.ui-equip-slot').forEach(el => {
+          el.addEventListener('click', () => {
+              Inventory.unequipItem(el.dataset.slot);
+              _refreshInventoryUI();
+          });
+      });
+  
+      // â”€â”€ Listeners de InventÃ¡rio 
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      Events.on('itemAdded',      () => _refreshInventoryUI());
+      Events.on('itemRemoved',    () => _refreshInventoryUI());
+      Events.on('itemEquipped',   () => _refreshInventoryUI());
+      Events.on('itemUnequipped', () => _refreshInventoryUI());
+  
+      Events.on('goldChanged', ({ total }) => {
+          const gh = document.getElementById('ui-gold-hud');
+          const gi = document.getElementById('ui-gold-inv');
+          if (gh) gh.textContent = 'ðŸª™ ' + total;
+          if (gi) gi.textContent = total;
+      });
+  
+      Events.on('inventoryFull', ({ itemId }) => {
+>     document.querySelectorAll('.ui-equip-slot').forEach(el => {
+          const slotName = el.dataset.slot;
+          const itemId = equip[slotName];
+          if (itemId) {
+              const def = Inventory.getItemDef(itemId);
+              const icon = slotName === 'weapon' ? 'âš”ï¸' : slotName === 'armor' ? 'ðŸ›¡ï¸' : 'ðŸ’';
+              el.innerHTML = `<span style="font-size:18px;">${icon}</span><br><span style="font-size:9px;">${def?.name ?? itemId}</span>`;
+              el.style.borderColor = '#c8a84a';
+          } else {
+              const label = slotName === 'weapon' ? 'Arma' : slotName === 'armor' ? 'Arm.' : 'Aces.';
+              el.textContent = label;
+              el.style.borderColor = '#5a4a2a';
+          }
+      });
+  }
+  /**
+   * Exibe nÃºmero de dano flutuante sobre a posiÃ§Ã£o world do alvo.
+   * @param {{ x: number, y: number, z: number }} worldPosition
+   * @param {number}  amount
+   * @param {boolean} isCritical
+   */
+
+

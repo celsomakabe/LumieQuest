@@ -1,0 +1,146 @@
+[
+  {
+    "id": "set_normal_swordman",
+    "name": "Conjunto Normal do Espadachim",
+    "tier": "normal",
+    "classRestriction": "swordman",
+    "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
+    "bonuses": {
+      "2": { "str": 2, "vit": 1 },
+      "3": { "str": 4, "vit": 2, "hp_pct": 5 },
+      "4": { "str": 7, "vit": 5, "hp_pct": 10 }
+    }
+  },
+  {
+    "id": "set_legendary_swordman",
+    "name": "Conjunto Lendário do Espadachim",
+    "tier": "legendary",
+    "classRestriction": "swordman",
+    "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
+    "bonuses": {
+      "2": { "str": 3, "vit": 2 },
+      "3": { "str": 7, "vit": 4, "hp_pct": 9 },
+      "4": { "str": 12, "vit": 8, "hp_pct": 18 }
+    }
+  },
+  {
+    "id": "set_divine_swordman",
+    "name": "Conjunto Divino do Espadachim",
+    "tier": "divine",
+    "classRestriction": "swordman",
+    "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
+    "bonuses": {
+      "2": { "str": 5, "vit": 3 },
+      "3": { "str": 10, "vit": 7, "hp_pct": 16 },
+      "4": { "str": 18, "vit": 13, "hp_pct": 30 }
+    }
+  },
+  {
+    "id": "set_normal_mage",
+    "name": "Conjunto Normal do Mago",
+    "tier": "normal",
+    "classRestriction": "mage",
+    "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
+    "bonuses": {
+      "2": { "int": 2, "dex": 1 },
+      "3": { "int": 4, "dex": 2, "mp_pct": 6 },
+      "4": { "int": 7, "dex": 5, "mp_pct": 12 }
+    }
+  },
+  {
+    "id": "set_legendary_mage",
+    "name": "Conjunto Lendário do Mago",
+    "tier": "legendary",
+    "classRestriction": "mage",
+    "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
+    "bonuses": {
+      "2": { "int": 3, "dex": 2 },
+      "3": { "int": 7, "dex": 4, "mp_pct": 10 },
+      "4": { "int": 12, "dex": 8, "mp_pct": 20 }
+    }
+  },
+  {
+    "id": "set_divine_mage",
+    "name": "Conjunto Divino do Mago",
+    "tier": "divine",
+    "classRestriction": "mage",
+    "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
+    "bonuses": {
+      "2": { "int": 5, "dex": 3 },
+      "3": { "int": 10, "dex": 7, "mp_pct": 16 },
+      "4": { "int": 18, "dex": 13, "mp_pct": 32 }
+    }
+  },
+  {
+    "id": "set_normal_archer",
+    "name": "Conjunto Normal do Arqueiro",
+    "tier": "normal",
+    "classRestriction": "archer",
+    "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
+    "bonuses": {
+      "2": { "dex": 2, "agi": 1 },
+      "3": { "dex": 4, "agi": 2, "hp_pct": 3 },
+      "4": { "dex": 7, "agi": 5, "hp_pct": 8 }
+    }
+  },
+  {
+    "id": "set_legendary_archer",
+    "name": "Conjunto Lendário do Arqueiro",
+    "tier": "legendary",
+    "classRestriction": "archer",
+    "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
+    "bonuses": {
+      "2": { "dex": 3, "agi": 2 },
+      "3": { "dex": 7, "agi": 4, "hp_pct": 6 },
+      "4": { "dex": 12, "agi": 8, "hp_pct": 14 }
+    }
+  },
+  {
+    "id": "set_divine_archer",
+    "name": "Conjunto Divino do Arqueiro",
+    "tier": "divine",
+    "classRestriction": "archer",
+    "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
+    "bonuses": {
+      "2": { "dex": 5, "agi": 3 },
+      "3": { "dex": 10, "agi": 7, "hp_pct": 10 },
+      "4": { "dex": 18, "agi": 13, "hp_pct": 22 }
+    }
+  },
+  {
+    "id": "set_normal_assassin",
+    "name": "Conjunto Normal do Assassino",
+    "tier": "normal",
+    "classRestriction": "assassin",
+    "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
+    "bonuses": {
+      "2": { "agi": 2, "luk": 1 },
+      "3": { "agi": 4, "luk": 2, "hp_pct": 3 },
+      "4": { "agi": 7, "luk": 5, "hp_pct": 8 }
+    }
+  },
+  {
+    "id": "set_legendary_assassin",
+    "name": "Conjunto Lendário do Assassino",
+    "tier": "legendary",
+    "classRestriction": "assassin",
+    "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
+    "bonuses": {
+      "2": { "agi": 3, "luk": 2 },
+      "3": { "agi": 7, "luk": 4, "hp_pct": 6 },
+      "4": { "agi": 12, "luk": 8, "hp_pct": 14 }
+    }
+  },
+  {
+    "id": "set_divine_assassin",
+    "name": "Conjunto Divino do Assassino",
+    "tier": "divine",
+    "classRestriction": "assassin",
+    "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
+    "bonuses": {
+      "2": { "agi": 5, "luk": 3 },
+      "3": { "agi": 10, "luk": 7, "hp_pct": 10 },
+      "4": { "agi": 18, "luk": 13, "hp_pct": 22 }
+    }
+  }
+]

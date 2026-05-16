@@ -1,7 +1,7 @@
-/**
+﻿/**
  * @module save
  * @description Serializa/deserializa estado do jogo no LocalStorage com versionamento.
- * Dependências: events.js
+ * DependÃªncias: events.js
  */
 
 import { emit } from './events.js';
@@ -9,16 +9,16 @@ import { emit } from './events.js';
 const STORAGE_KEY = 'lumiequest_save';
 
 /**
- * v1 — PROMPT 0: schema base
- * v2 — PROMPT 3: adiciona bloco "player"
+ * v1 â€” PROMPT 0: schema base
+ * v2 â€” PROMPT 3: adiciona bloco "player"
  * @type {number}
  */
-const CURRENT_SAVE_VERSION = 8;
+const CURRENT_SAVE_VERSION = 7;
 
 /** @type {Record<number, (data: Object) => Object>} */
 const MIGRATIONS = {
     /**
-     * v1 → v2: injeta bloco player padrão (swordman nível 1).
+     * v1 â†’ v2: injeta bloco player padrÃ£o (swordman nÃ­vel 1).
      * HP = 100 + vit(12)*5 = 160 | MP = 50 + int(5)*3 = 65
      */
     2: (data) => ({
@@ -32,7 +32,7 @@ const MIGRATIONS = {
           currentMap: 'city01', playtime: 0,
         },
     }),/**
-     * v2 → v3: cria bloco inventory (30 slots, equipment, gold) e migra zeny → inventory.gold.
+     * v2 â†’ v3: cria bloco inventory (30 slots, equipment, gold) e migra zeny â†’ inventory.gold.
      */
     3: (data) => {
         const goldFromZeny = (data.player && typeof data.player.zeny === 'number')
@@ -49,7 +49,7 @@ const MIGRATIONS = {
         return data;
     },
     /**
-     * v3 → v4: inicializa player.quests se ausente.
+     * v3 â†’ v4: inicializa player.quests se ausente.
      */
     4: (save) => {
         if (!save.player.quests) {
@@ -62,8 +62,8 @@ const MIGRATIONS = {
     },
 
     /**
-     * v4 → v5: adiciona player.equippedSkills (4 slots) e player.cooldowns.
-     * Idempotente: não sobrescreve se já existir (newGame pode popular antes da migration).
+     * v4 â†’ v5: adiciona player.equippedSkills (4 slots) e player.cooldowns.
+     * Idempotente: nÃ£o sobrescreve se jÃ¡ existir (newGame pode popular antes da migration).
      */
     5: (data) => {
         if (data.player) {
@@ -88,7 +88,7 @@ const MIGRATIONS = {
         return data;
     },
     /**
-     * v6 → v7: adiciona player.title baseado na classe atual.
+     * v6 â†’ v7: adiciona player.title baseado na classe atual.
      */
     7: (data) => {
         if (data.player) {
@@ -100,7 +100,7 @@ const MIGRATIONS = {
                 wizard: 'Bruxo',
                 high_wizard: 'Grande Bruxo',
                 archer: 'Arqueiro',
-                hunter: 'Caçador',
+                hunter: 'CaÃ§ador',
                 sniper: 'Atirador de Elite',
                 assassin: 'Assassino',
                 assassin_master: 'Mestre Assassino',
@@ -112,36 +112,10 @@ const MIGRATIONS = {
         }
         return data;
     },
-        /**
-     * v7 → v8: expande equipment de 3 slots para 10 slots Ragnarok-completo.
-     * weapon e armor mantêm nome. accessory vai para accessory_left.
-     * Novos slots iniciam null.
-     */
-    8: (data) => {
-        const eq = data.player?.inventory?.equipment ?? {};
-        const newEq = {
-            weapon: eq.weapon ?? null,
-            shield: null,
-            upper_headgear: null,
-            mid_headgear: null,
-            lower_headgear: null,
-            armor: eq.armor ?? null,
-            garment: null,
-            footgear: null,
-            accessory_left: eq.accessory ?? null,
-            accessory_right: null
-        };
-
-        if (!data.player) data.player = {};
-        if (!data.player.inventory) data.player.inventory = {};
-        data.player.inventory.equipment = newEq;
-
-        return data;
-    },
 };
 
 /**
- * Carrega save existente, migra se necessário e emite saveLoaded.
+ * Carrega save existente, migra se necessÃ¡rio e emite saveLoaded.
  * @returns {void}
  */
 export function init() {
@@ -155,7 +129,7 @@ export function init() {
         emit('saveLoaded', migrated);
         console.log(`[save] v${raw.saveVersion} carregado (atual: v${CURRENT_SAVE_VERSION})`);
     } catch (err) {
-        console.error('[save] Falha ao migrar — resetando:', err);
+        console.error('[save] Falha ao migrar â€” resetando:', err);
         emit('saveFailed', { error: err });
     }
 }
@@ -199,8 +173,8 @@ export function deleteSave() {
 }
 
 /**
- * Aplica migrações sequenciais até CURRENT_SAVE_VERSION.
- * Indexa sempre pelo nextVersion (destino) — nunca pela versão atual.
+ * Aplica migraÃ§Ãµes sequenciais atÃ© CURRENT_SAVE_VERSION.
+ * Indexa sempre pelo nextVersion (destino) â€” nunca pela versÃ£o atual.
  * @param {Object} data
  * @returns {Object}
  */
@@ -210,9 +184,9 @@ export function migrateSave(data) {
         const nextVersion = current.saveVersion + 1;
         const fn          = MIGRATIONS[nextVersion];
         if (!fn) throw new Error(
-            `[save] MIGRATIONS[${nextVersion}] não encontrada. Adicione antes de incrementar CURRENT_SAVE_VERSION.`
+            `[save] MIGRATIONS[${nextVersion}] nÃ£o encontrada. Adicione antes de incrementar CURRENT_SAVE_VERSION.`
         );
-        console.log(`[save] Migrando v${current.saveVersion} → v${nextVersion}…`);
+        console.log(`[save] Migrando v${current.saveVersion} â†’ v${nextVersion}â€¦`);
         current             = fn(current);
         current.saveVersion = nextVersion;
     }
@@ -233,7 +207,7 @@ function _readRaw() {
         const json = localStorage.getItem(STORAGE_KEY);
         return json ? JSON.parse(json) : null;
     } catch (err) {
-        console.error('[save] JSON inválido no LocalStorage:', err);
+        console.error('[save] JSON invÃ¡lido no LocalStorage:', err);
         return null;
     }
 }

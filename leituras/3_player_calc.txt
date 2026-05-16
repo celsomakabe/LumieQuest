@@ -1,0 +1,167 @@
+﻿
+>    _data = _buildData(saveData);
+  
+      // Restaurar HP/MP cheios no boot (estilo MMO: relogar = full)
+      _data.hp = _data.maxHp;
+      _data.mp = _data.maxMp;
+  
+      const geometry = new THREE.CapsuleGeometry(0.5, 1.5, 8, 16);
+      const material = new THREE.MeshStandardMaterial({ color: 0x4488ff });
+      _mesh          = new THREE.Mesh(geometry, material);
+      _mesh.castShadow = true;
+  
+      _mesh.position.set(_data.position.x, _data.position.y, _data.position.z);
+      _prevPosition.copy(_mesh.position);
+  
+      add(_mesh);
+  
+      // BÃ´nus de equipamento via bus â€” sem import direto de equipment.js (R8)
+      on('itemEquipped', _onItemEquipped);
+      on('playerMoved', _onPlayerMoved);
+      on('mouseScrolled', ({ deltaY }) => {
+          const dir = deltaY > 0 ? 1 : -1;
+          _cameraDistance = Math.max(CAM_ZOOM_MIN, Math.min(CAM_ZOOM_MAX, _cameraDistance + dir * CAM_ZOOM_STEP));
+      });
+      // Auto-attack no clique esquerdo
+      on('mouseClicked', (e) => {
+        if (e.button !== 0) return;
+        if (_dialogOpen) return;
+        if (_data.hp <= 0) return;
+  
+        const pos    = _data.position;
+        const target = findNearestTarget(pos, 3);
+> export function addExp(amount) {
+      if (!_data) return;
+  
+      const gain = Number(amount);
+      if (!Number.isFinite(gain) || gain <= 0) return;
+  
+      _data.exp += gain;
+      emit('expChanged', { current: _data.exp, needed: 100 * (_data.level * _data.level) });
+      while (true) {
+          if (_data.level >= 99) {
+              _data.exp = 0;
+              break;
+          }
+          const xpNeeded = 100 * (_data.level * _data.level);
+          if (_data.exp < xpNeeded) break;
+  
+          _data.exp   -= xpNeeded;
+          _data.level += 1;
+  
+          // Pre-Renewal: floor((BaseLv-1)/5) + 3 statPoints por level
+          _data.statPoints += Math.floor((_data.level - 1) / 5) + 3;
+  
+          // Recalcular maxHp/maxMp via fÃ³rmula Ragnarok-like (nÃ£o mexer em baseStats)
+          const meta = getJobMeta(_data.class);
+          const jobModHP = meta?.jobModHP ?? 1.0;
+          const jobModMP = meta?.jobModMP ?? 1.0;
+          _data.maxHp = Math.floor((35 + _data.level * 8) * (1 + _data.baseStats.vit / 100) * jobModHP);
+          _data.maxMp = Math.floor((40 + _data.level * 5) * (1 + _data.baseStats.int / 100) * jobModMP);
+          _data.hp = _data.maxHp;
+          _data.mp = _data.maxMp;
+          emit('levelUp', { newLevel: _data.level });
+> export async function applyJobChange(newJobId) {
+      if (!_data) return false;
+      const Classes = await import('../systems/classes.js');
+      const check = Classes.canJobChange(_data);
+      if (!check.canChange) {
+>         console.warn('[player] applyJobChange bloqueado:', check.reason);
+          return false;
+      }
+      const meta = Classes.getJobMeta(newJobId);
+      if (!meta) {
+          console.warn('[player] JOBS_META nÃ£o encontrado para', newJobId);
+          return false;
+      }
+      const oldClass = _data.class;
+  
+      _data.class      = newJobId;
+      _data.title      = meta.title ?? '';
+      _data.jobLevel   = 1;
+      _data.jobExp     = 0;
+      _data.statPoints += 5;
+  
+      if (meta.statBonus) {
+          Object.keys(meta.statBonus).forEach(stat => {
+              if (_data.baseStats[stat] !== undefined) {
+                  _data.baseStats[stat] += meta.statBonus[stat];
+              }
+          });
+      }
+  // Recalcular maxHp/maxMp com novo jobMod (HP/MP escalam por classe)
+      const jobModHP = meta.jobModHP ?? 1.0;
+      const jobModMP = meta.jobModMP ?? 1.0;
+      _data.maxHp = Math.floor((35 + _data.level * 8) * (1 + _data.baseStats.vit / 100) * jobModHP);
+      _data.maxMp = Math.floor((40 + _data.level * 5) * (1 + _data.baseStats.int / 100) * jobModMP);
+      _data.hp = _data.maxHp;
+      _data.mp = _data.maxMp;
+      emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+> function _calcMaxHp(job, level, stats) {
+      const meta = getJobMeta(job);
+      const jobModHP = meta?.jobModHP ?? 1.0;
+      return Math.floor((35 + level * 8) * (1 + stats.vit / 100) * jobModHP);
+  }
+  
+  /**
+   * Calcula maxMp Ragnarok-style.
+   * @param {string} job
+   * @param {number} level
+   * @param {{int:number}} stats
+   * @returns {number}
+   */
+> function _calcMaxMp(job, level, stats) {
+      const meta = getJobMeta(job);
+      const jobModMP = meta?.jobModMP ?? 1.0;
+      return Math.floor((40 + level * 5) * (1 + stats.int / 100) * jobModMP);
+  }
+> function _buildData(saveData) {
+      const job   = saveData?.class ?? 'swordman';
+      const level = saveData?.level ?? 1;
+      const stats = getBaseStats(job, level);
+  
+      return {
+          type:          'player',
+          name:          saveData?.name          ?? 'Hero',
+          title:         saveData?.title         ?? '',
+          class:         job,
+          level:         level,
+          jobLevel:      saveData?.jobLevel      ?? 1,
+          exp:           saveData?.exp           ?? 0,
+          jobExp:        saveData?.jobExp        ?? 0,
+>         hp:            saveData?.hp            ?? _calcMaxHp(job, level, stats),
+>         maxHp:         saveData?.maxHp         ?? _calcMaxHp(job, level, stats),
+>         mp:            saveData?.mp            ?? _calcMaxMp(job, level, stats),
+>         maxMp:         saveData?.maxMp         ?? _calcMaxMp(job, level, stats),
+          baseStats:     saveData?.baseStats     ?? stats,
+          statPoints:    saveData?.statPoints    ?? 0,
+          skillPoints:   saveData?.skillPoints   ?? 0,
+          learnedSkills: saveData?.learnedSkills ?? [],
+          position:      saveData?.position      ?? { x: 0, y: 0, z: 0 },
+          currentMap:    saveData?.currentMap    ?? 'city01',
+  
+          playtime:      saveData?.playtime      ?? 0,
+          equippedSkills: Array.isArray(saveData?.equippedSkills)
+              ? saveData.equippedSkills
+              : [null, null, null, null],
+          jobHistory: Array.isArray(saveData?.jobHistory) ? saveData.jobHistory : [],
+          jobChangeQuestsCompleted: Array.isArray(saveData?.jobChangeQuestsCompleted) ? saveData.jobChangeQuestsCompleted : [],
+          cooldowns:     {}, // sempre zerado no boot â€” performance.now() reinicia em 0
+          _activeBuffs:  [],
+      };
+      
+  }
+  
+  /**
+   * Recebe bÃ´nus de equipamento via bus (R8 â€” sem import de equipment.js).
+   * @param {Object} _payload
+   */
+  function _onItemEquipped(_payload) {
+      // PROMPT 11: aplicar bÃ´nus de stats ao player
+      console.log('[player] itemEquipped recebido â€” bÃ´nus aplicado no PROMPT 11');
+  }
+  
+  /**
+   * Toca SFX de footstep alternado ao detectar deslocamento real no plano XZ.
+
+

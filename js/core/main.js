@@ -12,6 +12,7 @@ import * as Save    from './save.js';
 import * as Scene   from '../world/scene.js';
 import * as Player  from '../entities/player.js';
 import * as Classes from '../systems/classes.js';
+import * as Equipment from '../systems/equipment.js';
 import * as UI      from '../ui/ui.js';
 import * as THREE  from 'three';
 import * as Combat from '../systems/combat.js';
@@ -155,6 +156,7 @@ async function _onAssetsReady() {
         const skillsRes  = await fetch('./assets/data/skills.json');
         const skillsData = await skillsRes.json();
         Classes.setSkillDefs(skillsData.skills || []);
+ 
     } catch (err) {
         console.error('[main] Falha ao carregar skills.json:', err);
         Classes.setSkillDefs([]);
@@ -263,7 +265,16 @@ async function _onAssetsReady() {
     _lastTime  = performance.now();
     Events.emit('gameReady');
 }
-
+async function _loadSetDefs() {
+    try {
+        const setsRes = await fetch('./assets/data/sets.json');
+        const setsData = await setsRes.json();
+        Equipment.setCatalogue(setsData);
+    } catch (err) {
+        console.error('[Main] Falha ao carregar sets.json:', err);
+        Equipment.setCatalogue([]);
+    }
+}
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 /**
@@ -286,6 +297,8 @@ export async function init() {
 
     // Sistemas e UI
     Classes.init();
+    Equipment.init();
+    await _loadSetDefs();
     UI.init();
 
 // SESSÃO 24: mover para world.js (mapsConfig['map_inicial'].monsters)
