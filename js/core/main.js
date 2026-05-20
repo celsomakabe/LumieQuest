@@ -21,6 +21,7 @@ import * as NPCs     from '../entities/npcs.js';
 import * as Inventory from '../systems/inventory.js';
 import * as Quests    from '../systems/quests.js';
 import * as Refine    from '../systems/refine.js';
+import * as Cards     from '../systems/cards.js';
 let _dialogOpen = false;
 
 Events.on('dialogStarted', () => { _dialogOpen = true; });
@@ -218,9 +219,11 @@ async function _onAssetsReady() {
       Combat.attack(attacker, player);
   });
  // ── Inventário ────────────────────────────────────────────────────────
-    Events.on('itemPicked', ({ itemId, qty }) => {
-        Inventory.addItem(itemId, qty);
-    Audio.playSFX('assets/audio/sfx/sfx_ui_click.ogg');
+    Events.on('itemPicked', ({ itemId, qty, dropId, refineLevel, sockets }) => {
+        Inventory.addItem(itemId, qty, {
+            ...(refineLevel != null ? { refineLevel } : {}),
+            ...(Array.isArray(sockets) && sockets.length > 0 ? { sockets } : {})
+        });
     });
 
     Events.on('inventoryHealRequest', ({ amount }) => {
@@ -301,6 +304,7 @@ export async function init() {
     Equipment.init();
     await _loadSetDefs();
     Refine.init();
+    await Cards.init();
     UI.init();
 
 // SESSÃO 24: mover para world.js (mapsConfig['map_inicial'].monsters)

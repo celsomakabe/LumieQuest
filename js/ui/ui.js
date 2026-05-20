@@ -10,6 +10,7 @@ import { getCamera, getRenderer } from '../world/scene.js';
 import * as Audio  from '../core/audio.js';
 import * as Inventory from '../systems/inventory.js';
 import * as Equipment from '../systems/equipment.js';
+import * as Cards from '../systems/cards.js';
 import * as Quests from '../systems/quests.js';
 import * as Combat from '../systems/combat.js';
 import * as Player from '../entities/player.js';
@@ -35,6 +36,8 @@ let _equipmentWindowEl = null;
 let _refineWindowEl = null;
 let _selectedRefineTarget = null;
 let _selectedRefineMeta = null;
+let _socketPopupEl = null;
+let _socketPopupTarget = null;
 
 function _formatStatsLine(stats) {
     if (!stats) return 'Sem bônus ativo';
@@ -279,6 +282,7 @@ export function toggleEquipmentWindow() {
         _refreshEquipmentWindowUI();
         Events.emit('uiWindowOpened', { id: 'equipment' });
     } else {
+        _closeSocketPopup();
         Events.emit('uiWindowClosed', { id: 'equipment' });
     }
 }
@@ -461,6 +465,9 @@ export function init() {
             `).join('')}
         </div>
 
+        <div style="font-size:13px;color:#c8a84a;margin-bottom:8px;">Sockets</div>
+        <div id="ui-item-sockets" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>
+
         <div style="font-size:13px;color:#c8a84a;margin-bottom:8px;">Sets Ativos</div>
         <div id="ui-active-sets" style="display:flex;flex-direction:column;gap:10px;"></div>
 
@@ -472,6 +479,7 @@ export function init() {
 
     document.getElementById('ui-equip-close').addEventListener('click', () => {
         equipmentPanel.style.display = 'none';
+        _closeSocketPopup();
         Events.emit('uiWindowClosed', { id: 'equipment' });
     });
 
@@ -1254,6 +1262,7 @@ function _refreshInventoryUI() {
                 def?.type === 'weapon'     ? '⚔️' :
                 def?.type === 'armor'      ? '🛡️' :
                 def?.type === 'accessory'  ? '💍' :
+                def?.type === 'card'       ? '🃏' :
                 def?.type === 'consumable' ? '🧪' :
                 def?.type === 'material'   ? '⛏️' :
                 '📦';
@@ -1266,6 +1275,12 @@ function _refreshInventoryUI() {
                 <span style="font-size:16px;">${icon}</span>
                 <span style="position:absolute;left:2px;top:2px;font-size:9px;color:${refineColor};">${refineLevel > 0 ? `+${refineLevel}` : ''}</span>
             `;
+
+            if (def?.type === 'card') {
+                cell.style.background = 'linear-gradient(180deg, #3a1f3f, #1c1020)';
+                cell.style.borderColor = '#c07cff';
+                cell.style.boxShadow = 'inset 0 0 0 1px rgba(255,255,255,0.06)';
+            }
 
             if (def?.stackable && slot.qty > 1) {
                 const qtyEl = document.createElement('span');
@@ -1330,7 +1345,75 @@ function _refreshEquipmentWindowUI() {
 
     const equip = Inventory.getEquipment();
     const activeSets = Equipment.getActiveSetBonuses?.() ?? { sets: [] };
+    const socketsWrap = document.getElementById('ui-item-sockets');
 
+    if (socketsWrap) {
+        socketsWrap.innerHTML = '';
+
+        EQUIPMENT_SLOT_META.forEach(meta => {
+            const equipObj = equip[meta.slot];
+            const itemId = equipObj?.itemId ?? (typeof equipObj === 'string' ? equipObj : null);
+
+            const row = document.createElement('div');
+            row.style.cssText = `
+                padding:10px;border:1px solid #5a4a2a;border-radius:6px;background:#21180d;
+            `;
+
+            const header = document.createElement('div');
+            header.style.cssText = `
+                display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;
+                color:#ffd27a;font-size:12px;
+            `;
+            header.innerHTML = `<span>${meta.title}</span><span>${itemId ? (Inventory.getItemDef(itemId)?.name ?? itemId) : 'Vazio'}</span>`;
+            row.appendChild(header);
+
+            const socketLine = document.createElement('div');
+            socketLine.style.cssText = `
+                display:flex;gap:6px;flex-wrap:wrap;
+            `;
+
+            const sockets = Array.isArray(equipObj?.sockets) ? equipObj.sockets : [];
+            const socketCount = Math.max(0, sockets.length);
+
+            if (!itemId || socketCount === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.style.cssText = 'font-size:11px;color:#8f7a54;';
+                emptyMsg.textContent = itemId ? 'Sem sockets neste item.' : 'Equipe um item para ver sockets.';
+                row.appendChild(emptyMsg);
+            } else {
+                sockets.forEach((socketCardId, socketIndex) => {
+                    const socketEl = document.createElement('div');
+                    socketEl.dataset.slot = meta.slot;
+                    socketEl.dataset.socketIndex = String(socketIndex);
+                    socketEl.style.cssText = `
+                        width:34px;height:34px;border-radius:50%;
+                        border:1px solid ${socketCardId ? '#c8a84a' : '#666'};
+                        display:flex;align-items:center;justify-content:center;
+                        cursor:pointer;box-sizing:border-box;
+                        background:${socketCardId ? '#392a12' : '#4b4b4b'};
+                        color:${socketCardId ? '#ffd27a' : '#bbb'};
+                        font-size:16px;user-select:none;
+                    `;
+
+                    if (socketCardId) {
+                        const cardDef = Inventory.getItemDef(socketCardId);
+                        socketEl.textContent = '🃏';
+                        socketEl.title = cardDef?.name ?? socketCardId;
+                    } else {
+                        socketEl.textContent = '○';
+                        socketEl.title = 'Socket vazio. Clique para inserir carta.';
+                        socketEl.addEventListener('click', () => _openSocketPopup(meta.slot, socketIndex));
+                    }
+
+                    socketLine.appendChild(socketEl);
+                });
+
+                row.appendChild(socketLine);
+            }
+
+            socketsWrap.appendChild(row);
+        });
+    }
     _equipmentWindowEl.querySelectorAll('#ui-eq-grid .ui-equipment-slot').forEach(el => {
         const slotName = el.dataset.slot;
         const meta = EQUIPMENT_SLOT_META.find(s => s.slot === slotName);
@@ -2461,6 +2544,113 @@ export function toggleSkillWindow() {
         Events.emit('uiWindowClosed', { windowId: 'skillWindow' });
     }
 }
+
+
+
+
+function _closeSocketPopup() {
+    _socketPopupEl?.remove();
+    _socketPopupEl = null;
+    _socketPopupTarget = null;
+}
+
+function _openSocketPopup(slotName, socketIndex) {
+    _closeSocketPopup();
+    _socketPopupTarget = { type: 'equipment', slot: slotName, socketIndex };
+
+    const cards = Inventory.getSlots()
+        .map((slot, index) => ({ slot, index }))
+        .filter(({ slot }) => {
+            const def = Inventory.getItemDef(slot?.itemId);
+            return def?.type === 'card';
+        });
+
+    const popup = document.createElement('div');
+    popup.id = 'ui-socket-popup';
+    popup.style.cssText = `
+        position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+        width:420px;max-width:92vw;max-height:70vh;overflow:auto;
+        background:rgba(20,18,14,0.98);border:1px solid #5a4a2a;border-radius:8px;
+        padding:14px;z-index:500;color:#e8d8a0;font-family:monospace;
+        box-shadow:0 8px 32px rgba(0,0,0,0.8);
+    `;
+
+    popup.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div style="font-weight:bold;color:#ffd27a;">Inserir carta</div>
+            <span id="ui-socket-popup-close" style="cursor:pointer;font-size:18px;line-height:1;">✕</span>
+        </div>
+        <div style="font-size:11px;color:#b49a6a;margin-bottom:10px;">
+            Selecione uma carta do inventário para o socket ${socketIndex + 1} de ${slotName}.
+        </div>
+        <div id="ui-socket-popup-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    `;
+
+    document.body.appendChild(popup);
+    _socketPopupEl = popup;
+
+    popup.querySelector('#ui-socket-popup-close')?.addEventListener('click', _closeSocketPopup);
+
+    const list = popup.querySelector('#ui-socket-popup-list');
+    if (!cards.length) {
+        list.innerHTML = `<div style="padding:10px;border:1px solid #4e3b1f;border-radius:6px;background:#21180d;color:#a89368;">Nenhuma carta disponível no inventário.</div>`;
+        return;
+    }
+
+    cards.forEach(({ slot, index }) => {
+        const def = Inventory.getItemDef(slot.itemId);
+        const row = document.createElement('div');
+        row.style.cssText = `
+            display:flex;justify-content:space-between;align-items:center;
+            padding:10px;border:1px solid #4e3b1f;border-radius:6px;background:#21180d;
+            cursor:pointer;
+        `;
+        row.innerHTML = `
+            <div>
+                <div style="color:#ffd27a;">${def?.name ?? slot.itemId}</div>
+                <div style="font-size:11px;color:#8f7a54;">Clique para inserir</div>
+            </div>
+            <div style="font-size:18px;">🃏</div>
+        `;
+
+        row.addEventListener('click', () => {
+            const result = Cards.insertCard({ type: 'equipment', slot: slotName }, socketIndex, slot.itemId);
+            if (result) {
+                Audio.playSFX('assets/audio/sfx/sfx_ui_click.ogg');
+                _flashSocketSuccess(slotName, socketIndex);
+                _refreshInventoryUI();
+                _refreshEquipmentWindowUI();
+                _closeSocketPopup();
+            }
+        });
+
+        list.appendChild(row);
+    });
+}
+
+
+
+
+function _flashSocketSuccess(slotName, socketIndex) {
+    const socketEl = document.querySelector(
+        `#ui-item-sockets [data-slot="${slotName}"][data-socket-index="${socketIndex}"]`
+    );
+    if (!socketEl) return;
+
+    socketEl.style.transition = 'transform 120ms ease, box-shadow 120ms ease, background 120ms ease';
+    socketEl.style.boxShadow = '0 0 0 2px #6dff7a, 0 0 12px rgba(109,255,122,0.95)';
+    socketEl.style.background = '#1f5b27';
+    socketEl.style.color = '#caffcf';
+    socketEl.style.transform = 'scale(1.08)';
+
+    setTimeout(() => {
+        socketEl.style.boxShadow = '';
+        socketEl.style.transform = '';
+    }, 180);
+}
+
+
+
 
 export function isSkillWindowOpen() {
     return _skillWindowOpen;

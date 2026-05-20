@@ -772,6 +772,192 @@
       "stackable": true,
       "stack": 99,
       "value": 1000
+    },
+        {
+      "id": "card_slime",
+      "name": "Carta de Slime",
+      "type": "card",
+      "slot": "any",
+      "stack": 1,
+      "effect": { "type": "stat", "stat": "vit", "value": 1 },
+      "classRestriction": null,
+      "sellPrice": 120,
+      "modelPlaceholder": "#7de3ff"
+    },
+    {
+      "id": "card_slime_lucky",
+      "name": "Carta de Slime Sortudo",
+      "type": "card",
+      "slot": "any",
+      "stack": 1,
+      "effect": { "type": "stat", "stat": "luk", "value": 1 },
+      "classRestriction": null,
+      "sellPrice": 130,
+      "modelPlaceholder": "#b4f0ff"
+    },
+    {
+      "id": "card_goblin",
+      "name": "Carta de Goblin",
+      "type": "card",
+      "slot": "any",
+      "stack": 1,
+      "effect": [
+        { "type": "atk_pct", "value": 2 },
+        { "type": "stat", "stat": "str", "value": 1 }
+      ],
+      "classRestriction": null,
+      "sellPrice": 180,
+      "modelPlaceholder": "#caa15a"
+    },
+    {
+      "id": "card_lobo",
+      "name": "Carta de Lobo",
+      "type": "card",
+      "slot": "any",
+      "stack": 1,
+      "effect": { "type": "stat", "stat": "agi", "value": 2 },
+      "classRestriction": null,
+      "sellPrice": 170,
+      "modelPlaceholder": "#a9b0b8"
+    },
+    {
+      "id": "card_besouro",
+      "name": "Carta de Besouro",
+      "type": "card",
+      "slot": "any",
+      "stack": 1,
+      "effect": { "type": "def_pct", "value": 3 },
+      "classRestriction": null,
+      "sellPrice": 200,
+      "modelPlaceholder": "#8a5c2a"
+    },
+    {
+      "id": "card_esqueleto",
+      "name": "Carta de Esqueleto",
+      "type": "card",
+      "slot": "any",
+      "stack": 1,
+      "effect": { "type": "elemental", "elemental": { "undead": 5 } },
+      "classRestriction": null,
+      "sellPrice": 210,
+      "modelPlaceholder": "#f0f0f0"
+    },
+    {
+      "id": "card_golem",
+      "name": "Carta de Golem Pequeno",
+      "type": "card",
+      "slot": "any",
+      "stack": 1,
+      "effect": { "type": "stat", "stat": "vit", "value": 3 },
+      "classRestriction": null,
+      "sellPrice": 240,
+      "modelPlaceholder": "#8e8e8e"
+    },
+    {
+      "id": "card_fada",
+      "name": "Carta de Fada Corrompida",
+      "type": "card",
+      "slot": "any",
+      "stack": 1,
+      "effect": [
+        { "type": "stat", "stat": "int", "value": 2 },
+        { "type": "mp_pct", "value": 1 }
+      ],
+      "classRestriction": null,
+      "sellPrice": 260,
+      "modelPlaceholder": "#ff7fd8"
+    },
+    {
+      "id": "card_lobisomem",
+      "name": "Carta de Lobisomem",
+      "type": "card",
+      "slot": "any",
+      "stack": 1,
+      "effect": { "type": "stat", "stat": "str", "value": 3 },
+      "classRestriction": null,
+      "sellPrice": 280,
+      "modelPlaceholder": "#7b6b5a"
+    },
+    {
+      "id": "card_orc",
+      "name": "Carta de Orc Warrior",
+      "type": "card",
+      "slot": "any",
+      "stack": 1,
+      "effect": { "type": "hp_pct", "value": 5 },
+      "classRestriction": null,
+      "sellPrice": 300,
+      "modelPlaceholder": "#6ba36b"
+    },
+    {
+      "id": "card_assassin",
+      "name": "Carta de Assassin Shadow",
+      "type": "card",
+      "slot": "any",
+      "stack": 1,
+      "effect": [
+        { "type": "stat", "stat": "dex", "value": 3 },
+        { "type": "statusChance", "statusChance": { "stun": 2 } }
+      ],
+      "classRestriction": null,
+      "sellPrice": 360,
+      "modelPlaceholder": "#554466"
+    },
+    {
+      "id": "card_lord_knight",
+      "name": "Carta do Lord Knight",
+      "type": "card",
+      "slot": "any",
+      "stack": 1,
+      "effect": [
+        { "type": "stat", "stat": "str", "value": 5 },
+        { "type": "atk_pct", "value": 5 }
+      ],
+      "classRestriction": null,
+      "sellPrice": 600,
+      "modelPlaceholder": "#d4af37"
+    },
+    {
+      "id": "card_high_wizard",
+      "name": "Carta do High Wizard",
+      "type": "card",
+      "slot": "any",
+      "stack": 1,
+      "effect": [
+        { "type": "stat", "stat": "int", "value": 5 },
+        { "type": "mp_pct", "value": 5 }
+      ],
+      "classRestriction": null,
+      "sellPrice": 600,
+      "modelPlaceholder": "#7f6dff"
+    },
+    {
+      "id": "card_sniper",
+      "name": "Carta do Sniper",
+      "type": "card",
+      "slot": "any",
+      "stack": 1,
+      "effect": [
+        { "type": "stat", "stat": "dex", "value": 5 },
+        { "type": "atk_pct", "value": 5 }
+      ],
+      "classRestriction": null,
+      "sellPrice": 600,
+      "modelPlaceholder": "#4dd0e1"
+    },
+    {
+      "id": "card_shadow_assassin",
+      "name": "Carta do Shadow Assassin",
+      "type": "card",
+      "slot": "any",
+      "stack": 1,
+      "effect": [
+        { "type": "stat", "stat": "agi", "value": 5 },
+        { "type": "statusChance", "status": "stun", "value": 3 }
+      ],
+      "classRestriction": null,
+      "sellPrice": 650,
+      "modelPlaceholder": "#2d1b3d"
     }
   ]
  }

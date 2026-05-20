@@ -8,7 +8,7 @@ import { on, emit } from '../core/events.js';
 
 let _slots = new Array(30).fill(null);
 
-/** @type {{ weapon: { itemId: string, refineLevel?: number }|null, shield: { itemId: string, refineLevel?: number }|null, upper_headgear: { itemId: string, refineLevel?: number }|null, mid_headgear: { itemId: string, refineLevel?: number }|null, lower_headgear: { itemId: string, refineLevel?: number }|null, armor: { itemId: string, refineLevel?: number }|null, garment: { itemId: string, refineLevel?: number }|null, footgear: { itemId: string, refineLevel?: number }|null, accessory_left: { itemId: string, refineLevel?: number }|null, accessory_right: { itemId: string, refineLevel?: number }|null }} */
+/** @type {{ weapon: { itemId: string, refineLevel?: number, sockets?: (string|null)[] }|null, shield: { itemId: string, refineLevel?: number, sockets?: (string|null)[] }|null, upper_headgear: { itemId: string, refineLevel?: number, sockets?: (string|null)[] }|null, mid_headgear: { itemId: string, refineLevel?: number, sockets?: (string|null)[] }|null, lower_headgear: { itemId: string, refineLevel?: number, sockets?: (string|null)[] }|null, armor: { itemId: string, refineLevel?: number, sockets?: (string|null)[] }|null, garment: { itemId: string, refineLevel?: number, sockets?: (string|null)[] }|null, footgear: { itemId: string, refineLevel?: number, sockets?: (string|null)[] }|null, accessory_left: { itemId: string, refineLevel?: number, sockets?: (string|null)[] }|null, accessory_right: { itemId: string, refineLevel?: number, sockets?: (string|null)[] }|null }} */
 let _equipment = {
     weapon: null,
     shield: null,
@@ -47,7 +47,9 @@ function _findStackableSlot(itemId) {
     if (!def) return -1;
     return _slots.findIndex(s => s !== null && s.itemId === itemId && s.qty < def.stack);
 }
-
+function _cloneSockets(sockets) {
+    return Array.isArray(sockets) ? sockets.map(cardId => cardId ?? null) : [];
+}
 export async function init(saveData) {
     if (_initialized) return;
     const response = await fetch('assets/data/items.json');
@@ -67,19 +69,38 @@ export async function init(saveData) {
 export function hydrate(data) {
     if (Array.isArray(data.slots)) {
         for (let i = 0; i < 30; i++) {
-            _slots[i] = data.slots[i] ?? null;
+            const rawSlot = data.slots[i] ?? null;
+            if (!rawSlot) {
+                _slots[i] = null;
+                continue;
+            }
+
+            _slots[i] = {
+                ...rawSlot,
+                sockets: _cloneSockets(rawSlot.sockets ?? [])
+            };
         }
     }
+
     for (const slot of VALID_EQUIP_SLOTS) {
         _equipment[slot] = data.equipment?.[slot] ?? null;
+
         if (typeof _equipment[slot] === 'string') {
             _equipment[slot] = { itemId: _equipment[slot] };
         }
+
+        if (_equipment[slot] && typeof _equipment[slot] === 'object') {
+            _equipment[slot] = {
+                ..._equipment[slot],
+                sockets: _cloneSockets(_equipment[slot].sockets ?? [])
+            };
+        }
     }
+
     _gold = typeof data.gold === 'number' ? data.gold : 0;
 }
 
-export function addItem(itemId, qty = 1) {
+export function addItem(itemId, qty = 1, meta = null) {
     if (itemId === 'gold') {
         _gold += qty;
         emit('goldChanged', { amount: qty, total: _gold });
@@ -118,6 +139,14 @@ export function addItem(itemId, qty = 1) {
             }
             const toAdd = Math.min(def.stack, remaining);
             _slots[emptyIdx] = { itemId, qty: toAdd };
+
+            if (meta?.refineLevel != null) {
+                _slots[emptyIdx].refineLevel = meta.refineLevel;
+            }
+
+            if (Array.isArray(meta?.sockets) && meta.sockets.length > 0) {
+                _slots[emptyIdx].sockets = _cloneSockets(meta.sockets);
+            }
             remaining -= toAdd;
             lastIndex = emptyIdx;
             emit('itemAdded', { itemId, qty: toAdd, slotIndex: emptyIdx });
@@ -166,6 +195,7 @@ export function equipItem(slotIndex) {
 
     const itemId = slot.itemId;
     const refineLevel = slot.refineLevel ?? 0;
+    const sockets = _cloneSockets(slot.sockets ?? []);
     _slots[slotIndex] = null;
 
     if (_equipment[equipSlot] !== null) {
@@ -175,18 +205,29 @@ export function equipItem(slotIndex) {
 
         if (addedIndex === false) {
             _slots[slotIndex] = { itemId, qty: 1, refineLevel };
+            if (sockets.length > 0) {
+                _slots[slotIndex].sockets = _cloneSockets(sockets);
+            }
             emit('inventoryFull', { itemId: oldItemId });
             return false;
         }
 
         if (_slots[addedIndex]) {
             _slots[addedIndex].refineLevel = oldEquipObj?.refineLevel ?? 0;
+
+            const oldSockets = _cloneSockets(oldEquipObj?.sockets ?? []);
+            if (oldSockets.length > 0) {
+                _slots[addedIndex].sockets = oldSockets;
+            }
         }
 
         emit('itemUnequipped', { itemId: oldItemId, equipmentSlot: equipSlot });
     }
 
     _equipment[equipSlot] = { itemId, refineLevel };
+    if (sockets.length > 0) {
+        _equipment[equipSlot].sockets = _cloneSockets(sockets);
+    }
     emit('itemEquipped', { itemId, equipmentSlot: equipSlot });
 
     if (def.effect) {
@@ -210,8 +251,13 @@ export function unequipItem(equipmentSlot) {
     }
 
     if (_slots[addedIndex]) {
-        _slots[addedIndex].refineLevel = equipObj?.refineLevel ?? 0;
+    _slots[addedIndex].refineLevel = equipObj?.refineLevel ?? 0;
+
+    const equipSockets = _cloneSockets(equipObj?.sockets ?? []);
+    if (equipSockets.length > 0) {
+        _slots[addedIndex].sockets = equipSockets;
     }
+}
 
     _equipment[equipmentSlot] = null;
     emit('itemUnequipped', { itemId, equipmentSlot });
@@ -223,7 +269,17 @@ export function getSlots() {
 }
 
 export function getEquipment() {
-    return { ..._equipment };
+    const clone = {};
+    for (const slot of VALID_EQUIP_SLOTS) {
+        const equipObj = _equipment[slot];
+        clone[slot] = equipObj
+            ? {
+                ...equipObj,
+                sockets: _cloneSockets(equipObj.sockets ?? [])
+            }
+            : null;
+    }
+    return clone;
 }
 
 export function getGold() { return _gold; }
@@ -242,7 +298,25 @@ export function setEquipRefineLevel(equipSlot, level) {
     _equipment[equipSlot].refineLevel = level;
     return true;
 }
+/**
+ * Define uma carta em um socket de item equipado.
+ * @param {string} equipSlot
+ * @param {number} socketIndex
+ * @param {string|null} cardId
+ * @returns {boolean}
+ */
+export function setEquipCardSocket(equipSlot, socketIndex, cardId) {
+    if (!VALID_EQUIP_SLOTS.includes(equipSlot)) return false;
+    if (!Number.isInteger(socketIndex) || socketIndex < 0) return false;
+    if (!_equipment[equipSlot] || typeof _equipment[equipSlot] !== 'object') return false;
 
+    const sockets = _cloneSockets(_equipment[equipSlot].sockets ?? []);
+    if (socketIndex >= sockets.length) return false;
+
+    sockets[socketIndex] = cardId ?? null;
+    _equipment[equipSlot].sockets = sockets;
+    return true;
+}
 export function removeEquippedItem(equipSlot) {
     if (!VALID_EQUIP_SLOTS.includes(equipSlot)) return false;
 
@@ -274,9 +348,20 @@ export function removeSlotItem(slotIndex) {
 
 export function serialize() {
     return {
-        slots: _slots.map(s => s ? { ...s } : null),
+        slots: _slots.map(s => s ? {
+            ...s,
+            sockets: _cloneSockets(s.sockets ?? [])
+        } : null),
         equipment: Object.fromEntries(
-            VALID_EQUIP_SLOTS.map(slot => [slot, _equipment[slot] ? { ..._equipment[slot] } : null])
+            VALID_EQUIP_SLOTS.map(slot => [
+                slot,
+                _equipment[slot]
+                    ? {
+                        ..._equipment[slot],
+                        sockets: _cloneSockets(_equipment[slot].sockets ?? [])
+                    }
+                    : null
+            ])
         ),
         gold: _gold
     };

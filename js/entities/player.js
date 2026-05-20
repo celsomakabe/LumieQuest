@@ -12,6 +12,7 @@ import { getGroundHeight }          from '../world/physics.js';
 import { getBaseStats, getJobMeta } from '../systems/classes.js';
 import * as Audio from '../core/audio.js';
 import { findNearestTarget, attack } from '../systems/combat.js';
+import { getCardBonuses } from '../systems/cards.js';
 let _dialogOpen = false;
 
 on('dialogStarted', () => { _dialogOpen = true; });
@@ -61,6 +62,13 @@ let _setBonusCache = {
     hp_pct: 0,
     mp_pct: 0
 };
+
+let _cardBonusCache = {
+    totalStats: { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 },
+    hp_pct: 0,
+    mp_pct: 0
+};
+
 let _rotationY   = 0;
 let _lastMouseX  = null; // null = primeiro frame, evita salto de rotação
 let _cameraDistance = 5; // distância da câmera, ajustável via roda do mouse
@@ -96,6 +104,13 @@ export function init(saveData = null) {
         hp_pct: 0,
         mp_pct: 0
     };
+    _cardBonusCache = {
+        totalStats: { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 },
+        hp_pct: 0,
+        mp_pct: 0
+    };
+
+
    _data = _buildData(saveData);
 
     // Restaurar HP/MP cheios no boot (estilo MMO: relogar = full)
@@ -113,6 +128,7 @@ export function init(saveData = null) {
     add(_mesh);
 
     // Bônus de equipamento via bus — sem import direto de equipment.js (R8)
+    on('cardBonusChanged', _onCardBonusChanged);
     on('itemEquipped', _onItemEquipped);
     on('setBonusChanged', _onSetBonusChanged);
     on('playerMoved', _onPlayerMoved);
@@ -258,8 +274,8 @@ export function addExp(amount) {
         // Pre-Renewal: floor((BaseLv-1)/5) + 3 statPoints por level
         _data.statPoints += Math.floor((_data.level - 1) / 5) + 3;
 
-        _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache);
-        _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache);
+        _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache);
+        _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache);
         _data.hp = _data.maxHp;
         _data.mp = _data.maxMp;
         emit('levelUp', { newLevel: _data.level });
@@ -324,8 +340,8 @@ export async function applyJobChange(newJobId) {
             }
         });
     }
-    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache);
-    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache);
+    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache);
+    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache);
     _data.hp = _data.maxHp;
     _data.mp = _data.maxMp;
     emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
@@ -503,11 +519,13 @@ function _updateCamera() {
  * @param {{vit:number}} stats
  * @returns {number}
  */
-function _calcMaxHp(job, level, stats, setBonus = null) {
+function _calcMaxHp(job, level, stats, setBonus = null, cardBonus = null) {
     const meta = getJobMeta(job);
     const jobModHP = meta?.jobModHP ?? 1.0;
-    const hpPct = Number(setBonus?.hp_pct || 0);
-    const effectiveVit = (stats.vit ?? 0) + (setBonus?.totalStats?.vit ?? 0);
+    const hpPct = Number(setBonus?.hp_pct || 0) + Number(cardBonus?.hp_pct || 0);
+    const effectiveVit = (stats.vit ?? 0)
+        + (setBonus?.totalStats?.vit ?? 0)
+        + (cardBonus?.totalStats?.vit ?? 0);
 
     return Math.floor((35 + level * 8) * (1 + effectiveVit / 100) * jobModHP * (1 + hpPct / 100));
 }
@@ -519,14 +537,17 @@ function _calcMaxHp(job, level, stats, setBonus = null) {
  * @param {{int:number}} stats
  * @returns {number}
  */
-function _calcMaxMp(job, level, stats, setBonus = null) {
+function _calcMaxMp(job, level, stats, setBonus = null, cardBonus = null) {
     const meta = getJobMeta(job);
     const jobModMP = meta?.jobModMP ?? 1.0;
-    const mpPct = Number(setBonus?.mp_pct || 0);
-    const effectiveInt = (stats.int ?? 0) + (setBonus?.totalStats?.int ?? 0);
+    const mpPct = Number(setBonus?.mp_pct || 0) + Number(cardBonus?.mp_pct || 0);
+    const effectiveInt = (stats.int ?? 0)
+        + (setBonus?.totalStats?.int ?? 0)
+        + (cardBonus?.totalStats?.int ?? 0);
 
     return Math.floor((40 + level * 5) * (1 + effectiveInt / 100) * jobModMP * (1 + mpPct / 100));
 }
+
 function _buildData(saveData) {
     const job   = saveData?.class ?? 'swordman';
     const level = saveData?.level ?? 1;
@@ -541,10 +562,10 @@ function _buildData(saveData) {
         jobLevel:      saveData?.jobLevel      ?? 1,
         exp:           saveData?.exp           ?? 0,
         jobExp:        saveData?.jobExp        ?? 0,
-        hp:            saveData?.hp            ?? _calcMaxHp(job, level, stats, _setBonusCache),
-        maxHp:         saveData?.maxHp         ?? _calcMaxHp(job, level, stats, _setBonusCache),
-        mp:            saveData?.mp            ?? _calcMaxMp(job, level, stats, _setBonusCache),
-        maxMp:         saveData?.maxMp         ?? _calcMaxMp(job, level, stats, _setBonusCache),
+        hp:            saveData?.hp            ?? _calcMaxHp(job, level, stats, _setBonusCache, _cardBonusCache),
+        maxHp:         saveData?.maxHp         ?? _calcMaxHp(job, level, stats, _setBonusCache, _cardBonusCache),
+        mp:            saveData?.mp            ?? _calcMaxMp(job, level, stats, _setBonusCache, _cardBonusCache),
+        maxMp:         saveData?.maxMp         ?? _calcMaxMp(job, level, stats, _setBonusCache, _cardBonusCache),
         baseStats:     saveData?.baseStats     ?? stats,
         statPoints:    saveData?.statPoints    ?? 0,
         skillPoints:   saveData?.skillPoints   ?? 0,
@@ -602,6 +623,41 @@ function _onSetBonusChanged(payload) {
     emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
     emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
 }
+
+function _onCardBonusChanged(_payload) {
+    if (!_data) return;
+
+    const bonus = getCardBonuses?.() ?? {
+        stats: { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 },
+        hp_pct: 0,
+        mp_pct: 0
+    };
+
+    _cardBonusCache.totalStats = {
+        str: Number(bonus?.stats?.str || 0),
+        agi: Number(bonus?.stats?.agi || 0),
+        vit: Number(bonus?.stats?.vit || 0),
+        int: Number(bonus?.stats?.int || 0),
+        dex: Number(bonus?.stats?.dex || 0),
+        luk: Number(bonus?.stats?.luk || 0)
+    };
+    _cardBonusCache.hp_pct = Number(bonus?.hp_pct || 0);
+    _cardBonusCache.mp_pct = Number(bonus?.mp_pct || 0);
+
+    const hpRatio = _data.maxHp > 0 ? (_data.hp / _data.maxHp) : 1;
+    const mpRatio = _data.maxMp > 0 ? (_data.mp / _data.maxMp) : 1;
+
+    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache);
+    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache);
+
+    _data.hp = Math.max(1, Math.min(_data.maxHp, Math.floor(_data.maxHp * hpRatio)));
+    _data.mp = Math.max(0, Math.min(_data.maxMp, Math.floor(_data.maxMp * mpRatio)));
+
+    emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+    emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+}
+
+
 /**
  * Toca SFX de footstep alternado ao detectar deslocamento real no plano XZ.
  * @param {{ position: THREE.Vector3, previousPosition: THREE.Vector3, mapId: string }} data

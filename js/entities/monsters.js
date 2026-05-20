@@ -21,6 +21,8 @@ import {
     registerTarget,
     unregisterTarget,
 } from '../systems/combat.js';
+import * as Inventory from '../systems/inventory.js';
+import { generateSockets } from '../systems/cards.js';
 
 // ─── Estado interno ───────────────────────────────────────────────────────────
 
@@ -39,7 +41,7 @@ let _initialized = false;
 /** @type {Object.<string, Object>} itemId → def para cor de drops */
 let _itemCatalogue = {};
 
-/** @type {Map<string, {itemId,qty,mesh,spawnTime}>} */
+/** @type {Map<string, {itemId:string, qty:number, mesh:THREE.Mesh, spawnTime:number, refineLevel?:number, sockets?:(string|null)[]}>} */
 const _drops = new Map();
 
 /** @type {number} */
@@ -176,8 +178,10 @@ function spawnMonster(monsterId, position, linkedQuestId = null) {
         speed:       def.speed,
         baseStats:   { str: def.str, vit: def.def },
 
-        drops:     def.drops     ?? [],
-        abilities: def.abilities ?? [],
+        drops:      def.drops      ?? [],
+        cardDrop:   def.cardDrop   ?? null,
+        cardDrops:  def.cardDrops  ?? [],
+        abilities:  def.abilities  ?? [],
 
         // IA
         state:           'idle',
@@ -708,6 +712,7 @@ function _onEntityDied({ entity }) {
 
     const def = _catalogue[m.monsterId];
     _rollDrops(def, m.mesh.position);
+    _rollCardDrops(def);
     unregisterTarget(m);
 
     emit('monsterDied', {
@@ -761,31 +766,112 @@ function _respawn(m) {
 // ─── Drops ────────────────────────────────────────────────────────────────────
 
 /** @param {Object} def @param {THREE.Vector3} position */
+
+/**
+ * Resolve a quantidade de um drop baseado no schema atual.
+ * @param {Object} drop
+ * @returns {number}
+ */
+
+
 function _rollDrops(def, position) {
     if (!def || !Array.isArray(def.drops)) return;
+
     for (const drop of def.drops) {
         if (Math.random() >= drop.chance) continue;
-        let qty = 1;
-        if (drop.qty && typeof drop.qty === 'object') {
-            qty = Math.floor(Math.random() * (drop.qty.max - drop.qty.min + 1)) + drop.qty.min;
-        } else if (typeof drop.qty === 'number') {
-            qty = drop.qty;
-        }
+
+        const qty = _resolveDropQty(drop);
+        const meta = _buildDropItemMeta(drop.itemId);
         const itemColor = _itemCatalogue[drop.itemId]?.modelPlaceholder ?? '#ffffff';
+
         const mesh = new THREE.Mesh(
             new THREE.BoxGeometry(0.3, 0.3, 0.3),
             new THREE.MeshLambertMaterial({ color: itemColor }),
         );
+
         mesh.position.set(
             position.x + (Math.random() - 0.5) * 0.6,
             position.y + 0.3,
             position.z + (Math.random() - 0.5) * 0.6,
         );
+
         mesh.castShadow = false;
         sceneAdd(mesh);
+
         const dropId = `drop_${_dropIdCounter++}`;
-        _drops.set(dropId, { itemId: drop.itemId, qty, mesh, spawnTime: performance.now() });
-        emit('itemDropped', { itemId: drop.itemId, qty, position: mesh.position, dropId });
+        _drops.set(dropId, {
+            itemId: drop.itemId,
+            qty,
+            mesh,
+            spawnTime: performance.now(),
+            ...(meta?.refineLevel != null ? { refineLevel: meta.refineLevel } : {}),
+            ...(meta?.sockets?.length ? { sockets: [...meta.sockets] } : {})
+        });
+
+        emit('itemDropped', {
+            itemId: drop.itemId,
+            qty,
+            position: mesh.position,
+            dropId,
+            ...(meta?.refineLevel != null ? { refineLevel: meta.refineLevel } : {}),
+            ...(meta?.sockets?.length ? { sockets: [...meta.sockets] } : {})
+        });
+    }
+}
+
+function _resolveDropQty(drop) {
+    if (drop.qty && typeof drop.qty === 'object') {
+        return Math.floor(Math.random() * (drop.qty.max - drop.qty.min + 1)) + drop.qty.min;
+    }
+    if (typeof drop.qty === 'number') {
+        return drop.qty;
+    }
+    if (typeof drop.qtyMin === 'number' && typeof drop.qtyMax === 'number') {
+        return Math.floor(Math.random() * (drop.qtyMax - drop.qtyMin + 1)) + drop.qtyMin;
+    }
+    if (typeof drop.qtyMin === 'number') {
+        return drop.qtyMin;
+    }
+    return 1;
+}
+
+/**
+ * Monta metadata opcional para item dropado no mundo.
+ * Equipáveis recebem sockets aleatórios conforme o slot do item.
+ * @param {string} itemId
+ * @returns {{ refineLevel?: number, sockets?: (string|null)[] }|null}
+ */
+function _buildDropItemMeta(itemId) {
+    const itemDef = _itemCatalogue[itemId];
+    if (!itemDef?.slot) return null;
+
+    const sockets = generateSockets(itemDef.slot);
+    if (sockets.length <= 0) return null;
+
+    return { sockets };
+}
+
+
+
+
+function _rollCardDrops(def) {
+    if (!def) return;
+
+    const cardEntries = [];
+    if (Array.isArray(def.cardDrops)) {
+        cardEntries.push(...def.cardDrops);
+    } else if (def.cardDrop) {
+        cardEntries.push(def.cardDrop);
+    }
+
+    for (const cardDrop of cardEntries) {
+        if (!cardDrop?.cardId || typeof cardDrop.chance !== 'number') continue;
+        if (Math.random() >= cardDrop.chance) continue;
+
+        const added = Inventory.addItem(cardDrop.cardId, 1);
+        if (added === false) {
+            emit('inventoryFull', { itemId: cardDrop.cardId });
+        }
     }
 }
 
@@ -809,7 +895,13 @@ function _updateDrops(dt, playerPos) {
         const dx = drop.mesh.position.x - playerPos.x;
         const dz = drop.mesh.position.z - playerPos.z;
         if (Math.sqrt(dx * dx + dz * dz) < 1.5) {
-            emit('itemPicked', { itemId: drop.itemId, qty: drop.qty, dropId });
+            emit('itemPicked', {
+                itemId: drop.itemId,
+                qty: drop.qty,
+                dropId,
+                ...(drop.refineLevel != null ? { refineLevel: drop.refineLevel } : {}),
+                ...(Array.isArray(drop.sockets) && drop.sockets.length > 0 ? { sockets: [...drop.sockets] } : {})
+            });
             _removeDrop(dropId);
         }
     }
@@ -827,7 +919,13 @@ function _onPickupRequest({ position }) {
     }
     if (nearestId) {
         const drop = _drops.get(nearestId);
-        emit('itemPicked', { itemId: drop.itemId, qty: drop.qty, dropId: nearestId });
+        emit('itemPicked', {
+            itemId: drop.itemId,
+            qty: drop.qty,
+            dropId: nearestId,
+            ...(drop.refineLevel != null ? { refineLevel: drop.refineLevel } : {}),
+            ...(Array.isArray(drop.sockets) && drop.sockets.length > 0 ? { sockets: [...drop.sockets] } : {})
+        });
         _removeDrop(nearestId);
     }
 }
