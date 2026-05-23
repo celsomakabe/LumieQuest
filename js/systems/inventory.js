@@ -5,6 +5,7 @@
  */
 
 import { on, emit } from '../core/events.js';
+import { hasPet, addPet } from './pets.js';
 
 let _slots = new Array(30).fill(null);
 
@@ -171,6 +172,42 @@ export function useItem(slotIndex) {
     if (!slot) return false;
     const def = _catalogue[slot.itemId];
     if (!def || def.type !== 'consumable') return false;
+
+    // Tratamento de ovos de pet (useEffect)
+    if (def.useEffect === 'hatchPet') {
+        const pool = ['pet_bolinha', 'pet_lobinho', 'pet_sininho', 'pet_pedrao'];
+        const missing = pool.filter(id => !hasPet(id));
+        if (missing.length === 0) {
+            emit('uiHintShow', { msg: 'Você já possui todos os pets deste ovo!', duration: 3000 });
+            return false;
+        }
+        let petId = null;
+        for (let i = 0; i < 10; i++) {
+            const rolled = pool[Math.floor(Math.random() * pool.length)];
+            if (!hasPet(rolled)) { petId = rolled; break; }
+        }
+        if (!petId) petId = missing[Math.floor(Math.random() * missing.length)];
+        addPet(petId);
+        removeItem(slotIndex, 1);
+        emit('petObtained', { petId });
+        emit('itemUsed', { itemId: slot.itemId, slotIndex });
+        return true;
+    }
+
+    if (def.useEffect === 'hatchFenix') {
+        if (hasPet('pet_fenix_sombria')) {
+            emit('uiHintShow', { msg: 'Você já possui a Fênix Sombria!', duration: 3000 });
+            return false;
+        }
+        addPet('pet_fenix_sombria');
+        removeItem(slotIndex, 1);
+        emit('petObtained', { petId: 'pet_fenix_sombria' });
+        emit('uiHintShow', { msg: 'Você obteve: Fênix Sombria!', duration: 3000 });
+        emit('itemUsed', { itemId: slot.itemId, slotIndex });
+        return true;
+    }
+
+    // Tratamento de consumíveis normais (effect)
     if (def.effect) {
         if (def.effect.type === 'heal') {
             emit('inventoryHealRequest', { amount: def.effect.amount });

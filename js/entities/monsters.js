@@ -73,6 +73,7 @@ async function init() {
     on('pickupRequest',           _onPickupRequest);
     on('questBossSpawnRequest',   _onQuestBossSpawnRequest);
     on('questBossDespawnRequest', _onQuestBossDespawnRequest);
+    on('petAttack', _onPetAttack);
 
     _initialized = true;
     console.log(`[monsters] Catálogo: ${Object.keys(_catalogue).length} tipos.`);
@@ -699,6 +700,29 @@ function _faceTarget(m, target) {
 // ─── Morte ────────────────────────────────────────────────────────────────────
 
 /** @param {{ entity:Object }} payload */
+function _onPetAttack({ targetId, damage } = {}) {
+    if (!targetId) return;
+    const monster = _monsters.get(targetId);
+    if (!monster || monster.state === 'dead') return;
+
+    const rawDamage = Math.floor(Number(damage ?? 0));
+    if (!Number.isFinite(rawDamage) || rawDamage <= 0) return;
+
+    monster.hp = Math.max(0, monster.hp - rawDamage);
+
+    emit('damageDealt', {
+        attackerId: 'pet',
+        attackerType: 'pet',
+        targetId: monster.id,
+        targetType: 'monster',
+        amount: rawDamage
+    });
+
+    if (monster.hp <= 0) {
+        emit('entityDied', { entity: monster });
+    }
+}
+
 function _onEntityDied({ entity }) {
     if (!_monsters.has(entity.id)) return;
     const m = _monsters.get(entity.id);

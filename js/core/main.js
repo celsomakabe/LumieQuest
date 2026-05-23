@@ -22,6 +22,7 @@ import * as Inventory from '../systems/inventory.js';
 import * as Quests    from '../systems/quests.js';
 import * as Refine    from '../systems/refine.js';
 import * as Cards     from '../systems/cards.js';
+import * as Pets      from '../systems/pets.js';
 let _dialogOpen = false;
 
 Events.on('dialogStarted', () => { _dialogOpen = true; });
@@ -114,6 +115,7 @@ function _loop(timestamp) {
 
     // Entities
     Player.update(delta, inputState);
+    Pets.update(delta);
     Monsters.updateAll(delta, Player.getPosition());
     NPCs.updateAll(delta, Player.getPosition());  
     // Render
@@ -134,7 +136,7 @@ UI.setFPS(_calcFPS(delta));
 function _doAutoSave() {
     const playerData = Player.getState();
     const current    = Save.load() ?? {};
-Save.save({ ...current, player: { ...playerData, inventory: Inventory.serialize(), quests: Quests.getState() } });
+Save.save({ ...current, player: { ...playerData, inventory: Inventory.serialize(), quests: Quests.getState(), pets: Pets.serialize() } });
 }
 
 // ─── Assets Ready ─────────────────────────────────────────────────────────────
@@ -162,6 +164,17 @@ async function _onAssetsReady() {
     } catch (err) {
         console.error('[main] Falha ao carregar skills.json:', err);
         Classes.setSkillDefs([]);
+    }
+
+    // ── PROMPT 16: carregar pet_defs de items.json ──────
+    try {
+        const itemsRes = await fetch('./assets/data/items.json');
+        const itemsData = await itemsRes.json();
+        const petDefs = (itemsData.items ?? []).filter(i => i?.type === 'pet_def');
+        Pets.init(petDefs);
+    } catch (err) {
+        console.error('[main] Falha ao carregar petDefs de items.json:', err);
+        Pets.init([]);
     }
 
     // ── PROMPT 10: modal de classe se save novo (player.class vazio) ──────
@@ -193,10 +206,14 @@ async function _onAssetsReady() {
     }
 
     // Spawna player com dados do save (capturado via Events.once abaixo)
+    if (!_saveData.player.pets || typeof _saveData.player.pets !== 'object') {
+        _saveData.player.pets = { collection: [], summonedIndex: null };
+    }
     Player.init(_saveData.player);
     if (typeof window !== 'undefined') window.Player = Player; // debug console (PROMPT 10)
     await Inventory.init(_saveData.player.inventory ?? null);
     await Quests.init(_saveData.player.quests ?? null);
+    Pets.hydrate(_saveData.player.pets ?? null);
     Combat.registerTarget(Player.getInstance());
 
     // Atualiza hotbar com skills equipadas (após Player.init populou _data)

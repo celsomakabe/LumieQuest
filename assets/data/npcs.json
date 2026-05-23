@@ -97,6 +97,22 @@
       }
     },
     {
+      "id": "sage",
+      "name": "Sábio Ancião",
+      "type": "quest",
+      "position": { "x": 15, "y": 0, "z": -10 },
+      "dialogues": {
+        "default": {
+          "text": "Jovem aventureiro... sinto uma energia especial em você. Talvez esteja pronto para o desafio do Espírito Arcano.",
+          "options": []
+        }
+      },
+      "actions": [
+        { "type": "offerQuest", "questId": "quest_pet_espirito" },
+        { "type": "completeQuest", "questId": "quest_pet_espirito" }
+      ]
+    },
+    {
       "id": "merchant",
       "name": "Comerciante Lyra",
       "position": { "x": 0, "y": 0, "z": -6 },
@@ -818,6 +834,22 @@
           }
         }
       }
+    },
+    {
+      "id": "sage",
+      "name": "Sábio Ancião",
+      "type": "quest",
+      "position": { "x": 15, "y": 0, "z": -10 },
+      "dialogues": {
+        "default": {
+          "text": "Jovem aventureiro... sinto uma energia especial em você. Talvez esteja pronto para o desafio do Espírito Arcano.",
+          "options": []
+        }
+      },
+      "actions": [
+        { "type": "offerQuest", "questId": "quest_pet_espirito" },
+        { "type": "completeQuest", "questId": "quest_pet_espirito" }
+      ]
     }
   ]
 }

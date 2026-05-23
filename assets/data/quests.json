@@ -230,7 +230,7 @@
     ],
     "rewards": { "exp": 50000, "gold": 1000, "jobChange": "sniper" }
   },
-  {
+     {
     "id": "quest_evo2_shadow_assassin",
     "name": "A Sombra Ancestral",
     "description": "Para se tornar Shadow Assassin, colete essências do assassin_shadow, consulte o Informante Sable e destrua a Sombra Ancestral.",
@@ -264,5 +264,48 @@
       }
     ],
     "rewards": { "exp": 50000, "gold": 1000, "jobChange": "shadow_assassin" }
+  },
+  {
+    "id": "quest_pet_espirito",
+    "name": "O Chamado do Espírito",
+    "description": "O Sábio Ancião sente uma energia ancestral. Prove seu valor coletando cristais arcanos e derrotando criaturas poderosas.",
+    "giver": "sage",
+    "completer": "sage",
+    "reqLevel": 10,
+    "objectives": [
+      {
+        "id": "collect_cristal_arcano",
+        "type": "gather",
+        "target": "cristal_arcano",
+        "label": "Coletar 10 Cristais Arcanos",
+        "required": 10
+      },
+      {
+        "id": "kill_lobisomem",
+        "type": "kill",
+        "target": "lobisomem",
+        "label": "Derrotar 15 Lobisomens",
+        "required": 15
+      },
+      {
+        "id": "kill_orc_warrior",
+        "type": "kill",
+        "target": "orc_warrior",
+        "label": "Derrotar 15 Orc Warriors",
+        "required": 15
+      },
+      {
+        "id": "kill_assassin_shadow",
+        "type": "kill",
+        "target": "assassin_shadow",
+        "label": "Derrotar 10 Assassin Shadows",
+        "required": 10
+      }
+    ],
+    "rewards": {
+      "exp": 5000,
+      "gold": 500,
+      "pet": "pet_espirito_arcano"
+    }
   }
 ]

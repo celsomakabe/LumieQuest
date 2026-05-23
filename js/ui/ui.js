@@ -7,6 +7,7 @@
 import * as Events from '../core/events.js';
 import * as THREE from 'three';
 import { getCamera, getRenderer } from '../world/scene.js';
+import * as Refine from '../systems/refine.js';
 import * as Audio  from '../core/audio.js';
 import * as Inventory from '../systems/inventory.js';
 import * as Equipment from '../systems/equipment.js';
@@ -16,7 +17,7 @@ import * as Combat from '../systems/combat.js';
 import * as Player from '../entities/player.js';
 import * as Classes from '../systems/classes.js';
 import * as Monsters from '../entities/monsters.js';
-import * as Refine from '../systems/refine.js';
+import * as Pets from '../systems/pets.js';
 
 const EQUIPMENT_SLOT_META = [
     { slot: 'weapon',          label: 'Arma',    icon: '⚔️', title: 'Arma' },
@@ -34,6 +35,7 @@ const EQUIPMENT_SLOT_META = [
 let _inventoryWindowEl = null;
 let _equipmentWindowEl = null;
 let _refineWindowEl = null;
+let _petWindowEl = null;
 let _selectedRefineTarget = null;
 let _selectedRefineMeta = null;
 let _socketPopupEl = null;
@@ -118,6 +120,7 @@ let _hintEl         = null;
 
 // ── Estado de skills/hotbar (PROMPT 10) ──────────────────────────────────
 let _skillWindowOpen   = false;
+let _petWindowOpen     = false;
 let _hotbarEl          = null;
 let _hotbarSlotEls     = [];
 let _skillWindowEl     = null;
@@ -582,9 +585,14 @@ export function init() {
             } else {
                 _closeRefineWindow();
             }
+            return;
+        }
+        if (id === 'pets' || id === 'petWindow') {
+            Audio.playSFX('assets/audio/sfx/sfx_ui_click.ogg');
+            togglePetWindow();
+            return;
         }
     });
-
     _buildDialogWindow();
     _buildHintElement();
 
@@ -593,9 +601,10 @@ export function init() {
     Events.on('uiHintHide',    _onHintHide);
 
     Events.on('keyPressed', ({ code, action }) => {
-        if (code === 'Escape' && _dialogOpen) _closeDialog();
+if (code === 'Escape' && _dialogOpen) _closeDialog();
         if (code === 'Escape' && _questLogOpen && !_dialogOpen) toggleQuestLog();
         if (code === 'Escape' && _skillWindowOpen && !_dialogOpen) toggleSkillWindow();
+        if (code === 'Escape' && _petWindowOpen && !_dialogOpen) togglePetWindow();
         if (code === 'Escape' && _refineWindowEl && _refineWindowEl.style.display !== 'none' && !_dialogOpen) _closeRefineWindow();
 
         if (action === 'questLog') {
@@ -606,13 +615,20 @@ export function init() {
         if ((code === 'KeyC' || action === 'equipmentWindow') && !_dialogOpen) {
             toggleEquipmentWindow();
         }
-    });
+        if ((code === 'KeyP' || action === 'petWindow') && !_dialogOpen) {
+            togglePetWindow();
+        }    });
 
     _createQuestLogPanel();
     _createQuestNotificationContainer();
+    _createPetWindow();
 
     Events.on('uiWindowClosed', ({ id, name }) => {
         if (id === 'questLog' || name === 'questLog') _questLogOpen = false;
+        if (id === 'pets' || name === 'pets') {
+            _petWindowOpen = false;
+            if (_petWindowEl) _petWindowEl.style.display = 'none';
+        }
     });
 
     Events.on('questAccepted', ({ quest }) =>
@@ -640,6 +656,11 @@ export function init() {
     Events.on('keyPressed', ({ action }) => {
         if (_dialogOpen) return;
 
+        if (action === 'petWindow') {
+            togglePetWindow();
+            return;
+        }
+
         if (action === 'skillWindow') {
             toggleSkillWindow();
             return;
@@ -655,7 +676,14 @@ export function init() {
 
     Events.on('monsterSpawned', ({ id }) => _createMonsterHpBar(id));
     Events.on('monsterDied',    ({ id }) => _removeMonsterHpBar(id));
+
+    Events.on('petObtained',    () => { if (_petWindowOpen) _refreshPetWindowUI(); });
+    Events.on('petSummoned',    () => { if (_petWindowOpen) _refreshPetWindowUI(); });
+    Events.on('petUnsummoned',  () => { if (_petWindowOpen) _refreshPetWindowUI(); });
+    Events.on('petLevelUp',     () => { if (_petWindowOpen) _refreshPetWindowUI(); });
+    Events.on('petBonusChanged',() => { if (_petWindowOpen) _refreshPetWindowUI(); });
 }
+
 
 // ─── construção DOM (diálogo) ────────────────────────────────────────────────
 
@@ -928,7 +956,185 @@ function _createQuestNotificationContainer() {
     `;
     document.body.appendChild(container);
 }
+// ─── Pet Window ──────────────────────────────────────────────────────────────
 
+function _createPetWindow() {
+    if (_petWindowEl) return;
+
+    const panel = document.createElement('div');
+    panel.id = 'pet-window';
+    panel.style.cssText = `
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 460px;
+        max-width: 94vw;
+        max-height: 85vh;
+        overflow-y: auto;
+        background: rgba(20, 18, 14, 0.97);
+        border: 1px solid #5a4a2a;
+        border-radius: 8px;
+        padding: 16px;
+        z-index: 920;
+        color: #e8d8a0;
+        font-family: monospace;
+        font-size: 14px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+        user-select: none;
+    `;
+
+    panel.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <span style="font-size:15px;font-weight:bold;">Coleção de Pets</span>
+            <span id="ui-pet-close" style="cursor:pointer;font-size:18px;line-height:1;">×</span>
+        </div>
+        <div id="pet-window-summary" style="margin-bottom:12px;padding:10px;border:1px solid #4e3b1f;border-radius:6px;background:#21180d;color:#c8a84a;">
+            Nenhum pet invocado.
+        </div>
+        <div id="pet-window-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+        <div style="margin-top:10px;font-size:11px;color:#8f7a4f;">P para abrir/fechar</div>
+    `;
+
+    document.body.appendChild(panel);
+    _petWindowEl = panel;
+
+    document.getElementById('ui-pet-close')?.addEventListener('click', togglePetWindow);
+}
+
+function _getPetXpToNext(level) {
+    return Math.floor(50 * (1.3 ** (Math.max(1, Number(level ?? 1)) - 1)));
+}
+
+function _formatPetBonusesLine(bonuses) {
+    if (!bonuses || typeof bonuses !== 'object') return 'Sem bônus passivos.';
+    const parts = [];
+    if (bonuses.maxHp) parts.push(`+${bonuses.maxHp} HP`);
+    if (bonuses.maxMp) parts.push(`+${bonuses.maxMp} MP`);
+    if (bonuses.def) parts.push(`+${bonuses.def} DEF`);
+    if (bonuses.atk) parts.push(`+${bonuses.atk} ATK`);
+    if (bonuses.agi) parts.push(`+${bonuses.agi} AGI`);
+    if (bonuses.int) parts.push(`+${bonuses.int} INT`);
+    if (bonuses.dex) parts.push(`+${bonuses.dex} DEX`);
+    if (bonuses.mpRegen) parts.push(`+${bonuses.mpRegen} Regen MP`);
+    return parts.length ? parts.join(' • ') : 'Sem bônus passivos.';
+}
+
+function _refreshPetWindowUI() {
+    if (!_petWindowEl) return;
+
+    const summaryEl = document.getElementById('pet-window-summary');
+    const listEl = document.getElementById('pet-window-list');
+    if (!summaryEl || !listEl) return;
+
+    const collection = Pets.getCollection();
+    const summoned = Pets.getSummonedPet();
+
+    summaryEl.innerHTML = summoned
+        ? `<div style="font-size:13px;color:#ffd27a;margin-bottom:4px;">Pet invocado</div>
+           <div>${summoned.def?.name ?? summoned.petId} • Nv. ${summoned.level}</div>
+           <div style="margin-top:4px;font-size:12px;color:#9f8e68;">${_formatPetBonusesLine(summoned.bonuses)}</div>`
+        : 'Nenhum pet invocado.';
+
+    if (!collection.length) {
+        listEl.innerHTML = `<div style="padding:12px;border:1px solid #4e3b1f;border-radius:6px;background:#21180d;color:#a89368;">Nenhum pet capturado ainda.</div>`;
+        return;
+    }
+
+    listEl.innerHTML = '';
+
+    collection.forEach((entry, index) => {
+        const def = Pets.getPetDef(entry.petId);
+        if (!def) return;
+
+        const level = Math.max(1, Number(entry.level ?? 1));
+        const exp = Math.max(0, Number(entry.exp ?? 0));
+        const xpToNext = _getPetXpToNext(level);
+        const xpPct = level >= 20 ? 100 : Math.min(100, (exp / Math.max(1, xpToNext)) * 100);
+        const isSummoned = summoned?.petId === entry.petId;
+
+        const passiveBonuses = {};
+        const statKeys = new Set([
+            ...Object.keys(def.baseBonus ?? {}),
+            ...Object.keys(def.bonusPerLevel ?? {})
+        ]);
+        for (const stat of statKeys) {
+            const base = Number(def.baseBonus?.[stat] ?? 0);
+            const perLevel = Number(def.bonusPerLevel?.[stat] ?? 0);
+            const value = base + (perLevel * Math.max(0, level - 1));
+            if (value) passiveBonuses[stat] = value;
+        }
+
+        const abilities = Array.isArray(def.abilities) ? def.abilities : [];
+        const abilitiesHtml = abilities.length
+            ? abilities.map(a => {
+                const reqLv = Math.max(1, Number(a.unlockLevel ?? 1));
+                const unlocked = level >= reqLv;
+                return `<div style="padding:5px 8px;border-radius:4px;background:${unlocked ? '#1f4d2b' : '#2b2b2b'};color:${unlocked ? '#b8ffbf' : '#9a9a9a'};border:1px solid ${unlocked ? '#3f8f54' : '#4a4a4a'};font-size:11px;">
+                    <span style="font-weight:bold;">${a.name}</span> — ${unlocked ? 'Desbloqueada' : `Nível ${reqLv}`}
+                </div>`;
+            }).join('')
+            : '<div style="font-size:11px;color:#8f7a4f;">Sem habilidades.</div>';
+
+        const row = document.createElement('div');
+        row.style.cssText = `padding:12px;border:1px solid ${isSummoned ? '#6dff7a' : '#5a4a2a'};border-radius:8px;background:${isSummoned ? '#1d2a1d' : '#21180d'};box-shadow:${isSummoned ? '0 0 0 1px #6dff7a,0 0 18px rgba(109,255,122,0.25)' : 'none'};`;
+
+        row.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+                <div style="flex:1;min-width:0;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:15px;color:#ffd27a;">${def.name}</span>
+                        <span style="font-size:12px;color:${isSummoned ? '#b8ffbf' : '#c8a84a'};">${isSummoned ? 'Invocado' : 'Guardado'}</span>
+                    </div>
+                    <div style="margin-top:4px;font-size:12px;color:#b9a57a;">Nível ${level}</div>
+                    <div style="margin-top:8px;">
+                        <div style="display:flex;justify-content:space-between;font-size:11px;color:#a89368;margin-bottom:4px;">
+                            <span>XP</span><span>${level >= 20 ? 'MAX' : `${exp} / ${xpToNext}`}</span>
+                        </div>
+                        <div style="height:8px;background:#2a2116;border:1px solid #4e3b1f;border-radius:999px;overflow:hidden;">
+                            <div style="height:100%;width:${xpPct}%;background:${level >= 20 ? '#4caf50' : '#a08040'};"></div>
+                        </div>
+                    </div>
+                    <div style="margin-top:10px;font-size:12px;color:#c8a84a;">Bônus passivos</div>
+                    <div style="margin-top:4px;font-size:11px;color:#ddd1b2;">${_formatPetBonusesLine(passiveBonuses)}</div>
+                    <div style="margin-top:10px;font-size:12px;color:#c8a84a;">Habilidades</div>
+                    <div style="margin-top:6px;display:flex;flex-direction:column;gap:6px;">${abilitiesHtml}</div>
+                </div>
+                <div style="display:flex;align-items:center;">
+                    <button class="ui-pet-btn" data-idx="${index}" style="min-width:80px;padding:8px 10px;border-radius:6px;border:1px solid ${isSummoned ? '#6dff7a' : '#8a6a2a'};background:${isSummoned ? '#234228' : '#2d2212'};color:${isSummoned ? '#d6ffe0' : '#f0d48a'};cursor:pointer;font-size:12px;">
+                        ${isSummoned ? 'Guardar' : 'Invocar'}
+                    </button>
+                </div>
+            </div>
+        `;
+
+        row.querySelector('.ui-pet-btn')?.addEventListener('click', () => {
+            if (isSummoned) { Pets.unsummon(); } else { Pets.summon(index); }
+            _refreshPetWindowUI();
+        });
+
+        listEl.appendChild(row);
+    });
+}
+
+/**
+ * Abre/fecha a janela de pets.
+ */
+export function togglePetWindow() {
+    if (_dialogOpen) return;
+    if (!_petWindowEl) return;
+
+    _petWindowOpen = !_petWindowOpen;
+    _petWindowEl.style.display = _petWindowOpen ? 'block' : 'none';
+
+    if (_petWindowOpen) {
+        _refreshPetWindowUI();
+        Events.emit('uiWindowOpened', { id: 'pets', name: 'pets' });
+    } else {
+        Events.emit('uiWindowClosed', { id: 'pets', name: 'pets' });
+    }
+}
 /**
  * Renderiza o conteúdo do Quest Log com as quests ativas.
  */

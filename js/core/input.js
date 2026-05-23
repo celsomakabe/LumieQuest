@@ -29,6 +29,7 @@ const _bindings = {
     skill3:      'Digit3',
     skill4:      'Digit4',
     skillWindow: 'KeyK',
+    petWindow:   'KeyP',
 };
 
 // ─── Estado interno ───────────────────────────────────────────────────────────

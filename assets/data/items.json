@@ -958,6 +958,114 @@
       "classRestriction": null,
       "sellPrice": 650,
       "modelPlaceholder": "#2d1b3d"
+    },
+    {
+      "id": "pet_bolinha",
+      "name": "Bolinha",
+      "type": "pet_def",
+      "description": "Um slime domesticado e amigável.",
+      "affinity": "swordman",
+      "baseBonus": { "maxHp": 20, "def": 3 },
+      "bonusPerLevel": { "maxHp": 5, "def": 1 },
+      "abilities": [
+        { "name": "Cura Viscosa", "type": "heal", "value": 30, "cooldown": 30, "unlockLevel": 1 },
+        { "name": "Cura Maior", "type": "heal", "value": 80, "cooldown": 25, "unlockLevel": 10 }
+      ],
+      "visual": { "color": "#44cc44", "radius": 0.3, "emissive": "#22aa22" },
+      "expTable": "standard"
+    },
+    {
+      "id": "pet_lobinho",
+      "name": "Lobinho",
+      "type": "pet_def",
+      "description": "Um filhote de lobo feroz e leal.",
+      "affinity": "assassin",
+      "baseBonus": { "atk": 5, "agi": 3 },
+      "bonusPerLevel": { "atk": 2, "agi": 1 },
+      "abilities": [
+        { "name": "Mordida", "type": "attack", "value": 25, "cooldown": 20, "unlockLevel": 1 },
+        { "name": "Fúria Lupina", "type": "attack", "value": 60, "cooldown": 18, "unlockLevel": 10 }
+      ],
+      "visual": { "color": "#888888", "radius": 0.3, "emissive": "#666666" },
+      "expTable": "standard"
+    },
+    {
+      "id": "pet_sininho",
+      "name": "Sininho",
+      "type": "pet_def",
+      "description": "Uma pequena fada brilhante e travessa.",
+      "affinity": "mage",
+      "baseBonus": { "int": 5, "mpRegen": 2 },
+      "bonusPerLevel": { "int": 2, "mpRegen": 1 },
+      "abilities": [
+        { "name": "Brisa Arcana", "type": "restoreMp", "value": 20, "cooldown": 25, "unlockLevel": 1 },
+        { "name": "Fonte de Mana", "type": "restoreMp", "value": 50, "cooldown": 20, "unlockLevel": 10 }
+      ],
+      "visual": { "color": "#cc44ff", "radius": 0.25, "emissive": "#aa22dd" },
+      "expTable": "standard"
+    },
+    {
+      "id": "pet_pedrao",
+      "name": "Pedrão",
+      "type": "pet_def",
+      "description": "Um golem miniatura resistente e protetor.",
+      "affinity": "archer",
+      "baseBonus": { "dex": 4, "def": 4 },
+      "bonusPerLevel": { "dex": 1, "def": 1 },
+      "abilities": [
+        { "name": "Provocar", "type": "taunt", "radius": 5, "duration": 5, "cooldown": 35, "unlockLevel": 1 },
+        { "name": "Muralha", "type": "taunt", "radius": 8, "duration": 8, "cooldown": 30, "unlockLevel": 10 }
+      ],
+      "visual": { "color": "#aa8844", "radius": 0.35, "emissive": "#886633" },
+      "expTable": "standard"
+    },
+    {
+      "id": "pet_espirito_arcano",
+      "name": "Espírito Arcano",
+      "type": "pet_def",
+      "description": "Um espírito ancestral de poder misterioso.",
+      "affinity": null,
+      "baseBonus": { "atk": 3, "def": 3, "int": 3 },
+      "bonusPerLevel": { "atk": 1, "def": 1, "int": 1 },
+      "abilities": [
+        { "name": "Bênção Arcana", "type": "buff", "stat": "int", "value": 10, "duration": 30, "cooldown": 60, "unlockLevel": 1 },
+        { "name": "Poder Ancestral", "type": "buff", "stat": "atk", "value": 15, "duration": 30, "cooldown": 55, "unlockLevel": 12 }
+      ],
+      "visual": { "color": "#4488ff", "radius": 0.3, "emissive": "#2266dd" },
+      "expTable": "standard"
+    },
+    {
+      "id": "pet_fenix_sombria",
+      "name": "Fênix Sombria",
+      "type": "pet_def",
+      "description": "Uma fênix das sombras, rara e poderosa.",
+      "affinity": null,
+      "baseBonus": { "atk": 3, "def": 3, "int": 3, "agi": 3, "dex": 3 },
+      "bonusPerLevel": { "atk": 1, "def": 1, "int": 1, "agi": 1, "dex": 1 },
+      "abilities": [
+        { "name": "Chama Sombria", "type": "attack", "value": 50, "cooldown": 25, "unlockLevel": 1 },
+        { "name": "Renascimento", "type": "revive", "hpPercent": 30, "cooldown": 300, "unlockLevel": 15 }
+      ],
+      "visual": { "color": "#ff2244", "radius": 0.3, "emissive": "#cc1133" },
+      "expTable": "standard"
+    },
+    {
+      "id": "ovo_pet",
+      "name": "Ovo Misterioso",
+      "type": "consumable",
+      "description": "Um ovo que contém um pet. Use para descobrir qual!",
+      "stackable": true,
+      "stack": 10,
+      "useEffect": "hatchPet"
+    },
+    {
+      "id": "ovo_fenix",
+      "name": "Ovo Sombrio",
+      "type": "consumable",
+      "description": "Um ovo envolvido em chamas negras. Contém algo poderoso.",
+      "stackable": false,
+      "stack": 1,
+      "useEffect": "hatchFenix"
     }
   ]
  }

@@ -7,6 +7,7 @@
  */
 
 import * as Events from '../core/events.js';
+import { addPet, getPetDef } from './pets.js';
 
 // ─── Estado interno ───────────────────────────────────────────────────────────
 
@@ -337,6 +338,16 @@ export function completeQuest(questId) {
   _completed.push(questId);
 
   Events.emit('questCompleted', { questId, quest, rewards: quest.rewards });
+
+  if (quest.rewards?.pet) {
+    const obtained = addPet(quest.rewards.pet);
+    if (obtained) {
+      Events.emit('uiHintShow', {
+        msg: `Novo pet obtido: ${getPetDef(quest.rewards.pet)?.name ?? quest.rewards.pet}`,
+        duration: 3500
+      });
+    }
+  }
 
   if (quest.rewards?.jobChange) {
     Events.emit('jobChangeUnlocked', { questId, jobId: quest.rewards.jobChange });

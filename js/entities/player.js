@@ -13,6 +13,7 @@ import { getBaseStats, getJobMeta } from '../systems/classes.js';
 import * as Audio from '../core/audio.js';
 import { findNearestTarget, attack } from '../systems/combat.js';
 import { getCardBonuses } from '../systems/cards.js';
+import { getPetBonuses } from '../systems/pets.js';
 let _dialogOpen = false;
 
 on('dialogStarted', () => { _dialogOpen = true; });
@@ -67,6 +68,13 @@ let _cardBonusCache = {
     totalStats: { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 },
     hp_pct: 0,
     mp_pct: 0
+};
+let _petBonusCache = {
+    totalStats: { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 },
+    hp_pct: 0,
+    mp_pct: 0,
+    maxHp: 0,
+    maxMp: 0
 };
 
 let _rotationY   = 0;
@@ -131,6 +139,7 @@ export function init(saveData = null) {
     on('cardBonusChanged', _onCardBonusChanged);
     on('itemEquipped', _onItemEquipped);
     on('setBonusChanged', _onSetBonusChanged);
+    on('petBonusChanged', _onPetBonusChanged);
     on('playerMoved', _onPlayerMoved);
     on('mouseScrolled', ({ deltaY }) => {
         const dir = deltaY > 0 ? 1 : -1;
@@ -274,8 +283,8 @@ export function addExp(amount) {
         // Pre-Renewal: floor((BaseLv-1)/5) + 3 statPoints por level
         _data.statPoints += Math.floor((_data.level - 1) / 5) + 3;
 
-        _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache);
-        _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache);
+        _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+        _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
         _data.hp = _data.maxHp;
         _data.mp = _data.maxMp;
         emit('levelUp', { newLevel: _data.level });
@@ -340,8 +349,8 @@ export async function applyJobChange(newJobId) {
             }
         });
     }
-    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache);
-    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache);
+    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
     _data.hp = _data.maxHp;
     _data.mp = _data.maxMp;
     emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
@@ -519,15 +528,16 @@ function _updateCamera() {
  * @param {{vit:number}} stats
  * @returns {number}
  */
-function _calcMaxHp(job, level, stats, setBonus = null, cardBonus = null) {
+function _calcMaxHp(job, level, stats, setBonus = null, cardBonus = null, petBonus = null) {
     const meta = getJobMeta(job);
     const jobModHP = meta?.jobModHP ?? 1.0;
-    const hpPct = Number(setBonus?.hp_pct || 0) + Number(cardBonus?.hp_pct || 0);
+    const hpPct = Number(setBonus?.hp_pct || 0) + Number(cardBonus?.hp_pct || 0) + Number(petBonus?.hp_pct || 0);
     const effectiveVit = (stats.vit ?? 0)
         + (setBonus?.totalStats?.vit ?? 0)
-        + (cardBonus?.totalStats?.vit ?? 0);
-
-    return Math.floor((35 + level * 8) * (1 + effectiveVit / 100) * jobModHP * (1 + hpPct / 100));
+        + (cardBonus?.totalStats?.vit ?? 0)
+        + (petBonus?.totalStats?.vit || 0);
+    const flatHp = Number(petBonus?.maxHp || 0);
+    return Math.floor((35 + level * 8) * (1 + effectiveVit / 100) * jobModHP * (1 + hpPct / 100)) + flatHp;
 }
 
 /**
@@ -537,15 +547,16 @@ function _calcMaxHp(job, level, stats, setBonus = null, cardBonus = null) {
  * @param {{int:number}} stats
  * @returns {number}
  */
-function _calcMaxMp(job, level, stats, setBonus = null, cardBonus = null) {
+function _calcMaxMp(job, level, stats, setBonus = null, cardBonus = null, petBonus = null) {
     const meta = getJobMeta(job);
     const jobModMP = meta?.jobModMP ?? 1.0;
-    const mpPct = Number(setBonus?.mp_pct || 0) + Number(cardBonus?.mp_pct || 0);
+    const mpPct = Number(setBonus?.mp_pct || 0) + Number(cardBonus?.mp_pct || 0) + Number(petBonus?.mp_pct || 0);
     const effectiveInt = (stats.int ?? 0)
         + (setBonus?.totalStats?.int ?? 0)
-        + (cardBonus?.totalStats?.int ?? 0);
-
-    return Math.floor((40 + level * 5) * (1 + effectiveInt / 100) * jobModMP * (1 + mpPct / 100));
+        + (cardBonus?.totalStats?.int ?? 0)
+        + (petBonus?.totalStats?.int || 0);
+    const flatMp = Number(petBonus?.maxMp || 0);
+    return Math.floor((40 + level * 5) * (1 + effectiveInt / 100) * jobModMP * (1 + mpPct / 100)) + flatMp;
 }
 
 function _buildData(saveData) {
@@ -562,10 +573,10 @@ function _buildData(saveData) {
         jobLevel:      saveData?.jobLevel      ?? 1,
         exp:           saveData?.exp           ?? 0,
         jobExp:        saveData?.jobExp        ?? 0,
-        hp:            saveData?.hp            ?? _calcMaxHp(job, level, stats, _setBonusCache, _cardBonusCache),
-        maxHp:         saveData?.maxHp         ?? _calcMaxHp(job, level, stats, _setBonusCache, _cardBonusCache),
-        mp:            saveData?.mp            ?? _calcMaxMp(job, level, stats, _setBonusCache, _cardBonusCache),
-        maxMp:         saveData?.maxMp         ?? _calcMaxMp(job, level, stats, _setBonusCache, _cardBonusCache),
+        hp:            saveData?.hp            ?? _calcMaxHp(job, level, stats, _setBonusCache, _cardBonusCache, _petBonusCache),
+        maxHp:         saveData?.maxHp         ?? _calcMaxHp(job, level, stats, _setBonusCache, _cardBonusCache, _petBonusCache),
+        mp:            saveData?.mp            ?? _calcMaxMp(job, level, stats, _setBonusCache, _cardBonusCache, _petBonusCache),
+        maxMp:         saveData?.maxMp         ?? _calcMaxMp(job, level, stats, _setBonusCache, _cardBonusCache, _petBonusCache),
         baseStats:     saveData?.baseStats     ?? stats,
         statPoints:    saveData?.statPoints    ?? 0,
         skillPoints:   saveData?.skillPoints   ?? 0,
@@ -614,8 +625,8 @@ function _onSetBonusChanged(payload) {
     const hpRatio = _data.maxHp > 0 ? (_data.hp / _data.maxHp) : 1;
     const mpRatio = _data.maxMp > 0 ? (_data.mp / _data.maxMp) : 1;
 
-    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache);
-    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache);
+    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
 
     _data.hp = Math.max(1, Math.min(_data.maxHp, Math.floor(_data.maxHp * hpRatio)));
     _data.mp = Math.max(0, Math.min(_data.maxMp, Math.floor(_data.maxMp * mpRatio)));
@@ -647,8 +658,8 @@ function _onCardBonusChanged(_payload) {
     const hpRatio = _data.maxHp > 0 ? (_data.hp / _data.maxHp) : 1;
     const mpRatio = _data.maxMp > 0 ? (_data.mp / _data.maxMp) : 1;
 
-    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache);
-    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache);
+    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
 
     _data.hp = Math.max(1, Math.min(_data.maxHp, Math.floor(_data.maxHp * hpRatio)));
     _data.mp = Math.max(0, Math.min(_data.maxMp, Math.floor(_data.maxMp * mpRatio)));
@@ -656,6 +667,38 @@ function _onCardBonusChanged(_payload) {
     emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
     emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
 }
+
+function _onPetBonusChanged(_payload) {
+    if (!_data) return;
+
+    const bonus = getPetBonuses?.() ?? {};
+
+    _petBonusCache.totalStats = {
+        str: Number(bonus?.str || 0),
+        agi: Number(bonus?.agi || 0),
+        vit: Number(bonus?.vit || 0),
+        int: Number(bonus?.int || 0),
+        dex: Number(bonus?.dex || 0),
+        luk: Number(bonus?.luk || 0)
+    };
+    _petBonusCache.hp_pct = 0;
+    _petBonusCache.mp_pct = 0;
+    _petBonusCache.maxHp = Number(bonus?.maxHp || 0);
+    _petBonusCache.maxMp = Number(bonus?.maxMp || 0);
+
+    const hpRatio = _data.maxHp > 0 ? (_data.hp / _data.maxHp) : 1;
+    const mpRatio = _data.maxMp > 0 ? (_data.mp / _data.maxMp) : 1;
+
+    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+
+    _data.hp = Math.max(1, Math.min(_data.maxHp, Math.floor(_data.maxHp * hpRatio)));
+    _data.mp = Math.max(0, Math.min(_data.maxMp, Math.floor(_data.maxMp * mpRatio)));
+
+    emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+    emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+}
+
 
 
 /**

@@ -17,7 +17,8 @@
         { "itemId": "ouro", "chance": 0.80, "qty": { "min": 1, "max": 5 } },
         { "itemId": "cristal-arcano", "chance": 0.05 },
         { "itemId": "veneno-raro", "chance": 0.05 },
-        { "itemId": "fragment_high_wizard", "chance": 0.20 }
+        { "itemId": "fragment_high_wizard", "chance": 0.20 },
+        { "itemId": "ovo_pet", "chance": 0.005 }
       ],
       "soundProfile": {}
     },
@@ -57,7 +58,8 @@
       "modelPlaceholder": "#886644",
       "drops": [
         { "itemId": "pocao-pequena", "chance": 0.25 },
-        { "itemId": "ouro", "chance": 0.85, "qty": { "min": 5, "max": 15 } }
+        { "itemId": "ouro", "chance": 0.85, "qty": { "min": 5, "max": 15 } },
+        { "itemId": "ovo_pet", "chance": 0.005 }
       ],
       "soundProfile": {}
     },
@@ -95,7 +97,8 @@
       "drops": [
         { "itemId": "pocao-azul", "chance": 0.20 },
         { "itemId": "espada-iniciante", "chance": 0.10 },
-        { "itemId": "ouro", "chance": 0.90, "qty": { "min": 10, "max": 25 } }
+        { "itemId": "ouro", "chance": 0.90, "qty": { "min": 10, "max": 25 } },
+        { "itemId": "ovo_pet", "chance": 0.005 }
       ],
       "soundProfile": {}
     },
@@ -131,7 +134,8 @@
       "modelPlaceholder": "#cc44cc",
       "drops": [
         { "itemId": "pocao-azul", "chance": 0.40 },
-        { "itemId": "ouro", "chance": 0.95, "qty": { "min": 20, "max": 40 } }
+        { "itemId": "ouro", "chance": 0.95, "qty": { "min": 20, "max": 40 } },
+        { "itemId": "ovo_pet", "chance": 0.005 }
       ],
       "soundProfile": {}
     },
@@ -209,7 +213,9 @@
         { "itemId": "pocao-pequena", "chance": 1.0, "qty": { "min": 5, "max": 8 } },
         { "itemId": "ouro", "chance": 1.0, "qty": { "min": 500, "max": 1000 } },
         { "itemId": "cristal-arcano", "chance": 0.70, "qty": { "min": 3, "max": 6 } },
-        { "itemId": "espada-iniciante", "chance": 0.50 }
+        { "itemId": "espada-iniciante", "chance": 0.50 },
+        { "itemId": "ovo_pet", "chance": 0.001 },
+        { "itemId": "ovo_fenix", "chance": 0.001 }
       ],
       "soundProfile": {}
     },
@@ -231,7 +237,9 @@
       "drops": [
         { "itemId": "pocao-azul", "chance": 1.0, "qty": { "min": 4, "max": 6 } },
         { "itemId": "ouro", "chance": 1.0, "qty": { "min": 500, "max": 1000 } },
-        { "itemId": "cristal-arcano", "chance": 0.80, "qty": { "min": 4, "max": 8 } }
+        { "itemId": "cristal-arcano", "chance": 0.80, "qty": { "min": 4, "max": 8 } },
+        { "itemId": "ovo_pet", "chance": 0.001 },
+        { "itemId": "ovo_fenix", "chance": 0.001 }
       ],
       "soundProfile": {}
     },
@@ -253,7 +261,9 @@
       "drops": [
         { "itemId": "pocao-pequena", "chance": 1.0, "qty": { "min": 4, "max": 6 } },
         { "itemId": "ouro", "chance": 1.0, "qty": { "min": 500, "max": 1000 } },
-        { "itemId": "cristal-arcano", "chance": 0.60, "qty": { "min": 2, "max": 5 } }
+        { "itemId": "cristal-arcano", "chance": 0.60, "qty": { "min": 2, "max": 5 } },
+        { "itemId": "ovo_pet", "chance": 0.001 },
+        { "itemId": "ovo_fenix", "chance": 0.001 }
       ],
       "soundProfile": {}
     },
@@ -276,7 +286,9 @@
         { "itemId": "pocao-azul", "chance": 1.0, "qty": { "min": 3, "max": 5 } },
         { "itemId": "ouro", "chance": 1.0, "qty": { "min": 500, "max": 1000 } },
         { "itemId": "veneno-raro", "chance": 0.90, "qty": { "min": 3, "max": 6 } },
-        { "itemId": "cristal-arcano", "chance": 0.70, "qty": { "min": 3, "max": 6 } }
+        { "itemId": "cristal-arcano", "chance": 0.70, "qty": { "min": 3, "max": 6 } },
+        { "itemId": "ovo_pet", "chance": 0.001 },
+        { "itemId": "ovo_fenix", "chance": 0.001 }
       ],
       "soundProfile": {}
     }

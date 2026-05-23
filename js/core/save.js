@@ -13,7 +13,7 @@ const STORAGE_KEY = 'lumiequest_save';
  * v2 — PROMPT 3: adiciona bloco "player"
  * @type {number}
  */
-const CURRENT_SAVE_VERSION = 8;
+const CURRENT_SAVE_VERSION = 9;
 
 /** @type {Record<number, (data: Object) => Object>} */
 const MIGRATIONS = {
@@ -138,6 +138,19 @@ const MIGRATIONS = {
 
         return data;
     },
+    /**
+     * v8 → v9: adiciona bloco player.pets para o Sistema de Pets.
+     */
+    9: (data) => {
+        if (!data.player) data.player = {};
+        if (!data.player.pets || typeof data.player.pets !== 'object') {
+            data.player.pets = {
+                collection: [],
+                summonedIndex: null
+            };
+        }
+        return data;
+    },
 };
 
 /**
@@ -220,7 +233,7 @@ export function migrateSave(data) {
 }
 
 /**
- * Retorna CURRENT_SAVE_VERSION (4).
+ * Retorna CURRENT_SAVE_VERSION (9).
  * @returns {number}
  */
 export function getCurrentVersion() {
