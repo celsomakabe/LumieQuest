@@ -1,0 +1,313 @@
+// assets/data/maps.json
+{
+  "maps": [
+    {
+      "id": "city_01",
+      "name": "Cidade de Prontera",
+      "terrainSize": 80,
+      "terrainColor": "#7caa5a",
+      "monsterPool": [],
+      "npcs": [
+        "mayor",
+        "blacksmith",
+        "guard",
+        "merchant",
+        "priest",
+        "sage",
+        "master_swordsman",
+        "master_mage",
+        "master_archer",
+        "master_assassin",
+        "grandmaster_lord_knight",
+        "grandmaster_high_wizard",
+        "grandmaster_sniper",
+        "grandmaster_shadow_assassin"
+      ],
+      "maxMonsters": 0,
+      "respawnTime": 0,
+      "exitPoints": [
+        {
+          "targetMap": "forest_01",
+          "position": { "x": 35, "y": 0, "z": 0 },
+          "label": "Floresta de Payon"
+        }
+      ],
+      "audioProfile": {
+        "bgm": "bgm_city",
+        "ambient": [
+          "sfx_ambient_wind",
+          "sfx_npc_blacksmith_hammer"
+        ],
+        "reverb": "outdoor"
+      },
+      "weatherProfile": {
+        "options": ["clear"],
+        "changeInterval": 300
+      },
+      "lighting": {
+        "day": {
+          "ambient": "#ffffff",
+          "directional": "#ffffcc",
+          "intensity": 1.0
+        },
+        "night": {
+          "ambient": "#1a1a3a",
+          "directional": "#4444aa",
+          "intensity": 0.3
+        }
+      }
+    },
+    {
+      "id": "forest_01",
+      "name": "Floresta de Payon",
+      "terrainSize": 120,
+      "terrainColor": "#4a7a3a",
+      "monsterPool": [
+        { "monsterId": "slime", "weight": 30 },
+        { "monsterId": "goblin", "weight": 25 },
+        { "monsterId": "lobo", "weight": 20 },
+        { "monsterId": "besouro", "weight": 15 },
+        { "monsterId": "fada-corrompida", "weight": 10 }
+      ],
+      "npcs": [],
+      "maxMonsters": 15,
+      "respawnTime": 30,
+      "exitPoints": [
+        {
+          "targetMap": "city_01",
+          "position": { "x": -55, "y": 0, "z": 0 },
+          "label": "Cidade de Prontera"
+        },
+        {
+          "targetMap": "caves_01",
+          "position": { "x": 55, "y": 0, "z": 0 },
+          "label": "Cavernas de Byalan"
+        }
+      ],
+      "audioProfile": {
+        "bgm": "bgm_forest",
+        "ambient": [
+          "sfx_ambient_birds",
+          "sfx_ambient_wind"
+        ],
+        "reverb": "outdoor"
+      },
+      "weatherProfile": {
+        "options": ["clear", "rain"],
+        "changeInterval": 300
+      },
+      "lighting": {
+        "day": {
+          "ambient": "#ffffff",
+          "directional": "#ffffcc",
+          "intensity": 1.0
+        },
+        "night": {
+          "ambient": "#1a1a3a",
+          "directional": "#4444aa",
+          "intensity": 0.3
+        }
+      }
+    },
+    {
+      "id": "caves_01",
+      "name": "Cavernas de Byalan",
+      "terrainSize": 100,
+      "terrainColor": "#3a3a4a",
+      "monsterPool": [
+        { "monsterId": "esqueleto", "weight": 30 },
+        { "monsterId": "golem-pequeno", "weight": 25 },
+        { "monsterId": "zumbi", "weight": 25 },
+        { "monsterId": "esqueleto-arqueiro", "weight": 20 }
+      ],
+      "npcs": [],
+      "maxMonsters": 15,
+      "respawnTime": 30,
+      "exitPoints": [
+        {
+          "targetMap": "forest_01",
+          "position": { "x": -45, "y": 0, "z": 0 },
+          "label": "Floresta de Payon"
+        },
+        {
+          "targetMap": "ruins_01",
+          "position": { "x": 45, "y": 0, "z": 0 },
+          "label": "Ruínas de Glast Heim"
+        }
+      ],
+      "audioProfile": {
+        "bgm": "bgm_caves",
+        "ambient": [
+          "sfx_ambient_cave_drip",
+          "sfx_ambient_water"
+        ],
+        "reverb": "indoor"
+      },
+      "weatherProfile": {
+        "options": ["none"],
+        "changeInterval": 0
+      },
+      "lighting": {
+        "day": {
+          "ambient": "#7a7a8a",
+          "directional": "#8a8ab0",
+          "intensity": 0.55
+        },
+        "night": {
+          "ambient": "#7a7a8a",
+          "directional": "#8a8ab0",
+          "intensity": 0.55
+        }
+      }
+    },
+    {
+      "id": "ruins_01",
+      "name": "Ruínas de Glast Heim",
+      "terrainSize": 110,
+      "terrainColor": "#4a4a3a",
+      "monsterPool": [
+        { "monsterId": "lobisomem", "weight": 25 },
+        { "monsterId": "orc_warrior", "weight": 25 },
+        { "monsterId": "fantasma", "weight": 25 },
+        { "monsterId": "demonio-menor", "weight": 25 }
+      ],
+      "npcs": [],
+      "maxMonsters": 15,
+      "respawnTime": 35,
+      "exitPoints": [
+        {
+          "targetMap": "caves_01",
+          "position": { "x": -50, "y": 0, "z": 0 },
+          "label": "Cavernas de Byalan"
+        },
+        {
+          "targetMap": "castle_01",
+          "position": { "x": 50, "y": 0, "z": 0 },
+          "label": "Castelo de Geffen"
+        }
+      ],
+      "audioProfile": {
+        "bgm": "bgm_ruins",
+        "ambient": [
+          "sfx_ambient_wind",
+          "sfx_ambient_torches"
+        ],
+        "reverb": "outdoor"
+      },
+      "weatherProfile": {
+        "options": ["clear", "fog"],
+        "changeInterval": 300
+      },
+      "lighting": {
+        "day": {
+          "ambient": "#d8d2c0",
+          "directional": "#d6c9a0",
+          "intensity": 0.9
+        },
+        "night": {
+          "ambient": "#232330",
+          "directional": "#5b5f88",
+          "intensity": 0.28
+        }
+      }
+    },
+    {
+      "id": "castle_01",
+      "name": "Castelo de Geffen",
+      "terrainSize": 100,
+      "terrainColor": "#5a5a6a",
+      "monsterPool": [
+        { "monsterId": "assassin_shadow", "weight": 30 },
+        { "monsterId": "lobisomem-alfa", "weight": 20 },
+        { "monsterId": "golem-grande", "weight": 25 },
+        { "monsterId": "succubus", "weight": 25 }
+      ],
+      "npcs": [],
+      "maxMonsters": 15,
+      "respawnTime": 40,
+      "exitPoints": [
+        {
+          "targetMap": "ruins_01",
+          "position": { "x": -45, "y": 0, "z": 0 },
+          "label": "Ruínas de Glast Heim"
+        },
+        {
+          "targetMap": "dungeon_secret",
+          "position": { "x": 45, "y": 0, "z": 0 },
+          "label": "Dungeon Secreta"
+        }
+      ],
+      "audioProfile": {
+        "bgm": "bgm_castle",
+        "ambient": [
+          "sfx_ambient_wind",
+          "sfx_ambient_torches"
+        ],
+        "reverb": "outdoor"
+      },
+      "weatherProfile": {
+        "options": ["clear", "fog"],
+        "changeInterval": 300
+      },
+      "lighting": {
+        "day": {
+          "ambient": "#e0e0ea",
+          "directional": "#d8d8f0",
+          "intensity": 0.95
+        },
+        "night": {
+          "ambient": "#1d1d35",
+          "directional": "#5555aa",
+          "intensity": 0.25
+        }
+      }
+    },
+    {
+      "id": "dungeon_secret",
+      "name": "Dungeon Secreta",
+      "terrainSize": 80,
+      "terrainColor": "#2a2a2a",
+      "monsterPool": [
+        { "monsterId": "dragao-bebe", "weight": 55 },
+        { "monsterId": "boss_lord_knight", "weight": 12 },
+        { "monsterId": "boss_high_wizard", "weight": 11 },
+        { "monsterId": "boss_sniper", "weight": 11 },
+        { "monsterId": "boss_shadow_assassin", "weight": 11 }
+      ],
+      "npcs": [],
+      "maxMonsters": 8,
+      "respawnTime": 45,
+      "exitPoints": [
+        {
+          "targetMap": "castle_01",
+          "position": { "x": -30, "y": 0, "z": 0 },
+          "label": "Castelo de Geffen"
+        }
+      ],
+      "audioProfile": {
+        "bgm": "bgm_dungeon",
+        "ambient": [
+          "sfx_ambient_cave_drip",
+          "sfx_ambient_torches"
+        ],
+        "reverb": "indoor"
+      },
+      "weatherProfile": {
+        "options": ["none"],
+        "changeInterval": 0
+      },
+      "lighting": {
+        "day": {
+          "ambient": "#4a4a5a",
+          "directional": "#7070aa",
+          "intensity": 0.45
+        },
+        "night": {
+          "ambient": "#4a4a5a",
+          "directional": "#7070aa",
+          "intensity": 0.45
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+// assets/data/audio.json
+{
+  "bgm": {
+    "bgm_city": "assets/audio/bgm/bgm_city.ogg",
+    "bgm_forest": "assets/audio/bgm/bgm_forest.ogg",
+    "bgm_caves": "assets/audio/bgm/bgm_caves.ogg",
+    "bgm_ruins": "assets/audio/bgm/bgm_ruins.ogg",
+    "bgm_castle": "assets/audio/bgm/bgm_castle.ogg",
+    "bgm_dungeon": "assets/audio/bgm/bgm_dungeon.ogg"
+  },
+  "sfx": {
+    "sfx_ui_click": "assets/audio/sfx/sfx_ui_click.ogg",
+    "sfx_ui_hover": "assets/audio/sfx/sfx_ui_hover.ogg",
+    "sfx_levelup": "assets/audio/sfx/sfx_levelup.ogg",
+    "sfx_footstep_grass1": "assets/audio/sfx/sfx_footstep_grass1.ogg",
+    "sfx_footstep_grass2": "assets/audio/sfx/sfx_footstep_grass2.ogg",
+    "sfx_combat_swing": "assets/audio/sfx/sfx_combat_swing.ogg",
+    "sfx_combat_hit": "assets/audio/sfx/sfx_combat_hit.ogg",
+    "sfx_combat_critical": "assets/audio/sfx/sfx_combat_critical.ogg",
+    "sfx_combat_miss": "assets/audio/sfx/sfx_combat_miss.ogg",
+    "sfx_pickup": "assets/audio/sfx/sfx_pickup.ogg",
+    "sfx_ambient_birds": "assets/audio/sfx/sfx_ambient_birds.ogg",
+    "sfx_ambient_wind": "assets/audio/sfx/sfx_ambient_wind.ogg",
+    "sfx_ambient_water": "assets/audio/sfx/sfx_ambient_water.ogg",
+    "sfx_ambient_cave_drip": "assets/audio/sfx/sfx_ambient_cave_drip.ogg",
+    "sfx_ambient_night": "assets/audio/sfx/sfx_ambient_night.ogg",
+    "sfx_ambient_rain": "assets/audio/sfx/sfx_ambient_rain.ogg",
+    "sfx_ambient_torches": "assets/audio/sfx/sfx_ambient_torches.ogg",
+    "sfx_npc_blacksmith_hammer": "assets/audio/sfx/sfx_npc_blacksmith_hammer.ogg",
+    "sfx_monster_growl": "assets/audio/sfx/sfx_combat_miss.ogg",
+    "sfx_monster_hit": "assets/audio/sfx/sfx_combat_hit.ogg",
+    "sfx_monster_die": "assets/audio/sfx/sfx_combat_critical.ogg"
+  }
+}
