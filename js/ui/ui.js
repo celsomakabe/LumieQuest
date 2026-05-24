@@ -127,7 +127,8 @@ let _skillWindowEl     = null;
 let _classModalEl      = null;
 let _classModalCb      = null;
 let _selectedSkillId   = null;
-
+let _elMapName    = null;
+let _elExitPrompt = null;
 // ─── Helpers privados ─────────────────────────────────────────────────────────
 
 /**
@@ -139,6 +140,7 @@ function _buildDOM() {
     hud.innerHTML = `
         <div id="hud-info">
             <span id="hud-name">${_name}</span>
+            <span id="hud-map">Mapa: —</span>
             <span id="hud-level">Lv ${_level}</span>
         </div>
         <div id="hud-bars">
@@ -189,6 +191,15 @@ function _buildDOM() {
         }
         #hud-info { margin-bottom: 4px; }
         #hud-name { margin-right: 8px; font-weight: bold; }
+        #hud-map { display: inline-block; margin-left: 10px; color: #ffd27a; font-size: 12px; }
+        #exit-point-prompt {
+            position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%);
+            background: rgba(10,8,5,0.82); border: 1px solid rgba(200,162,39,0.65);
+            border-radius: 6px; padding: 7px 16px; color: #ffe6a3;
+            font-family: monospace; font-size: 13px; text-shadow: 1px 1px 2px #000;
+            pointer-events: none; user-select: none; z-index: 260; white-space: nowrap;
+            display: none;
+        }
         .bar-row { display: flex; align-items: center; gap: 4px; margin-bottom: 3px; }
         .bar-row label { width: 20px; }
         .bar-bg { width: 120px; height: 10px; background: #333; border-radius: 4px; overflow: hidden; }
@@ -253,6 +264,8 @@ function _queryRefs() {
     _elName      = document.getElementById('hud-name');
     _elLevel     = document.getElementById('hud-level');
     _elFPS       = document.getElementById('hud-fps');
+    _elMapName   = document.getElementById('hud-map');
+    _elExitPrompt = document.getElementById('exit-point-prompt');
     _elNotifWrap = document.getElementById('notif-wrap');
     _elCenter    = document.getElementById('center-msg');
     _elXP        = document.getElementById('hud-xp');
@@ -294,7 +307,23 @@ export function init() {
     _buildDOM();
     _queryRefs();
     _renderPlayerName();
+    Events.on('exitPointNear', ({ label } = {}) => {
+        if (_elExitPrompt) {
+            _elExitPrompt.textContent = `Pressione E para ir a ${label || 'saída'}`;
+            _elExitPrompt.style.display = 'block';
+        }
+    });
 
+    Events.on('exitPointLeft', () => {
+        if (_elExitPrompt) _elExitPrompt.style.display = 'none';
+    });
+
+    Events.on('mapLoaded', ({ mapId, mapName } = {}) => {
+        if (_elExitPrompt) _elExitPrompt.style.display = 'none';
+        const label = mapName || mapId || '';
+        if (_elMapName) _elMapName.textContent = `Mapa: ${label}`;
+        if (label) showCenterMessage(label);
+    });
     if (!document.getElementById('lumie-damage-style')) {
         const style = document.createElement('style');
         style.id = 'lumie-damage-style';

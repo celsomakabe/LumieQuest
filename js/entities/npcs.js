@@ -8,6 +8,7 @@ import * as Quests from '../systems/quests.js';
 import * as Classes from '../systems/classes.js';
 import { updateNpcQuestIndicator } from '../ui/ui.js';
 import * as Scene from '../world/scene.js';
+import { playSFX3D } from '../core/audio.js';
 /** @type {Array<NPCInstance>} */
 const _npcs = [];
 
@@ -95,6 +96,7 @@ export function spawnFromConfig(config) {
       position:     new THREE.Vector3(def.position.x, def.position.y, def.position.z),
       dialogTree:   def.dialogTree,
       playerInRange: false,
+      lastAmbientSfxAt: 0,
     };
 
     _npcs.push(instance);
@@ -122,6 +124,15 @@ export function updateAll(delta, playerPos) {
 
     const wasInRange = npc.playerInRange;
     npc.playerInRange = distSq <= INTERACT_RADIUS_SQ;
+    const now = performance.now();
+    if (
+        npc.id === 'blacksmith' &&
+        distSq <= 225 &&
+        now - (npc.lastAmbientSfxAt ?? 0) >= 30000
+    ) {
+        playSFX3D('assets/audio/sfx/sfx_npc_blacksmith_hammer.ogg', npc.mesh.position);
+        npc.lastAmbientSfxAt = now;
+    }
 
     if (npc.playerInRange && distSq < closestDistSq) {
       closestDistSq = distSq;

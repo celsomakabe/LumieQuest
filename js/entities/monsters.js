@@ -23,6 +23,7 @@ import {
 } from '../systems/combat.js';
 import * as Inventory from '../systems/inventory.js';
 import { generateSockets } from '../systems/cards.js';
+import { playSFX3D } from '../core/audio.js';
 
 // ─── Estado interno ───────────────────────────────────────────────────────────
 
@@ -339,7 +340,17 @@ function _updateMonster(m, dt, playerPos) {
     const dist = m.mesh.position.distanceTo(playerPos);
     switch (m.state) {
         case 'idle':   _stateIdle(m, dt, dist);              break;
-        case 'aggro':  m.state = 'chase';                    break;
+        case 'aggro':
+            if (!m._aggroSfxPlayed) {
+                const aggroDef = _catalogue[m.monsterId];
+                const aggroSfx = aggroDef?.soundProfile?.aggro;
+                if (aggroSfx) {
+                    playSFX3D(`assets/audio/sfx/${aggroSfx}.ogg`, m.mesh.position);
+                }
+                m._aggroSfxPlayed = true;
+            }
+            m.state = 'chase';
+            break;
         case 'chase':  _stateChase(m, dt, playerPos, dist);  break;
         case 'attack': _stateAttack(m, dt, playerPos, dist); break;
     }
@@ -553,7 +564,7 @@ function _stateIdle(m, dt, distToPlayer) {
 
 function _stateChase(m, dt, playerPos, dist) {
     if (dist < m.attackRange) { m.state = 'attack'; return; }
-    if (dist > m.aggroRange * 1.5) { m.state = 'idle'; m._idleTimer = 0; return; }
+    if (dist > m.aggroRange * 1.5) { m.state = 'idle'; m._idleTimer = 0; m._aggroSfxPlayed = false; return; }
 
     // boss_sniper fica parado atirando à distância se dentro do attackRange estendido
     if (m.monsterId === 'boss_sniper' && dist <= m.attackRange) {
@@ -729,6 +740,11 @@ function _onEntityDied({ entity }) {
     if (m.state === 'dead') return;
 
     m.state = 'dead';
+    const deadDef = _catalogue[m.monsterId];
+    const dieSfx = deadDef?.soundProfile?.die;
+    if (dieSfx) {
+        playSFX3D(`assets/audio/sfx/${dieSfx}.ogg`, m.mesh.position);
+    }
     m.hp    = 0;
     m.mesh.visible = false;
 
