@@ -145,6 +145,10 @@ export function init(saveData = null) {
         const dir = deltaY > 0 ? 1 : -1;
         _cameraDistance = Math.max(CAM_ZOOM_MIN, Math.min(CAM_ZOOM_MAX, _cameraDistance + dir * CAM_ZOOM_STEP));
     });
+    on('playerCurrentMapChanged', ({ mapId }) => {
+        if (_data && mapId) _data.currentMap = mapId;
+    });
+
     // Auto-attack no clique esquerdo
     on('mouseClicked', (e) => {
       if (e.button !== 0) return;
@@ -582,7 +586,7 @@ function _buildData(saveData) {
         skillPoints:   saveData?.skillPoints   ?? 0,
         learnedSkills: saveData?.learnedSkills ?? [],
         position:      saveData?.position      ?? { x: 0, y: 0, z: 0 },
-        currentMap:    saveData?.currentMap    ?? 'city01',
+        currentMap:    saveData?.currentMap    ?? 'city_01',
 
         playtime:      saveData?.playtime      ?? 0,
         equippedSkills: Array.isArray(saveData?.equippedSkills)

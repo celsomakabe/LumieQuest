@@ -13,7 +13,7 @@ const STORAGE_KEY = 'lumiequest_save';
  * v2 — PROMPT 3: adiciona bloco "player"
  * @type {number}
  */
-const CURRENT_SAVE_VERSION = 9;
+const CURRENT_SAVE_VERSION = 10;
 
 /** @type {Record<number, (data: Object) => Object>} */
 const MIGRATIONS = {
@@ -148,6 +148,16 @@ const MIGRATIONS = {
                 collection: [],
                 summonedIndex: null
             };
+        }
+        return data;
+    },
+    /**
+     * v9 → v10: garante player.currentMap normalizado para 'city_01'.
+     */
+    10: (data) => {
+        if (!data.player) data.player = {};
+        if (!data.player.currentMap || data.player.currentMap === 'city01') {
+            data.player.currentMap = 'city_01';
         }
         return data;
     },

@@ -23,6 +23,7 @@ import * as Quests    from '../systems/quests.js';
 import * as Refine    from '../systems/refine.js';
 import * as Cards     from '../systems/cards.js';
 import * as Pets      from '../systems/pets.js';
+import * as World     from '../world/world.js';
 let _dialogOpen = false;
 
 Events.on('dialogStarted', () => { _dialogOpen = true; });
@@ -118,6 +119,7 @@ function _loop(timestamp) {
     Pets.update(delta);
     Monsters.updateAll(delta, Player.getPosition());
     NPCs.updateAll(delta, Player.getPosition());  
+    World.update(delta);
     // Render
     Scene.render(delta);
 
@@ -324,21 +326,10 @@ export async function init() {
     await Cards.init();
     UI.init();
 
-// SESSÃO 24: mover para world.js (mapsConfig['map_inicial'].monsters)
     await Monsters.init();
-    Monsters.spawnGroup('slime',  5, { center: { x:  5, z:  5 }, radius: 4 });
-    Monsters.spawnGroup('goblin', 3, { center: { x: -5, z:  5 }, radius: 3 });
-    Monsters.spawnMonster('orc_warrior',     { x:  20, y: 0.5, z:  20 });
-    Monsters.spawnMonster('assassin_shadow', { x: -20, y: 0.5, z:  20 });
-// ── NPCs ──────────────────────────────────────────────────────────────
     NPCs.init(Scene.getScene());
-    try {
-        const res  = await fetch('./assets/data/npcs.json');
-        const data = await res.json();
-        NPCs.spawnFromConfig(data);
-    } catch (err) {
-        console.error('[main] Falha ao carregar npcs.json:', err);
-    }
+    await World.init();
+    await World.loadMap('city_01');
     // ──────────────────────────────────────────────────────────────────────
     // Captura save antes de tudo (one-shot)
     Events.once('saveLoaded', (data) => {
