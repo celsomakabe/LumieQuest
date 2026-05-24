@@ -20,7 +20,11 @@
         { "itemId": "fragment_high_wizard", "chance": 0.20 },
         { "itemId": "ovo_pet", "chance": 0.005 }
       ],
-      "soundProfile": {}
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
     },
     {
       "id": "goblin",
@@ -42,7 +46,11 @@
         { "itemId": "veneno-raro", "chance": 0.05 },
         { "itemId": "fragment_sniper", "chance": 0.20 }
       ],
-      "soundProfile": {}
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
     },
     {
       "id": "lobo",
@@ -61,7 +69,11 @@
         { "itemId": "ouro", "chance": 0.85, "qty": { "min": 5, "max": 15 } },
         { "itemId": "ovo_pet", "chance": 0.005 }
       ],
-      "soundProfile": {}
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
     },
     {
       "id": "besouro",
@@ -80,7 +92,11 @@
         { "itemId": "armadura-cloth", "chance": 0.08 },
         { "itemId": "ouro", "chance": 0.70, "qty": { "min": 8, "max": 20 } }
       ],
-      "soundProfile": {}
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
     },
     {
       "id": "esqueleto",
@@ -100,7 +116,11 @@
         { "itemId": "ouro", "chance": 0.90, "qty": { "min": 10, "max": 25 } },
         { "itemId": "ovo_pet", "chance": 0.005 }
       ],
-      "soundProfile": {}
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
     },
     {
       "id": "golem-pequeno",
@@ -118,7 +138,11 @@
         { "itemId": "armadura-cloth", "chance": 0.30 },
         { "itemId": "ouro", "chance": 1.00, "qty": { "min": 15, "max": 30 } }
       ],
-      "soundProfile": {}
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
     },
     {
       "id": "fada-corrompida",
@@ -137,7 +161,11 @@
         { "itemId": "ouro", "chance": 0.95, "qty": { "min": 20, "max": 40 } },
         { "itemId": "ovo_pet", "chance": 0.005 }
       ],
-      "soundProfile": {}
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
     },
     {
       "id": "lobisomem",
@@ -156,7 +184,11 @@
         { "itemId": "machado-iniciante", "chance": 0.25 },
         { "itemId": "ouro", "chance": 1.00, "qty": { "min": 50, "max": 100 } }
       ],
-      "soundProfile": {}
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
     },
     {
       "id": "orc_warrior",
@@ -174,7 +206,11 @@
         { "itemId": "ouro", "chance": 1.0, "qty": { "min": 50, "max": 100 } },
         { "itemId": "fragment_lord_knight", "chance": 0.25 }
       ],
-      "soundProfile": {}
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
     },
     {
       "id": "assassin_shadow",
@@ -192,7 +228,11 @@
         { "itemId": "ouro", "chance": 1.0, "qty": { "min": 50, "max": 100 } },
         { "itemId": "fragment_shadow_assassin", "chance": 0.30 }
       ],
-      "soundProfile": {}
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
     },
     {
       "id": "boss_lord_knight",
@@ -217,7 +257,11 @@
         { "itemId": "ovo_pet", "chance": 0.001 },
         { "itemId": "ovo_fenix", "chance": 0.001 }
       ],
-      "soundProfile": {}
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
     },
     {
       "id": "boss_high_wizard",
@@ -241,7 +285,11 @@
         { "itemId": "ovo_pet", "chance": 0.001 },
         { "itemId": "ovo_fenix", "chance": 0.001 }
       ],
-      "soundProfile": {}
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
     },
     {
       "id": "boss_sniper",
@@ -265,7 +313,11 @@
         { "itemId": "ovo_pet", "chance": 0.001 },
         { "itemId": "ovo_fenix", "chance": 0.001 }
       ],
-      "soundProfile": {}
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
     },
     {
       "id": "boss_shadow_assassin",
@@ -290,7 +342,190 @@
         { "itemId": "ovo_pet", "chance": 0.001 },
         { "itemId": "ovo_fenix", "chance": 0.001 }
       ],
-      "soundProfile": {}
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+}
+    },
+    {
+      "id": "zumbi",
+      "name": "Zumbi",
+      "hp": 150,
+      "str": 13,
+      "def": 3,
+      "agi": 2,
+      "xp": 58,
+      "aggroRange": 4,
+      "attackRange": 1.4,
+      "speed": 1.7,
+      "modelPlaceholder": "#6d7a52",
+      "drops": [
+        { "itemId": "pocao-pequena", "chance": 0.22 },
+        { "itemId": "ouro", "chance": 0.88, "qty": { "min": 10, "max": 22 } }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "esqueleto-arqueiro",
+      "name": "Esqueleto Arqueiro",
+      "hp": 115,
+      "str": 16,
+      "def": 2,
+      "agi": 7,
+      "xp": 70,
+      "aggroRange": 9,
+      "attackRange": 5.0,
+      "speed": 2.2,
+      "modelPlaceholder": "#c8c8a0",
+      "drops": [
+        { "itemId": "pocao-azul", "chance": 0.15 },
+        { "itemId": "ouro", "chance": 0.85, "qty": { "min": 12, "max": 28 } }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "golem-grande",
+      "name": "Golem Grande",
+      "hp": 420,
+      "str": 28,
+      "def": 18,
+      "agi": 1,
+      "xp": 200,
+      "aggroRange": 4,
+      "attackRange": 1.8,
+      "speed": 1.1,
+      "modelPlaceholder": "#666666",
+      "drops": [
+        { "itemId": "armadura-cloth", "chance": 0.20 },
+        { "itemId": "ouro", "chance": 1.00, "qty": { "min": 40, "max": 80 } }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "demonio-menor",
+      "name": "Demônio Menor",
+      "hp": 230,
+      "str": 22,
+      "def": 6,
+      "agi": 8,
+      "xp": 140,
+      "aggroRange": 7,
+      "attackRange": 1.6,
+      "speed": 3.2,
+      "modelPlaceholder": "#aa2222",
+      "drops": [
+        { "itemId": "cristal-arcano", "chance": 0.12 },
+        { "itemId": "ouro", "chance": 0.92, "qty": { "min": 25, "max": 50 } }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "lobisomem-alfa",
+      "name": "Lobisomem Alfa",
+      "hp": 480,
+      "str": 32,
+      "def": 12,
+      "agi": 11,
+      "xp": 260,
+      "aggroRange": 9,
+      "attackRange": 1.9,
+      "speed": 4.2,
+      "modelPlaceholder": "#3d2210",
+      "drops": [
+        { "itemId": "espada-iniciante", "chance": 0.18 },
+        { "itemId": "ouro", "chance": 1.00, "qty": { "min": 60, "max": 120 } }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "dragao-bebe",
+      "name": "Dragão Bebê",
+      "hp": 280,
+      "str": 26,
+      "def": 8,
+      "agi": 6,
+      "xp": 175,
+      "aggroRange": 6,
+      "attackRange": 2.8,
+      "speed": 2.6,
+      "modelPlaceholder": "#cc6600",
+      "drops": [
+        { "itemId": "cristal-arcano", "chance": 0.20 },
+        { "itemId": "ouro", "chance": 1.00, "qty": { "min": 45, "max": 90 } },
+        { "itemId": "ovo_pet", "chance": 0.02 }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "fantasma",
+      "name": "Fantasma",
+      "hp": 100,
+      "str": 20,
+      "def": 0,
+      "agi": 10,
+      "xp": 95,
+      "aggroRange": 8,
+      "attackRange": 2.0,
+      "speed": 3.6,
+      "modelPlaceholder": "#d0d0ff",
+      "drops": [
+        { "itemId": "pocao-azul", "chance": 0.30 },
+        { "itemId": "ouro", "chance": 0.80, "qty": { "min": 18, "max": 36 } }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "succubus",
+      "name": "Súcubo",
+      "hp": 195,
+      "str": 24,
+      "def": 4,
+      "agi": 9,
+      "xp": 130,
+      "aggroRange": 8,
+      "attackRange": 3.0,
+      "speed": 3.0,
+      "modelPlaceholder": "#cc3388",
+      "drops": [
+        { "itemId": "pocao-azul", "chance": 0.25 },
+        { "itemId": "cristal-arcano", "chance": 0.10 },
+        { "itemId": "ouro", "chance": 0.95, "qty": { "min": 22, "max": 45 } }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
     }
+    
   ]
 }
