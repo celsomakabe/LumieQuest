@@ -314,7 +314,7 @@ export async function init() {
     Scene.init(canvas);
 
     // Áudio após cena (precisa da câmera)
-    Audio.init(Scene.getCamera());
+    await Audio.init(Scene.getCamera());    
 
     // Sistemas e UI
     Classes.init();
