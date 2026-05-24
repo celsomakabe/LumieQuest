@@ -15,6 +15,15 @@ let _mapObjects = [];
 let _exitNearTarget = null;
 let _npcsConfig = null;
 let _boundExitPointAction = null;
+let _cycleTime = 0;
+let _weatherTime = 0;
+let _currentWeather = 'clear';
+let _currentPhase = 'day';
+let _hemiLight = null;
+let _sunLight = null;
+let _lastEmittedPhase = null;
+
+const DAY_NIGHT_CYCLE_DURATION = 300;
 
 /**
  * Inicializa o módulo de mundo e carrega maps.json.
@@ -73,6 +82,9 @@ export async function loadMap(mapId) {
   _spawnMapNpcs(nextMap);
   _applyMapAudio(nextMap);
   _updatePlayerCurrentMap(mapId);
+  _cacheSceneLights();
+  _applyCurrentLighting();
+  emit('weatherChanged', { weather: 'clear' });
 
   emit('mapLoaded', {
     mapId,
@@ -97,12 +109,26 @@ export function getMapConfig() {
 }
 
 /**
+ * Retorna estado atual do ciclo dia/noite.
+ * @returns {{ phase: 'day'|'night'|'dawn'|'dusk', progress: number }}
+ */
+export function getDayNightCycle() {
+  return {
+    phase: _currentPhase,
+    progress: _getPhaseProgress(_cycleTime / DAY_NIGHT_CYCLE_DURATION)
+  };
+}
+
+/**
  * Atualiza lógica do mundo.
  * @param {number} delta
  * @returns {void}
  */
 export function update(delta) {
   if (!_currentMapConfig) return;
+
+  _updateDayNightCycle(delta);
+  _updateWeather(delta);
 
   const playerPos = getPosition();
   const exitPoints = Array.isArray(_currentMapConfig.exitPoints) ? _currentMapConfig.exitPoints : [];
@@ -135,6 +161,8 @@ export function update(delta) {
   }
 }
 
+// ─── Funções privadas ─────────────────────────────────────────────────────────
+
 function _clearCurrentMap() {
   // TODO PARTE 4: stopAmbient()
 
@@ -145,6 +173,11 @@ function _clearCurrentMap() {
 
   _mapObjects = [];
   _terrainMesh = null;
+  _cycleTime = 0;
+  _weatherTime = 0;
+  _currentWeather = 'clear';
+  _currentPhase = 'day';
+  _lastEmittedPhase = null;
 }
 
 function _createTerrain(mapConfig) {
@@ -254,4 +287,176 @@ function _disposeObject(object) {
   } else if (object.material?.dispose) {
     object.material.dispose();
   }
+}
+
+// ─── Ciclo dia/noite ──────────────────────────────────────────────────────────
+
+function _cacheSceneLights() {
+  const scene = getScene();
+  if (!scene) return;
+
+  _hemiLight = null;
+  _sunLight = null;
+
+  for (const child of scene.children) {
+    if (!_hemiLight && child instanceof THREE.HemisphereLight) {
+      _hemiLight = child;
+      continue;
+    }
+
+    if (!_sunLight && child instanceof THREE.DirectionalLight) {
+      _sunLight = child;
+    }
+
+    if (_hemiLight && _sunLight) break;
+  }
+}
+
+function _updateDayNightCycle(delta) {
+  if (!_currentMapConfig) return;
+
+  const isOutdoor = _currentMapConfig.audioProfile?.reverb === 'outdoor';
+  if (!isOutdoor) {
+    _currentPhase = 'day';
+    _applyIndoorLighting();
+    _emitPhaseEventIfNeeded();
+    return;
+  }
+
+  _cycleTime = (_cycleTime + delta) % DAY_NIGHT_CYCLE_DURATION;
+  _applyOutdoorLighting();
+  _emitPhaseEventIfNeeded();
+}
+
+function _applyCurrentLighting() {
+  const isOutdoor = _currentMapConfig?.audioProfile?.reverb === 'outdoor';
+  if (isOutdoor) {
+    _applyOutdoorLighting();
+    return;
+  }
+  _applyIndoorLighting();
+}
+
+function _applyIndoorLighting() {
+  const dayLighting = _currentMapConfig?.lighting?.day;
+  if (!dayLighting) return;
+
+  _currentPhase = 'day';
+  _applyLightingValues(dayLighting);
+}
+
+function _applyOutdoorLighting() {
+  const dayLighting = _currentMapConfig?.lighting?.day;
+  const nightLighting = _currentMapConfig?.lighting?.night;
+  if (!dayLighting || !nightLighting) return;
+
+  const cycleProgress = _cycleTime / DAY_NIGHT_CYCLE_DURATION;
+  let lighting = dayLighting;
+
+  if (cycleProgress < 0.25) {
+    _currentPhase = 'dawn';
+    lighting = _interpolateLighting(nightLighting, dayLighting, cycleProgress / 0.25);
+  } else if (cycleProgress < 0.75) {
+    _currentPhase = 'day';
+    lighting = dayLighting;
+  } else if (cycleProgress < 0.85) {
+    _currentPhase = 'dusk';
+    lighting = _interpolateLighting(dayLighting, nightLighting, (cycleProgress - 0.75) / 0.10);
+  } else {
+    _currentPhase = 'night';
+    lighting = nightLighting;
+  }
+
+  _applyLightingValues(lighting);
+}
+
+function _applyLightingValues(lighting) {
+  if (!_hemiLight || !_sunLight || !lighting) return;
+
+  if (lighting.ambient) {
+    _hemiLight.color.set(lighting.ambient);
+  }
+  if (typeof lighting.intensity === 'number') {
+    _hemiLight.intensity = lighting.intensity;
+    _sunLight.intensity = lighting.intensity;
+  }
+  if (lighting.directional) {
+    _sunLight.color.set(lighting.directional);
+  }
+}
+
+function _interpolateLighting(fromLighting, toLighting, t) {
+  const clampedT = THREE.MathUtils.clamp(t, 0, 1);
+
+  return {
+    ambient: _lerpColor(fromLighting.ambient, toLighting.ambient, clampedT),
+    directional: _lerpColor(fromLighting.directional, toLighting.directional, clampedT),
+    intensity: THREE.MathUtils.lerp(fromLighting.intensity ?? 0, toLighting.intensity ?? 0, clampedT)
+  };
+}
+
+function _lerpColor(fromColor, toColor, t) {
+  const from = new THREE.Color(fromColor ?? '#ffffff');
+  const to = new THREE.Color(toColor ?? '#ffffff');
+  return `#${from.lerp(to, t).getHexString()}`;
+}
+
+// ─── Clima ────────────────────────────────────────────────────────────────────
+
+function _updateWeather(delta) {
+  if (!_currentMapConfig) return;
+
+  const weatherProfile = _currentMapConfig.weatherProfile ?? {};
+  const options = Array.isArray(weatherProfile.options) ? weatherProfile.options : ['none'];
+  const validOptions = options.filter(option => option !== 'none');
+  const changeInterval = Number(weatherProfile.changeInterval || 0);
+
+  if (validOptions.length === 0 || changeInterval <= 0) {
+    if (_currentWeather !== 'clear') {
+      _currentWeather = 'clear';
+      emit('weatherChanged', { weather: 'clear' });
+    }
+    return;
+  }
+
+  _weatherTime += delta;
+  if (_weatherTime < changeInterval) return;
+
+  _weatherTime = 0;
+  const nextWeather = validOptions[Math.floor(Math.random() * validOptions.length)] ?? 'clear';
+
+  if (nextWeather === _currentWeather) return;
+
+  _currentWeather = nextWeather;
+  emit('weatherChanged', { weather: nextWeather });
+}
+
+// ─── Eventos de fase ──────────────────────────────────────────────────────────
+
+function _emitPhaseEventIfNeeded() {
+  if (_lastEmittedPhase === _currentPhase) return;
+
+  const previousPhase = _lastEmittedPhase;
+  _lastEmittedPhase = _currentPhase;
+
+  if (_currentPhase === 'night' && previousPhase !== 'night') {
+    emit('nightStarted');
+  }
+
+  if ((_currentPhase === 'day' || _currentPhase === 'dawn') && previousPhase === 'night') {
+    emit('dayStarted');
+  }
+}
+
+function _getPhaseProgress(cycleProgress) {
+  if (_currentPhase === 'dawn') {
+    return THREE.MathUtils.clamp(cycleProgress / 0.25, 0, 1);
+  }
+  if (_currentPhase === 'day') {
+    return THREE.MathUtils.clamp((cycleProgress - 0.25) / 0.50, 0, 1);
+  }
+  if (_currentPhase === 'dusk') {
+    return THREE.MathUtils.clamp((cycleProgress - 0.75) / 0.10, 0, 1);
+  }
+  return THREE.MathUtils.clamp((cycleProgress - 0.85) / 0.15, 0, 1);
 }
