@@ -78,7 +78,7 @@ export async function loadMap(mapId) {
   add(_terrainMesh);
   _mapObjects.push(_terrainMesh);
 
-  _spawnMapMonsters(nextMap);
+  await _spawnMapMonsters(nextMap);
   _spawnMapNpcs(nextMap);
   _applyMapAudio(nextMap);
   _updatePlayerCurrentMap(mapId);
@@ -194,7 +194,7 @@ function _createTerrain(mapConfig) {
   return mesh;
 }
 
-function _spawnMapMonsters(mapConfig) {
+async function _spawnMapMonsters(mapConfig) {
   const pool = Array.isArray(mapConfig.monsterPool) ? mapConfig.monsterPool : [];
   const maxMonsters = Number(mapConfig.maxMonsters || 0);
 
@@ -205,7 +205,7 @@ function _spawnMapMonsters(mapConfig) {
     if (!selected) continue;
 
     const position = _randomPointInMap(mapConfig.terrainSize);
-    spawnMonster(selected.monsterId, position);
+    await spawnMonster(selected.monsterId, position);
   }
 }
 

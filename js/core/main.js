@@ -226,7 +226,7 @@ async function _onAssetsReady() {
     if (!_saveData.player.pets || typeof _saveData.player.pets !== 'object') {
         _saveData.player.pets = { collection: [], summonedIndex: null };
     }
-    Player.init(_saveData.player);
+    await Player.init(_saveData.player);
     if (typeof window !== 'undefined') window.Player = Player; // debug console (PROMPT 10)
     await Inventory.init(_saveData.player.inventory ?? null);
     await Quests.init(_saveData.player.quests ?? null);
@@ -375,7 +375,20 @@ export async function init() {
 
     // Preload — texturas procedurais não precisam de entry aqui;
     // áudios são pré-carregados para cache imediato
-    Assets.preloadAll([
+   Assets.preloadAll([
+        // Player models (Sessão 25A)
+        { type: 'model', url: 'assets/models/player/swordman.glb' },
+        { type: 'model', url: 'assets/models/player/mage.glb' },
+        { type: 'model', url: 'assets/models/player/archer.glb' },
+        { type: 'model', url: 'assets/models/player/assassin.glb' },
+        { type: 'model', url: 'assets/models/player/knight.glb' },
+        { type: 'model', url: 'assets/models/player/shadow_assassin.glb' },
+
+        // Shared animations (KayKit)
+        { type: 'model', url: 'assets/models/animations/general.glb' },
+        { type: 'model', url: 'assets/models/animations/movement.glb' },
+
+        // Audio
         { type: 'audio', url: 'assets/audio/bgm/bgm_city.ogg'     },
         { type: 'audio', url: 'assets/audio/sfx/sfx_ui_click.ogg' },
         { type: 'audio', url: 'assets/audio/sfx/sfx_ui_hover.ogg' },

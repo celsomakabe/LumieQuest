@@ -6,7 +6,7 @@
  *   - spawnQuestBoss(bossId, questId) e despawnQuestBoss(bossId): exports públicos
  *   - Geometria diferenciada por boss + anel dourado
  *   - Fases de boss: 100%/50%/25% HP com gatilhos específicos por tipo
- *   - Telegrafía visual AoE: scale 1.3x + cor vermelha por 2s antes do dano
+ *   - Telegrafia visual AoE: scale 1.3x + cor vermelha por 2s antes do dano
  *   - _stateAttack: _attackCounter % 2 alterna normal/ability
  *   - combat.js update() precisa de patch para deadly_poison/abyss_poison (ver R10)
  * Cross-layer imports justificados:
@@ -197,7 +197,7 @@ function spawnMonster(monsterId, position, linkedQuestId = null) {
         _phase50Done: false,
         _phase25Done: false,
 
-        // Estado de telegrafía / habilidades especiais
+        // Estado de telegrafia / habilidades especiais
         _telegraphing:       false,
         _telegraphTimer:     0,
         _pendingAoe:         false,
@@ -317,7 +317,7 @@ function updateAll(dt, playerPosition) {
 
 /** @param {Object} m @param {number} dt @param {THREE.Vector3} playerPos */
 function _updateMonster(m, dt, playerPos) {
-    // Telegrafía: conta down antes do AoE
+    // Telegrafia: conta down antes do AoE
     if (m._telegraphing) {
         m._telegraphTimer -= dt;
         if (m._telegraphTimer <= 0) {
@@ -331,7 +331,7 @@ function _updateMonster(m, dt, playerPos) {
                 _executeBossAoe(m, playerPos);
             }
         }
-        return; // congela IA durante telegrafía
+        return;
     }
 
     // Checar fases por HP
@@ -461,7 +461,7 @@ function _triggerPhase25(m) {
 // ─── Habilidades específicas de boss ──────────────────────────────────────────
 
 /**
- * Inicia telegrafía visual 2s antes do AoE do boss_lord_knight.
+ * Inicia telegrafia visual 2s antes do AoE do boss_lord_knight.
  * @param {Object} m
  */
 function _startTelegraph(m) {
@@ -475,7 +475,7 @@ function _startTelegraph(m) {
 }
 
 /**
- * Executa o dano AoE do boss_lord_knight após telegrafía.
+ * Executa o dano AoE do boss_lord_knight após telegrafia.
  * @param {Object} m @param {THREE.Vector3} playerPos
  */
 function _executeBossAoe(m, playerPos) {
@@ -493,12 +493,9 @@ function _executeBossAoe(m, playerPos) {
  * @param {Object} m
  */
 function _bossTeleportStrike(m) {
-    // Teleport
     const angle = Math.random() * Math.PI * 2;
     m.mesh.position.x = _playerPos.x + Math.cos(angle) * 1.5;
     m.mesh.position.z = _playerPos.z + Math.sin(angle) * 1.5;
-
-    // Ataque imediato após teleporte
     setTimeout(() => {
         if (m.state !== 'dead') {
             const dmg = Math.floor(m.str * 2.0);
@@ -592,12 +589,10 @@ function _stateAttack(m, dt, playerPos, dist) {
     }
 
     if (!m.isBoss || m.abilities.length === 0) {
-        // Ataque normal
         emit('monsterAttackRequest', { attacker: m, ability: null, damage: null });
         return;
     }
 
-    // Alternância: contador par → ability, ímpar → ataque normal
     m._attackCounter++;
     if (m._attackCounter % 2 === 0) {
         const ability = m.abilities[Math.floor(m._attackCounter / 2) % m.abilities.length];
@@ -618,7 +613,7 @@ function _executeBossAbility(m, ability, playerPos) {
             break;
 
         case 'summonAdds':
-            if (!m._phase50Done) break; // só após fase 50%
+            if (!m._phase50Done) break;
             spawnMonster('goblin', {
                 x: m.mesh.position.x + (Math.random() - 0.5) * 3,
                 y: 0.5,
@@ -768,10 +763,7 @@ function _onEntityDied({ entity }) {
             msg:      `Boss derrotado: ${def.name}! +${m.xp} XP`,
             duration: 5000,
         });
-        // Boss de quest não ressuscita — quest fica como completada
-        // Despawn já foi tratado pelo linkedQuestId no payload acima (quests.js Parte 3)
     } else {
-        // Monstros normais: respawn após 30s
         m._respawnTimeout = setTimeout(() => _respawn(m), 30_000);
     }
 }
@@ -805,15 +797,11 @@ function _respawn(m) {
 
 // ─── Drops ────────────────────────────────────────────────────────────────────
 
-/** @param {Object} def @param {THREE.Vector3} position */
-
 /**
  * Resolve a quantidade de um drop baseado no schema atual.
  * @param {Object} drop
  * @returns {number}
  */
-
-
 function _rollDrops(def, position) {
     if (!def || !Array.isArray(def.drops)) return;
 
@@ -890,9 +878,6 @@ function _buildDropItemMeta(itemId) {
 
     return { sockets };
 }
-
-
-
 
 function _rollCardDrops(def) {
     if (!def) return;

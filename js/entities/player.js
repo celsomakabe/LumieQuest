@@ -7,13 +7,15 @@
 import * as THREE        from 'three';
 import { emit, on }      from '../core/events.js';
 import { getState as getInput } from '../core/input.js';
-import { getScene, getCamera, add } from '../world/scene.js';
+import { getCamera, add, remove } from '../world/scene.js';
 import { getGroundHeight }          from '../world/physics.js';
 import { getBaseStats, getJobMeta } from '../systems/classes.js';
 import * as Audio from '../core/audio.js';
 import { findNearestTarget, attack } from '../systems/combat.js';
 import { getCardBonuses } from '../systems/cards.js';
 import { getPetBonuses } from '../systems/pets.js';
+import * as Models from '../core/models.js';
+
 let _dialogOpen = false;
 
 on('dialogStarted', () => { _dialogOpen = true; });
@@ -37,18 +39,41 @@ on('bossAbyssPoison', ({ damagePerTick, duration }) => {
 });
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
-const MOVE_SPEED        = 5;
-const MOUSE_SENSITIVITY = 0.003;
-const CAM_OFFSET        = new THREE.Vector3(0, 5, 8); // proporção base da câmera
-const CAM_ZOOM_MIN      = 3;   // distância mínima
-const CAM_ZOOM_MAX      = 20;  // distância máxima
-const CAM_ZOOM_STEP     = 0.5; // velocidade da roda do mouse
+const MOVE_SPEED         = 5;
+const MOUSE_SENSITIVITY  = 0.003;
+const CAM_OFFSET         = new THREE.Vector3(0, 5, 8);
+const CAM_ZOOM_MIN       = 3;
+const CAM_ZOOM_MAX       = 20;
+const CAM_ZOOM_STEP      = 0.5;
+const ANIM_FADE_DURATION = 0.2;
 
+const CLASS_MODELS = {
+    swordman:        'assets/models/player/swordman.glb',
+    mage:            'assets/models/player/mage.glb',
+    archer:          'assets/models/player/archer.glb',
+    assassin:        'assets/models/player/assassin.glb',
+    knight:          'assets/models/player/knight.glb',
+    wizard:          'assets/models/player/mage.glb',
+    hunter:          'assets/models/player/archer.glb',
+    assassin_master: 'assets/models/player/assassin.glb',
+    lord_knight:     'assets/models/player/knight.glb',
+    high_wizard:     'assets/models/player/mage.glb',
+    sniper:          'assets/models/player/archer.glb',
+    shadow_assassin: 'assets/models/player/shadow_assassin.glb'
+};// ─── Estado interno ──────────────────────────────────────────────────────────
 
-// ─── Estado interno ───────────────────────────────────────────────────────────
-
-/** @type {THREE.Mesh|null} */
+/** @type {THREE.Object3D|null} */
 let _mesh = null;
+/** @type {THREE.Group|null} */
+let _model = null;
+/** @type {THREE.AnimationMixer|null} */
+let _mixer = null;
+/** @type {{ idle: THREE.AnimationAction|null, walk: THREE.AnimationAction|null, attack: THREE.AnimationAction|null }} */
+let _actions = { idle: null, walk: null, attack: null };
+/** @type {THREE.AnimationAction|null} */
+let _currentAction = null;
+/** @type {THREE.AnimationClip[]} */
+let _animClips = [];
 let _attackAnimTimer = null;
 let _isDead = false;
 /** @type {Object|null} */
@@ -78,13 +103,13 @@ let _petBonusCache = {
 };
 
 let _rotationY   = 0;
-let _lastMouseX  = null; // null = primeiro frame, evita salto de rotação
-let _cameraDistance = 5; // distância da câmera, ajustável via roda do mouse
+let _lastMouseX  = null;
+let _cameraDistance = 5;
 let _hasMoved    = false;
 
 const _prevPosition = new THREE.Vector3();
 
-// ─── BUG-05: Footsteps ────────────────────────────────────────────────────────
+// ─── BUG-05: Footsteps ───────────────────────────────────────────────────────
 let _footstepIndex    = 0;
 let _lastFootstepTime = 0;
 
@@ -92,9 +117,10 @@ const FOOTSTEP_COOLDOWN_MS = 350;
 const FOOTSTEP_VOLUME      = 0.4;
 const FOOTSTEP_THRESHOLD   = 0.01;
 
-// ── Regen passivo (Ragnarok-style) ───────────────────────────────────────
-const REGEN_TICK_S = 6;       // tick a cada 6 segundos
-let _regenTimer    = 0;       // acumulador de delta em segundos
+// ─── Regen passivo (Ragnarok-style) ─────────────────────────────────────────
+const REGEN_TICK_S = 6;
+let _regenTimer    = 0;
+
 const FOOTSTEP_SFXS = [
     'assets/audio/sfx/sfx_footstep_grass1.ogg',
     'assets/audio/sfx/sfx_footstep_grass2.ogg'
@@ -106,7 +132,12 @@ const FOOTSTEP_SFXS = [
  * @param {Object|null} [saveData]
  * @returns {void}
  */
-export function init(saveData = null) {
+/**
+ * Inicializa o player com dados do save ou defaults.
+ * @param {Object|null} [saveData]
+ * @returns {Promise<void>}
+ */
+export async function init(saveData = null) {
     _setBonusCache = {
         totalStats: { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 },
         hp_pct: 0,
@@ -117,25 +148,27 @@ export function init(saveData = null) {
         hp_pct: 0,
         mp_pct: 0
     };
+    _petBonusCache = {
+        totalStats: { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 },
+        hp_pct: 0,
+        mp_pct: 0,
+        maxHp: 0,
+        maxMp: 0
+    };
 
+    _data = _buildData(saveData);
 
-   _data = _buildData(saveData);
-
-    // Restaurar HP/MP cheios no boot (estilo MMO: relogar = full)
     _data.hp = _data.maxHp;
     _data.mp = _data.maxMp;
 
-    const geometry = new THREE.CapsuleGeometry(0.5, 1.5, 8, 16);
-    const material = new THREE.MeshStandardMaterial({ color: 0x4488ff });
-    _mesh          = new THREE.Mesh(geometry, material);
-    _mesh.castShadow = true;
+    await _loadPlayerVisual(_data.class);
 
     _mesh.position.set(_data.position.x, _data.position.y, _data.position.z);
+    _mesh.rotation.y = _rotationY;
     _prevPosition.copy(_mesh.position);
 
-    add(_mesh);
+    add(_model);
 
-    // Bônus de equipamento via bus — sem import direto de equipment.js (R8)
     on('cardBonusChanged', _onCardBonusChanged);
     on('itemEquipped', _onItemEquipped);
     on('setBonusChanged', _onSetBonusChanged);
@@ -149,30 +182,22 @@ export function init(saveData = null) {
         if (_data && mapId) _data.currentMap = mapId;
     });
 
-    // Auto-attack no clique esquerdo
     on('mouseClicked', (e) => {
-      if (e.button !== 0) return;
-      if (_dialogOpen) return;
-      if (_data.hp <= 0) return;
+        if (e.button !== 0) return;
+        if (_dialogOpen) return;
+        if (_data.hp <= 0) return;
 
-      const pos    = _data.position;
-      const target = findNearestTarget(pos, 3);
-      if (!target) {
-        Audio.playSFX('assets/audio/sfx/sfx_combat_miss.ogg');
-        return;
-      }
+        const pos    = _data.position;
+        const target = findNearestTarget(pos, 3);
+        if (!target) {
+            Audio.playSFX('assets/audio/sfx/sfx_combat_miss.ogg');
+            return;
+        }
 
-      const result = attack(_data, target);
-      if (!result) return;
+        const result = attack(_data, target);
+        if (!result) return;
 
-      if (_mesh) {
-        if (_attackAnimTimer) clearTimeout(_attackAnimTimer);
-        _mesh.scale.set(1.1, 1.1, 1.1);
-        _attackAnimTimer = setTimeout(() => {
-          if (_mesh) _mesh.scale.set(1.0, 1.0, 1.0);
-          _attackAnimTimer = null;
-        }, 100);
-      }
+        _playAttackAnimation();
     });
 
     emit('playerSpawned', { position: _mesh.position.clone() });
@@ -183,8 +208,12 @@ export function init(saveData = null) {
  * Retorna estado completo serializável para o save.
  * @returns {Object|null}
  */
+/**
+ * Retorna estado completo serializável para o save.
+ * @returns {Object|null}
+ */
 export function getState() {
-    if (!_data) return null;
+    if (!_data || !_mesh) return null;
     return {
         ..._data,
         position: { x: _mesh.position.x, y: _mesh.position.y, z: _mesh.position.z },
@@ -321,6 +350,7 @@ export function unlockJobChangeQuest(questId) {
 }
 
 /**
+ /**
  * Aplica mudança de job ao estado real do player.
  * @param {string} newJobId
  * @returns {Promise<boolean>}
@@ -333,12 +363,16 @@ export async function applyJobChange(newJobId) {
         console.warn('[player] applyJobChange bloqueado:', check.reason);
         return false;
     }
+
     const meta = Classes.getJobMeta(newJobId);
     if (!meta) {
         console.warn('[player] JOBS_META não encontrado para', newJobId);
         return false;
     }
+
     const oldClass = _data.class;
+    const oldModelUrl = _getClassModelUrl(oldClass);
+    const newModelUrl = _getClassModelUrl(newJobId);
 
     _data.class      = newJobId;
     _data.title      = meta.title ?? '';
@@ -353,12 +387,24 @@ export async function applyJobChange(newJobId) {
             }
         });
     }
+
     _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
     _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
     _data.hp = _data.maxHp;
     _data.mp = _data.maxMp;
     emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
     emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+
+    if (newModelUrl !== oldModelUrl) {
+        if (_model) {
+            remove(_model);
+        }
+
+        await _loadPlayerVisual(newJobId);
+        _mesh.position.set(_data.position.x, _data.position.y, _data.position.z);
+        _mesh.rotation.y = _rotationY;
+        add(_model);
+    }
 
     if (!Array.isArray(_data.jobHistory)) _data.jobHistory = [];
     _data.jobHistory.push({ jobId: newJobId, changedAt: Date.now(), level: _data.level });
@@ -374,11 +420,20 @@ export async function applyJobChange(newJobId) {
  * @param {Object} inputState
  * @returns {void}
  */
+/**
+ * Atualiza movimento, rotação e câmera. Chamado pelo game loop.
+ * @param {number} delta
+ * @param {Object} inputState
+ * @returns {void}
+ */
 export function update(delta, inputState) {
     if (_isDead) return;
     if (!_mesh || !_data) return;
 
-    // ── expirar buffs temporários ─────────────────────────────────────────────
+    if (_mixer) {
+        _mixer.update(delta);
+    }
+
     if (Array.isArray(_data._activeBuffs) && _data._activeBuffs.length > 0) {
         const now = performance.now();
         _data._activeBuffs = _data._activeBuffs.filter(buff => {
@@ -387,10 +442,9 @@ export function update(delta, inputState) {
                 return false;
             }
             return true;
-});
+        });
     }
 
-    // ── regen passivo de HP/MP (Ragnarok-style: tick 8s standing) ─────────
     _regenTimer += delta;
     if (_regenTimer >= REGEN_TICK_S) {
         _regenTimer -= REGEN_TICK_S;
@@ -411,31 +465,135 @@ export function update(delta, inputState) {
 
     _updateMovement(delta, inputState);
     _updateCamera();
+    _syncMovementAnimation();
 
     if (_hasMoved) {
         _data.position.x = _mesh.position.x;
         _data.position.y = _mesh.position.y;
         _data.position.z = _mesh.position.z;
-       /**
-        *@event playerMoved
-        *@property {THREE.Vector3} position         - posição atual
-        *@property {THREE.Vector3} previousPosition - posição no frame anterior
-        *@property {string} mapId
-        */
         emit('playerMoved', {
-            position:         _mesh.position.clone(),
+            position: _mesh.position.clone(),
             previousPosition: _prevPosition.clone(),
-            mapId:            _data.currentMap,
-});
+            mapId: _data.currentMap,
+        });
     }
 }
-/**
- * Retorna referência direta ao objeto interno _data.
- * Usado por combat.js e main.js para registrar o player como alvo.
- * @returns {Object}
- */
+ 
 export function getInstance() {
     return _data;
+}
+function _getClassModelUrl(classId) {
+    return CLASS_MODELS[classId] || CLASS_MODELS.swordman;
+}
+
+async function _loadPlayerVisual(classId) {
+    const modelUrl = _getClassModelUrl(classId);
+
+    const [playerGltf, generalGltf, movementGltf] = await Promise.all([
+        Models.loadModel(modelUrl),
+        Models.loadModel('assets/models/animations/general.glb'),
+        Models.loadModel('assets/models/animations/movement.glb')
+    ]);
+
+    _model = playerGltf.scene;
+    _mesh = _model;
+
+    _model.traverse((child) => {
+        if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = false;
+        }
+    });
+
+    _mixer = Models.createMixer(_model);
+    _animClips = [
+        ...Models.getAnimationClips(generalGltf),
+        ...Models.getAnimationClips(movementGltf)
+    ];
+
+    _actions = {
+        idle: _makeAction(_findClip(['idle'])),
+        walk: _makeAction(_findClip(['walk', 'walking', 'run', 'running'])),
+        attack: _makeAction(_findClip(['attack', 'melee', 'slash', 'slice']))
+    };
+
+    if (_actions.attack) {
+        _actions.attack.setLoop(THREE.LoopOnce, 1);
+        _actions.attack.clampWhenFinished = true;
+        _actions.attack.enabled = true;
+        _actions.attack.reset();
+        _actions.attack.paused = false;
+        _actions.attack.stop();
+        _actions.attack.getMixer().addEventListener('finished', _onAttackFinished);
+    }
+
+    _currentAction = null;
+    _playAction('idle', 0);
+}
+
+function _makeAction(clip) {
+    if (!_mixer || !clip) return null;
+    const action = _mixer.clipAction(clip);
+    action.enabled = true;
+    return action;
+}
+
+function _findClip(substrings) {
+    if (!Array.isArray(_animClips) || _animClips.length === 0) return null;
+
+    const normalized = substrings.map((value) => String(value).toLowerCase());
+
+    for (const clip of _animClips) {
+        const clipName = String(clip.name || '').toLowerCase();
+        if (normalized.some((term) => clipName.includes(term))) {
+            return clip;
+        }
+    }
+
+    return null;
+}
+
+function _playAction(name, fadeDuration = ANIM_FADE_DURATION) {
+    const nextAction = _actions[name];
+    if (!nextAction) return;
+    if (_currentAction === nextAction) return;
+
+    const previousAction = _currentAction;
+    _currentAction = nextAction;
+
+    nextAction.reset();
+    nextAction.enabled = true;
+
+    if (name === 'attack') {
+        nextAction.setLoop(THREE.LoopOnce, 1);
+        nextAction.clampWhenFinished = true;
+    } else {
+        nextAction.setLoop(THREE.LoopRepeat, Infinity);
+        nextAction.clampWhenFinished = false;
+    }
+
+    if (previousAction) {
+        previousAction.crossFadeTo(nextAction, fadeDuration, true);
+    }
+
+    nextAction.play();
+}
+
+function _syncMovementAnimation() {
+    if (!_actions.attack || _currentAction !== _actions.attack) {
+        _playAction(_hasMoved ? 'walk' : 'idle');
+    }
+}
+
+function _playAttackAnimation() {
+    if (!_actions.attack) return;
+    _playAction('attack', 0.1);
+}
+
+function _onAttackFinished(event) {
+    if (!_actions.attack) return;
+    if (event.action !== _actions.attack) return;
+    _playAction(_hasMoved ? 'walk' : 'idle', 0.1);
 }
 // ─── Helpers privados ─────────────────────────────────────────────────────────
 
@@ -446,23 +604,29 @@ export function getInstance() {
  * @param {number} delta
  * @param {Object} inputState
  */
+/**
+ * Processa WASD e rotação por mouse.
+ * Usa _lastMouseX para calcular dx real — evita rotação contínua quando
+ * mouse.dx de input.js persiste o último delta entre frames sem movimento.
+ * @param {number} delta
+ * @param {Object} inputState
+ */
 function _updateMovement(delta, inputState) {
     const { keys, mouse } = inputState;
-    // Rotação Y pelo mouse — só com botão direito segurado (padrão MMORPG)
+
     if (mouse.buttons?.right) {
         if (_lastMouseX !== null) {
             const dx = mouse.x - _lastMouseX;
             if (dx !== 0) {
-                _rotationY    -= dx * MOUSE_SENSITIVITY;
+                _rotationY -= dx * MOUSE_SENSITIVITY;
                 _mesh.rotation.y = _rotationY;
             }
         }
         _lastMouseX = mouse.x;
     } else {
-        _lastMouseX = null; // reseta quando solta o botão (evita salto na próxima vez)
+        _lastMouseX = null;
     }
 
-    // Movimento WASD orientado pela rotação do player
     let moveX = 0;
     let moveZ = 0;
 
@@ -474,12 +638,10 @@ function _updateMovement(delta, inputState) {
     }
 
     if (moveX !== 0 || moveZ !== 0) {
-        // Normaliza diagonal
         const len = Math.sqrt(moveX * moveX + moveZ * moveZ);
         moveX /= len;
         moveZ /= len;
 
-        // Rotaciona direção pelo yaw do player
         const cos    = Math.cos(_rotationY);
         const sin    = Math.sin(_rotationY);
         const worldX = moveX * cos - moveZ * sin;
@@ -488,7 +650,8 @@ function _updateMovement(delta, inputState) {
         _mesh.position.x += worldX * MOVE_SPEED * delta;
         _mesh.position.z += worldZ * MOVE_SPEED * delta;
         _mesh.position.y  = getGroundHeight(_mesh.position.x, _mesh.position.z);
-        _hasMoved         = true;
+        _mesh.rotation.y = Math.atan2(worldX, worldZ);
+        _hasMoved = true;
     }
 
     if (!_hasMoved && _prevPosition.distanceTo(_mesh.position) > 0.0001) {
@@ -496,15 +659,15 @@ function _updateMovement(delta, inputState) {
     }
 }
 
-/** Atualiza câmera orbit follow atrás do player. */
+
+
 function _updateCamera() {
     const camera = getCamera();
-    if (!camera) return;
+    if (!camera || !_mesh) return;
 
     const cos = Math.cos(_rotationY);
     const sin = Math.sin(_rotationY);
 
-// Escala proporcional baseada em _cameraDistance (zoom via wheel)
     const zoomScale = _cameraDistance / 8;
     const offsetX = (CAM_OFFSET.x * cos - CAM_OFFSET.z * sin) * zoomScale;
     const offsetZ = (CAM_OFFSET.x * sin + CAM_OFFSET.z * cos) * zoomScale;
