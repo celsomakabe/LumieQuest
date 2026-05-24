@@ -28,6 +28,21 @@ let _dialogOpen = false;
 
 Events.on('dialogStarted', () => { _dialogOpen = true; });
 Events.on('dialogEnded',   () => { _dialogOpen = false; });
+let _nearExitPointTargetMap = null;
+
+Events.on('exitPointNear', ({ targetMap } = {}) => {
+    _nearExitPointTargetMap = targetMap ?? null;
+});
+
+Events.on('exitPointLeft', () => {
+    _nearExitPointTargetMap = null;
+});
+
+Events.on('mapLoaded', () => {
+    _nearExitPointTargetMap = null;
+});
+
+
 // ─── Estado interno ───────────────────────────────────────────────────────────
 
 let _gameState     = 'loading';
@@ -272,7 +287,11 @@ async function _onAssetsReady() {
     if (_dialogOpen) return;
 
         if (code === 'KeyE') {
-            Events.emit('pickupRequest', { position: Player.getPosition() });
+            if (_nearExitPointTargetMap) {
+                Events.emit('exitPointAction', { targetMap: _nearExitPointTargetMap });
+            } else {
+                Events.emit('pickupRequest', { position: Player.getPosition() });
+            }
         }
         
         if (code === 'KeyI') {
