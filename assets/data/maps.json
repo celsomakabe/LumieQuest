@@ -31,6 +31,13 @@
           "label": "Floresta de Payon"
         }
       ],
+      "decoration": [
+        { "model": "Prop_Crate", "path": "assets/models/city/Prop_Crate.gltf", "count": 5, "area": { "xMin": -24, "xMax": 24, "zMin": -24, "zMax": 24 }, "scaleRange": [0.9, 1.1], "rotateY": true },
+        { "model": "Prop_WoodenFence", "path": "assets/models/city/Prop_WoodenFence.gltf", "count": 8, "area": { "xMin": -28, "xMax": 28, "zMin": -28, "zMax": 28 }, "scaleRange": [0.95, 1.05], "rotateY": true },
+        { "model": "Prop_Wagon", "path": "assets/models/city/Prop_Wagon.gltf", "count": 2, "area": { "xMin": -18, "xMax": 18, "zMin": -18, "zMax": 18 }, "scaleRange": [0.95, 1.1], "rotateY": true },
+        { "model": "BirchTree_1", "path": "assets/models/nature/BirchTree_1.gltf", "count": 3, "area": { "xMin": -12, "xMax": 12, "zMin": -12, "zMax": 12 }, "scaleRange": [0.9, 1.15], "rotateY": true },
+        { "model": "Bush_Flowers", "path": "assets/models/nature/Bush_Flowers.gltf", "count": 4, "area": { "xMin": -16, "xMax": 16, "zMin": -16, "zMax": 16 }, "scaleRange": [0.85, 1.1], "rotateY": true }
+      ],
       "audioProfile": {
         "bgm": "bgm_city",
         "ambient": [
@@ -83,6 +90,19 @@
           "label": "Cavernas de Byalan"
         }
       ],
+      "decoration": [
+        { "model": "BirchTree_1", "path": "assets/models/nature/BirchTree_1.gltf", "count": 8, "area": { "xMin": -40, "xMax": 40, "zMin": -40, "zMax": 40 }, "scaleRange": [0.9, 1.2], "rotateY": true },
+        { "model": "BirchTree_2", "path": "assets/models/nature/BirchTree_2.gltf", "count": 8, "area": { "xMin": -42, "xMax": 42, "zMin": -42, "zMax": 42 }, "scaleRange": [0.9, 1.2], "rotateY": true },
+        { "model": "BirchTree_3", "path": "assets/models/nature/BirchTree_3.gltf", "count": 8, "area": { "xMin": -44, "xMax": 44, "zMin": -44, "zMax": 44 }, "scaleRange": [0.9, 1.25], "rotateY": true },
+        { "model": "MapleTree_1", "path": "assets/models/nature/MapleTree_1.gltf", "count": 5, "area": { "xMin": -38, "xMax": 38, "zMin": -38, "zMax": 38 }, "scaleRange": [0.85, 1.15], "rotateY": true },
+        { "model": "MapleTree_2", "path": "assets/models/nature/MapleTree_2.gltf", "count": 5, "area": { "xMin": -36, "xMax": 36, "zMin": -36, "zMax": 36 }, "scaleRange": [0.85, 1.15], "rotateY": true },
+        { "model": "Bush_Large", "path": "assets/models/nature/Bush_Large.gltf", "count": 10, "area": { "xMin": -46, "xMax": 46, "zMin": -46, "zMax": 46 }, "scaleRange": [0.85, 1.15], "rotateY": true },
+        { "model": "Bush_Small_Flowers", "path": "assets/models/nature/Bush_Small_Flowers.gltf", "count": 8, "area": { "xMin": -42, "xMax": 42, "zMin": -42, "zMax": 42 }, "scaleRange": [0.8, 1.1], "rotateY": true },
+        { "model": "Grass_Large", "path": "assets/models/nature/Grass_Large.gltf", "count": 15, "area": { "xMin": -48, "xMax": 48, "zMin": -48, "zMax": 48 }, "scaleRange": [0.8, 1.2], "rotateY": true },
+        { "model": "Flower_1_Clump", "path": "assets/models/nature/Flower_1_Clump.gltf", "count": 5, "area": { "xMin": -40, "xMax": 40, "zMin": -40, "zMax": 40 }, "scaleRange": [0.8, 1.1], "rotateY": true },
+        { "model": "Flower_2_Clump", "path": "assets/models/nature/Flower_2_Clump.gltf", "count": 5, "area": { "xMin": -40, "xMax": 40, "zMin": -40, "zMax": 40 }, "scaleRange": [0.8, 1.1], "rotateY": true },
+        { "model": "Flower_3_Clump", "path": "assets/models/nature/Flower_3_Clump.gltf", "count": 5, "area": { "xMin": -40, "xMax": 40, "zMin": -40, "zMax": 40 }, "scaleRange": [0.8, 1.1], "rotateY": true }
+      ],
       "audioProfile": {
         "bgm": "bgm_forest",
         "ambient": [
@@ -133,6 +153,10 @@
           "position": { "x": 45, "y": 0, "z": 0 },
           "label": "Ruínas de Glast Heim"
         }
+      ],
+      "decoration": [
+        { "model": "rock_sphere", "path": "", "procedural": true, "count": 10, "area": { "xMin": -35, "xMax": 35, "zMin": -35, "zMax": 35 }, "scaleRange": [0.8, 1.6], "rotateY": true },
+        { "model": "pillar_cylinder", "path": "", "procedural": true, "count": 6, "area": { "xMin": -30, "xMax": 30, "zMin": -30, "zMax": 30 }, "scaleRange": [0.9, 1.3], "rotateY": true }
       ],
       "audioProfile": {
         "bgm": "bgm_caves",
@@ -185,6 +209,14 @@
           "label": "Castelo de Geffen"
         }
       ],
+      "decoration": [
+        { "model": "DeadTree_1", "path": "assets/models/nature/DeadTree_1.gltf", "count": 5, "area": { "xMin": -40, "xMax": 40, "zMin": -40, "zMax": 40 }, "scaleRange": [0.9, 1.2], "rotateY": true },
+        { "model": "DeadTree_2", "path": "assets/models/nature/DeadTree_2.gltf", "count": 5, "area": { "xMin": -42, "xMax": 42, "zMin": -42, "zMax": 42 }, "scaleRange": [0.9, 1.2], "rotateY": true },
+        { "model": "DeadTree_3", "path": "assets/models/nature/DeadTree_3.gltf", "count": 5, "area": { "xMin": -44, "xMax": 44, "zMin": -44, "zMax": 44 }, "scaleRange": [0.9, 1.25], "rotateY": true },
+        { "model": "Bush", "path": "assets/models/nature/Bush.gltf", "count": 8, "area": { "xMin": -36, "xMax": 36, "zMin": -36, "zMax": 36 }, "scaleRange": [0.85, 1.1], "rotateY": true },
+        { "model": "rock_sphere", "path": "", "procedural": true, "count": 8, "area": { "xMin": -34, "xMax": 34, "zMin": -34, "zMax": 34 }, "scaleRange": [0.9, 1.5], "rotateY": true },
+        { "model": "broken_pillar", "path": "", "procedural": true, "count": 4, "area": { "xMin": -28, "xMax": 28, "zMin": -28, "zMax": 28 }, "scaleRange": [0.8, 1.15], "rotateY": true }
+      ],
       "audioProfile": {
         "bgm": "bgm_ruins",
         "ambient": [
@@ -236,6 +268,11 @@
           "label": "Dungeon Secreta"
         }
       ],
+      "decoration": [
+        { "model": "pillar_cylinder", "path": "", "procedural": true, "count": 8, "area": { "xMin": -30, "xMax": 30, "zMin": -30, "zMax": 30 }, "scaleRange": [0.95, 1.35], "rotateY": true },
+        { "model": "torch_placeholder", "path": "", "procedural": true, "count": 6, "area": { "xMin": -26, "xMax": 26, "zMin": -26, "zMax": 26 }, "scaleRange": [0.8, 1.1], "rotateY": true },
+        { "model": "Prop_Crate", "path": "assets/models/city/Prop_Crate.gltf", "count": 4, "area": { "xMin": -20, "xMax": 20, "zMin": -20, "zMax": 20 }, "scaleRange": [0.9, 1.05], "rotateY": true }
+      ],
       "audioProfile": {
         "bgm": "bgm_castle",
         "ambient": [
@@ -282,6 +319,11 @@
           "position": { "x": -30, "y": 0, "z": 0 },
           "label": "Castelo de Geffen"
         }
+      ],
+      "decoration": [
+        { "model": "rock_sphere", "path": "", "procedural": true, "count": 12, "area": { "xMin": -26, "xMax": 26, "zMin": -26, "zMax": 26 }, "scaleRange": [0.9, 1.6], "rotateY": true },
+        { "model": "pillar_cylinder", "path": "", "procedural": true, "count": 8, "area": { "xMin": -24, "xMax": 24, "zMin": -24, "zMax": 24 }, "scaleRange": [0.9, 1.3], "rotateY": true },
+        { "model": "skull_placeholder", "path": "", "procedural": true, "count": 4, "area": { "xMin": -18, "xMax": 18, "zMin": -18, "zMax": 18 }, "scaleRange": [0.75, 1.0], "rotateY": true }
       ],
       "audioProfile": {
         "bgm": "bgm_dungeon",

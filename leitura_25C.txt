@@ -1,0 +1,1315 @@
+﻿===== world.js =====
+import * as THREE from 'three';
+import { getScene, getCamera, add, remove } from './scene.js';
+import { spawnMonster, spawnGroup } from '../entities/monsters.js';
+import { spawnFromConfig } from '../entities/npcs.js';
+import { playBGM, playSFX } from '../core/audio.js';
+import { getPosition, getState } from '../entities/player.js';
+import { on, off, emit } from '../core/events.js';
+
+let _maps = [];
+let _mapsById = new Map();
+let _currentMapId = null;
+let _currentMapConfig = null;
+let _terrainMesh = null;
+let _mapObjects = [];
+let _exitNearTarget = null;
+let _npcsConfig = null;
+let _boundExitPointAction = null;
+let _cycleTime = 0;
+let _weatherTime = 0;
+let _currentWeather = 'clear';
+let _currentPhase = 'day';
+let _hemiLight = null;
+let _sunLight = null;
+let _lastEmittedPhase = null;
+
+const DAY_NIGHT_CYCLE_DURATION = 300;
+
+/**
+ * Inicializa o mÃ³dulo de mundo e carrega maps.json.
+ * @returns {Promise<void>}
+ */
+export async function init() {
+  const response = await fetch('assets/data/maps.json');
+  if (!response.ok) {
+    throw new Error(`[world] Falha ao carregar maps.json: ${response.status}`);
+  }
+
+  const data = await response.json();
+  _maps = data.maps;
+  _mapsById = new Map(_maps.map(map => [map.id, map]));
+
+  const npcsResponse = await fetch('assets/data/npcs.json');
+  if (!npcsResponse.ok) {
+    throw new Error(`[world] Falha ao carregar npcs.json: ${npcsResponse.status}`);
+  }
+  _npcsConfig = await npcsResponse.json();
+
+  _boundExitPointAction = ({ targetMap } = {}) => {
+    if (!targetMap) return;
+    loadMap(targetMap);
+  };
+
+  on('exitPointAction', _boundExitPointAction);
+}
+
+/**
+ * Carrega um mapa pelo id.
+ * @param {string} mapId
+ * @returns {Promise<void>}
+ */
+export async function loadMap(mapId) {
+  const nextMap = _mapsById.get(mapId);
+  if (!nextMap) {
+    console.warn(`[world] Mapa desconhecido: ${mapId}`);
+    return;
+  }
+
+  const previousMapId = _currentMapId;
+  emit('mapUnloading', previousMapId);
+
+  _clearCurrentMap();
+
+  _currentMapId = mapId;
+  _currentMapConfig = nextMap;
+  _exitNearTarget = null;
+
+  _terrainMesh = _createTerrain(nextMap);
+  add(_terrainMesh);
+  _mapObjects.push(_terrainMesh);
+
+  await _spawnMapMonsters(nextMap);
+  _spawnMapNpcs(nextMap);
+  _applyMapAudio(nextMap);
+  _updatePlayerCurrentMap(mapId);
+  _cacheSceneLights();
+  _applyCurrentLighting();
+  emit('weatherChanged', { weather: 'clear' });
+
+  emit('mapLoaded', {
+    mapId,
+    mapName: nextMap.name ?? mapId
+  });
+}
+
+/**
+ * Retorna id do mapa atual.
+ * @returns {string|null}
+ */
+export function getCurrentMap() {
+  return _currentMapId;
+}
+
+/**
+ * Retorna config do mapa atual.
+ * @returns {Object|null}
+ */
+export function getMapConfig() {
+  return _currentMapConfig;
+}
+
+/**
+ * Retorna estado atual do ciclo dia/noite.
+ * @returns {{ phase: 'day'|'night'|'dawn'|'dusk', progress: number }}
+ */
+export function getDayNightCycle() {
+  return {
+    phase: _currentPhase,
+    progress: _getPhaseProgress(_cycleTime / DAY_NIGHT_CYCLE_DURATION)
+  };
+}
+
+/**
+ * Atualiza lÃ³gica do mundo.
+ * @param {number} delta
+ * @returns {void}
+ */
+export function update(delta) {
+  if (!_currentMapConfig) return;
+
+  _updateDayNightCycle(delta);
+  _updateWeather(delta);
+
+  const playerPos = getPosition();
+  const exitPoints = Array.isArray(_currentMapConfig.exitPoints) ? _currentMapConfig.exitPoints : [];
+
+  let nearestExit = null;
+  let nearestDistance = Infinity;
+
+  for (const exitPoint of exitPoints) {
+    const distance = _distanceToExit(playerPos, exitPoint.position);
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearestExit = exitPoint;
+    }
+  }
+
+  if (nearestExit && nearestDistance <= 3) {
+    if (_exitNearTarget !== nearestExit.targetMap) {
+      _exitNearTarget = nearestExit.targetMap;
+      emit('exitPointNear', {
+        targetMap: nearestExit.targetMap,
+        label: nearestExit.label
+      });
+    }
+    return;
+  }
+
+  if (_exitNearTarget && (!nearestExit || nearestDistance > 5)) {
+    _exitNearTarget = null;
+    emit('exitPointLeft');
+  }
+}
+
+// â”€â”€â”€ FunÃ§Ãµes privadas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function _clearCurrentMap() {
+  // TODO PARTE 4: stopAmbient()
+
+  for (const obj of _mapObjects) {
+    remove(obj);
+    _disposeObject(obj);
+  }
+
+  _mapObjects = [];
+  _terrainMesh = null;
+  _cycleTime = 0;
+  _weatherTime = 0;
+  _currentWeather = 'clear';
+  _currentPhase = 'day';
+  _lastEmittedPhase = null;
+}
+
+function _createTerrain(mapConfig) {
+  const geometry = new THREE.PlaneGeometry(mapConfig.terrainSize, mapConfig.terrainSize);
+  const material = new THREE.MeshLambertMaterial({
+    color: mapConfig.terrainColor
+  });
+
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.receiveShadow = true;
+  mesh.name = `terrain_${mapConfig.id}`;
+
+  return mesh;
+}
+
+async function _spawnMapMonsters(mapConfig) {
+  const pool = Array.isArray(mapConfig.monsterPool) ? mapConfig.monsterPool : [];
+  const maxMonsters = Number(mapConfig.maxMonsters || 0);
+
+  if (pool.length === 0 || maxMonsters <= 0) return;
+
+  for (let i = 0; i < maxMonsters; i++) {
+    const selected = _pickWeightedMonster(pool);
+    if (!selected) continue;
+
+    const position = _randomPointInMap(mapConfig.terrainSize);
+    await spawnMonster(selected.monsterId, position);
+  }
+}
+
+function _spawnMapNpcs(mapConfig) {
+  if (!_npcsConfig || !Array.isArray(mapConfig.npcs) || mapConfig.npcs.length === 0) return;
+
+  const filtered = {
+    npcs: _npcsConfig.npcs.filter(npc => mapConfig.npcs.includes(npc.id))
+  };
+
+  if (filtered.npcs.length > 0) {
+    spawnFromConfig(filtered);
+  }
+}
+
+function _applyMapAudio(mapConfig) {
+  const profile = mapConfig.audioProfile ?? {};
+  const bgmId = profile.bgm;
+
+  if (bgmId) {
+    playBGM(`assets/audio/bgm/${bgmId}.ogg`);
+  }
+  // TODO PARTE 4: startAmbient com ambient sounds
+}
+
+function _updatePlayerCurrentMap(mapId) {
+  emit('playerCurrentMapChanged', { mapId });
+}
+
+function _pickWeightedMonster(pool) {
+  let totalWeight = 0;
+
+  for (const entry of pool) {
+    totalWeight += Math.max(0, Number(entry.weight || 0));
+  }
+
+  if (totalWeight <= 0) return null;
+
+  const roll = Math.random() * totalWeight;
+  let accumulated = 0;
+
+  for (const entry of pool) {
+    accumulated += Math.max(0, Number(entry.weight || 0));
+    if (roll <= accumulated) {
+      return entry;
+    }
+  }
+
+  return pool[pool.length - 1] ?? null;
+}
+
+function _randomPointInMap(terrainSize) {
+  const half = terrainSize * 0.5;
+  return {
+    x: (Math.random() * terrainSize) - half,
+    y: 0.5,
+    z: (Math.random() * terrainSize) - half
+  };
+}
+
+function _distanceToExit(playerPos, exitPos) {
+  const dx = playerPos.x - exitPos.x;
+  const dy = (playerPos.y ?? 0) - (exitPos.y ?? 0);
+  const dz = playerPos.z - exitPos.z;
+  return Math.sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+function _disposeObject(object) {
+  if (!object) return;
+
+  if (object.geometry?.dispose) {
+    object.geometry.dispose();
+  }
+
+  if (Array.isArray(object.material)) {
+    for (const material of object.material) {
+      material?.dispose?.();
+    }
+  } else if (object.material?.dispose) {
+    object.material.dispose();
+  }
+}
+
+// â”€â”€â”€ Ciclo dia/noite â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function _cacheSceneLights() {
+  const scene = getScene();
+  if (!scene) return;
+
+  _hemiLight = null;
+  _sunLight = null;
+
+  for (const child of scene.children) {
+    if (!_hemiLight && child instanceof THREE.HemisphereLight) {
+      _hemiLight = child;
+      continue;
+    }
+
+    if (!_sunLight && child instanceof THREE.DirectionalLight) {
+      _sunLight = child;
+    }
+
+    if (_hemiLight && _sunLight) break;
+  }
+}
+
+function _updateDayNightCycle(delta) {
+  if (!_currentMapConfig) return;
+
+  const isOutdoor = _currentMapConfig.audioProfile?.reverb === 'outdoor';
+  if (!isOutdoor) {
+    _currentPhase = 'day';
+    _applyIndoorLighting();
+    _emitPhaseEventIfNeeded();
+    return;
+  }
+
+  _cycleTime = (_cycleTime + delta) % DAY_NIGHT_CYCLE_DURATION;
+  _applyOutdoorLighting();
+  _emitPhaseEventIfNeeded();
+}
+
+function _applyCurrentLighting() {
+  const isOutdoor = _currentMapConfig?.audioProfile?.reverb === 'outdoor';
+  if (isOutdoor) {
+    _applyOutdoorLighting();
+    return;
+  }
+  _applyIndoorLighting();
+}
+
+function _applyIndoorLighting() {
+  const dayLighting = _currentMapConfig?.lighting?.day;
+  if (!dayLighting) return;
+
+  _currentPhase = 'day';
+  _applyLightingValues(dayLighting);
+}
+
+function _applyOutdoorLighting() {
+  const dayLighting = _currentMapConfig?.lighting?.day;
+  const nightLighting = _currentMapConfig?.lighting?.night;
+  if (!dayLighting || !nightLighting) return;
+
+  const cycleProgress = _cycleTime / DAY_NIGHT_CYCLE_DURATION;
+  let lighting = dayLighting;
+
+  if (cycleProgress < 0.25) {
+    _currentPhase = 'dawn';
+    lighting = _interpolateLighting(nightLighting, dayLighting, cycleProgress / 0.25);
+  } else if (cycleProgress < 0.75) {
+    _currentPhase = 'day';
+    lighting = dayLighting;
+  } else if (cycleProgress < 0.85) {
+    _currentPhase = 'dusk';
+    lighting = _interpolateLighting(dayLighting, nightLighting, (cycleProgress - 0.75) / 0.10);
+  } else {
+    _currentPhase = 'night';
+    lighting = nightLighting;
+  }
+
+  _applyLightingValues(lighting);
+}
+
+function _applyLightingValues(lighting) {
+  if (!_hemiLight || !_sunLight || !lighting) return;
+
+  if (lighting.ambient) {
+    _hemiLight.color.set(lighting.ambient);
+  }
+  if (typeof lighting.intensity === 'number') {
+    _hemiLight.intensity = lighting.intensity;
+    _sunLight.intensity = lighting.intensity;
+  }
+  if (lighting.directional) {
+    _sunLight.color.set(lighting.directional);
+  }
+}
+
+function _interpolateLighting(fromLighting, toLighting, t) {
+  const clampedT = THREE.MathUtils.clamp(t, 0, 1);
+
+  return {
+    ambient: _lerpColor(fromLighting.ambient, toLighting.ambient, clampedT),
+    directional: _lerpColor(fromLighting.directional, toLighting.directional, clampedT),
+    intensity: THREE.MathUtils.lerp(fromLighting.intensity ?? 0, toLighting.intensity ?? 0, clampedT)
+  };
+}
+
+function _lerpColor(fromColor, toColor, t) {
+  const from = new THREE.Color(fromColor ?? '#ffffff');
+  const to = new THREE.Color(toColor ?? '#ffffff');
+  return `#${from.lerp(to, t).getHexString()}`;
+}
+
+// â”€â”€â”€ Clima â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function _updateWeather(delta) {
+  if (!_currentMapConfig) return;
+
+  const weatherProfile = _currentMapConfig.weatherProfile ?? {};
+  const options = Array.isArray(weatherProfile.options) ? weatherProfile.options : ['none'];
+  const validOptions = options.filter(option => option !== 'none');
+  const changeInterval = Number(weatherProfile.changeInterval || 0);
+
+  if (validOptions.length === 0 || changeInterval <= 0) {
+    if (_currentWeather !== 'clear') {
+      _currentWeather = 'clear';
+      emit('weatherChanged', { weather: 'clear' });
+    }
+    return;
+  }
+
+  _weatherTime += delta;
+  if (_weatherTime < changeInterval) return;
+
+  _weatherTime = 0;
+  const nextWeather = validOptions[Math.floor(Math.random() * validOptions.length)] ?? 'clear';
+
+  if (nextWeather === _currentWeather) return;
+
+  _currentWeather = nextWeather;
+  emit('weatherChanged', { weather: nextWeather });
+}
+
+// â”€â”€â”€ Eventos de fase â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function _emitPhaseEventIfNeeded() {
+  if (_lastEmittedPhase === _currentPhase) return;
+
+  const previousPhase = _lastEmittedPhase;
+  _lastEmittedPhase = _currentPhase;
+
+  if (_currentPhase === 'night' && previousPhase !== 'night') {
+    emit('nightStarted');
+  }
+
+  if ((_currentPhase === 'day' || _currentPhase === 'dawn') && previousPhase === 'night') {
+    emit('dayStarted');
+  }
+}
+
+function _getPhaseProgress(cycleProgress) {
+  if (_currentPhase === 'dawn') {
+    return THREE.MathUtils.clamp(cycleProgress / 0.25, 0, 1);
+  }
+  if (_currentPhase === 'day') {
+    return THREE.MathUtils.clamp((cycleProgress - 0.25) / 0.50, 0, 1);
+  }
+  if (_currentPhase === 'dusk') {
+    return THREE.MathUtils.clamp((cycleProgress - 0.75) / 0.10, 0, 1);
+  }
+  return THREE.MathUtils.clamp((cycleProgress - 0.85) / 0.15, 0, 1);
+}
+
+===== models.js =====
+/**
+ * @module models
+ * @description Loader de modelos glTF com cache, clone seguro para SkinnedMesh e utilitÃ¡rios de animaÃ§Ã£o.
+ */
+
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { clone as cloneSkeleton } from 'three/addons/utils/SkeletonUtils.js';
+
+let _loader = null;
+/** @type {Map<string, any>} */
+const _cache = new Map();
+
+/**
+ * Inicializa o loader interno de modelos.
+ * @returns {Promise<void>}
+ */
+export async function init() {
+    if (_loader) return;
+    _loader = new GLTFLoader();
+}
+
+/**
+ * Carrega um modelo glTF/GLB com cache.
+ * Se jÃ¡ estiver em cache, retorna uma cÃ³pia clonada do gltf.
+ * @param {string} url
+ * @returns {Promise<Object>}
+ */
+export async function loadModel(url) {
+    if (!_loader) {
+        await init();
+    }
+
+    if (_cache.has(url)) {
+        return _cloneGltf(_cache.get(url));
+    }
+
+    const gltf = await new Promise((resolve, reject) => {
+        _loader.load(
+            url,
+            resolve,
+            undefined,
+            (err) => reject(new Error(`[models] loadModel falhou: ${url} â€” ${err?.message ?? err}`))
+        );
+    });
+
+    _cache.set(url, gltf);
+    return _cloneGltf(gltf);
+}
+
+/**
+ * Clona apenas a cena do glTF com suporte correto a skeleton.
+ * Use para instanciar modelos skinned sem compartilhar rig.
+ * @param {Object} gltf
+ * @returns {THREE.Object3D|null}
+ */
+export function cloneModel(gltf) {
+    if (!gltf?.scene) return null;
+    return cloneSkeleton(gltf.scene);
+}
+
+/**
+ * Retorna os clips de animaÃ§Ã£o do glTF.
+ * @param {Object} gltf
+ * @returns {THREE.AnimationClip[]}
+ */
+export function getAnimationClips(gltf) {
+    return Array.isArray(gltf?.animations) ? gltf.animations : [];
+}
+
+/**
+ * Cria um AnimationMixer para o model informado.
+ * @param {THREE.Object3D} model
+ * @returns {THREE.AnimationMixer}
+ */
+export function createMixer(model) {
+    return new THREE.AnimationMixer(model);
+}
+
+function _cloneGltf(gltf) {
+    return {
+        ...gltf,
+        scene: cloneSkeleton(gltf.scene),
+        animations: Array.isArray(gltf.animations)
+            ? gltf.animations.map((clip) => clip.clone())
+            : [],
+    };
+}
+
+===== maps.json =====
+{
+  "maps": [
+    {
+      "id": "city_01",
+      "name": "Cidade de Prontera",
+      "terrainSize": 80,
+      "terrainColor": "#7caa5a",
+      "monsterPool": [],
+      "npcs": [
+        "mayor",
+        "blacksmith",
+        "guard",
+        "merchant",
+        "priest",
+        "sage",
+        "master_swordsman",
+        "master_mage",
+        "master_archer",
+        "master_assassin",
+        "grandmaster_lord_knight",
+        "grandmaster_high_wizard",
+        "grandmaster_sniper",
+        "grandmaster_shadow_assassin"
+      ],
+      "maxMonsters": 0,
+      "respawnTime": 0,
+      "exitPoints": [
+        {
+          "targetMap": "forest_01",
+          "position": { "x": 35, "y": 0, "z": 0 },
+          "label": "Floresta de Payon"
+        }
+      ],
+      "audioProfile": {
+        "bgm": "bgm_city",
+        "ambient": [
+          "sfx_ambient_wind",
+          "sfx_npc_blacksmith_hammer"
+        ],
+        "reverb": "outdoor"
+      },
+      "weatherProfile": {
+        "options": ["clear"],
+        "changeInterval": 300
+      },
+      "lighting": {
+        "day": {
+          "ambient": "#ffffff",
+          "directional": "#ffffcc",
+          "intensity": 1.0
+        },
+        "night": {
+          "ambient": "#1a1a3a",
+          "directional": "#4444aa",
+          "intensity": 0.3
+        }
+      }
+    },
+    {
+      "id": "forest_01",
+      "name": "Floresta de Payon",
+      "terrainSize": 120,
+      "terrainColor": "#4a7a3a",
+      "monsterPool": [
+        { "monsterId": "slime", "weight": 30 },
+        { "monsterId": "goblin", "weight": 25 },
+        { "monsterId": "lobo", "weight": 20 },
+        { "monsterId": "besouro", "weight": 15 },
+        { "monsterId": "fada-corrompida", "weight": 10 }
+      ],
+      "npcs": [],
+      "maxMonsters": 15,
+      "respawnTime": 30,
+      "exitPoints": [
+        {
+          "targetMap": "city_01",
+          "position": { "x": -55, "y": 0, "z": 0 },
+          "label": "Cidade de Prontera"
+        },
+        {
+          "targetMap": "caves_01",
+          "position": { "x": 55, "y": 0, "z": 0 },
+          "label": "Cavernas de Byalan"
+        }
+      ],
+      "audioProfile": {
+        "bgm": "bgm_forest",
+        "ambient": [
+          "sfx_ambient_birds",
+          "sfx_ambient_wind"
+        ],
+        "reverb": "outdoor"
+      },
+      "weatherProfile": {
+        "options": ["clear", "rain"],
+        "changeInterval": 300
+      },
+      "lighting": {
+        "day": {
+          "ambient": "#ffffff",
+          "directional": "#ffffcc",
+          "intensity": 1.0
+        },
+        "night": {
+          "ambient": "#1a1a3a",
+          "directional": "#4444aa",
+          "intensity": 0.3
+        }
+      }
+    },
+    {
+      "id": "caves_01",
+      "name": "Cavernas de Byalan",
+      "terrainSize": 100,
+      "terrainColor": "#3a3a4a",
+      "monsterPool": [
+        { "monsterId": "esqueleto", "weight": 30 },
+        { "monsterId": "golem-pequeno", "weight": 25 },
+        { "monsterId": "zumbi", "weight": 25 },
+        { "monsterId": "esqueleto-arqueiro", "weight": 20 }
+      ],
+      "npcs": [],
+      "maxMonsters": 15,
+      "respawnTime": 30,
+      "exitPoints": [
+        {
+          "targetMap": "forest_01",
+          "position": { "x": -45, "y": 0, "z": 0 },
+          "label": "Floresta de Payon"
+        },
+        {
+          "targetMap": "ruins_01",
+          "position": { "x": 45, "y": 0, "z": 0 },
+          "label": "RuÃ­nas de Glast Heim"
+        }
+      ],
+      "audioProfile": {
+        "bgm": "bgm_caves",
+        "ambient": [
+          "sfx_ambient_cave_drip",
+          "sfx_ambient_water"
+        ],
+        "reverb": "indoor"
+      },
+      "weatherProfile": {
+        "options": ["none"],
+        "changeInterval": 0
+      },
+      "lighting": {
+        "day": {
+          "ambient": "#7a7a8a",
+          "directional": "#8a8ab0",
+          "intensity": 0.55
+        },
+        "night": {
+          "ambient": "#7a7a8a",
+          "directional": "#8a8ab0",
+          "intensity": 0.55
+        }
+      }
+    },
+    {
+      "id": "ruins_01",
+      "name": "RuÃ­nas de Glast Heim",
+      "terrainSize": 110,
+      "terrainColor": "#4a4a3a",
+      "monsterPool": [
+        { "monsterId": "lobisomem", "weight": 25 },
+        { "monsterId": "orc_warrior", "weight": 25 },
+        { "monsterId": "fantasma", "weight": 25 },
+        { "monsterId": "demonio-menor", "weight": 25 }
+      ],
+      "npcs": [],
+      "maxMonsters": 15,
+      "respawnTime": 35,
+      "exitPoints": [
+        {
+          "targetMap": "caves_01",
+          "position": { "x": -50, "y": 0, "z": 0 },
+          "label": "Cavernas de Byalan"
+        },
+        {
+          "targetMap": "castle_01",
+          "position": { "x": 50, "y": 0, "z": 0 },
+          "label": "Castelo de Geffen"
+        }
+      ],
+      "audioProfile": {
+        "bgm": "bgm_ruins",
+        "ambient": [
+          "sfx_ambient_wind",
+          "sfx_ambient_torches"
+        ],
+        "reverb": "outdoor"
+      },
+      "weatherProfile": {
+        "options": ["clear", "fog"],
+        "changeInterval": 300
+      },
+      "lighting": {
+        "day": {
+          "ambient": "#d8d2c0",
+          "directional": "#d6c9a0",
+          "intensity": 0.9
+        },
+        "night": {
+          "ambient": "#232330",
+          "directional": "#5b5f88",
+          "intensity": 0.28
+        }
+      }
+    },
+    {
+      "id": "castle_01",
+      "name": "Castelo de Geffen",
+      "terrainSize": 100,
+      "terrainColor": "#5a5a6a",
+      "monsterPool": [
+        { "monsterId": "assassin_shadow", "weight": 30 },
+        { "monsterId": "lobisomem-alfa", "weight": 20 },
+        { "monsterId": "golem-grande", "weight": 25 },
+        { "monsterId": "succubus", "weight": 25 }
+      ],
+      "npcs": [],
+      "maxMonsters": 15,
+      "respawnTime": 40,
+      "exitPoints": [
+        {
+          "targetMap": "ruins_01",
+          "position": { "x": -45, "y": 0, "z": 0 },
+          "label": "RuÃ­nas de Glast Heim"
+        },
+        {
+          "targetMap": "dungeon_secret",
+          "position": { "x": 45, "y": 0, "z": 0 },
+          "label": "Dungeon Secreta"
+        }
+      ],
+      "audioProfile": {
+        "bgm": "bgm_castle",
+        "ambient": [
+          "sfx_ambient_wind",
+          "sfx_ambient_torches"
+        ],
+        "reverb": "outdoor"
+      },
+      "weatherProfile": {
+        "options": ["clear", "fog"],
+        "changeInterval": 300
+      },
+      "lighting": {
+        "day": {
+          "ambient": "#e0e0ea",
+          "directional": "#d8d8f0",
+          "intensity": 0.95
+        },
+        "night": {
+          "ambient": "#1d1d35",
+          "directional": "#5555aa",
+          "intensity": 0.25
+        }
+      }
+    },
+    {
+      "id": "dungeon_secret",
+      "name": "Dungeon Secreta",
+      "terrainSize": 80,
+      "terrainColor": "#2a2a2a",
+      "monsterPool": [
+        { "monsterId": "dragao-bebe", "weight": 55 },
+        { "monsterId": "boss_lord_knight", "weight": 12 },
+        { "monsterId": "boss_high_wizard", "weight": 11 },
+        { "monsterId": "boss_sniper", "weight": 11 },
+        { "monsterId": "boss_shadow_assassin", "weight": 11 }
+      ],
+      "npcs": [],
+      "maxMonsters": 8,
+      "respawnTime": 45,
+      "exitPoints": [
+        {
+          "targetMap": "castle_01",
+          "position": { "x": -30, "y": 0, "z": 0 },
+          "label": "Castelo de Geffen"
+        }
+      ],
+      "audioProfile": {
+        "bgm": "bgm_dungeon",
+        "ambient": [
+          "sfx_ambient_cave_drip",
+          "sfx_ambient_torches"
+        ],
+        "reverb": "indoor"
+      },
+      "weatherProfile": {
+        "options": ["none"],
+        "changeInterval": 0
+      },
+      "lighting": {
+        "day": {
+          "ambient": "#4a4a5a",
+          "directional": "#7070aa",
+          "intensity": 0.45
+        },
+        "night": {
+          "ambient": "#4a4a5a",
+          "directional": "#7070aa",
+          "intensity": 0.45
+        }
+      }
+    }
+  ]
+}
+
+===== main.js =====
+/**
+ * @file main.js
+ * @description Bootstrap do jogo. Inicializa mÃ³dulos na ordem correta e
+ * gerencia o game loop via requestAnimationFrame.
+ */
+
+import * as Events  from './events.js';
+import * as Input   from './input.js';
+import * as Assets  from './assets.js';
+import * as Audio   from './audio.js';
+import * as Save    from './save.js';
+import * as Scene   from '../world/scene.js';
+import * as Player  from '../entities/player.js';
+import * as Classes from '../systems/classes.js';
+import * as Equipment from '../systems/equipment.js';
+import * as UI      from '../ui/ui.js';
+import * as THREE  from 'three';
+import * as Combat from '../systems/combat.js';
+import * as Monsters from '../entities/monsters.js';
+import * as NPCs     from '../entities/npcs.js';
+import * as Inventory from '../systems/inventory.js';
+import * as Quests    from '../systems/quests.js';
+import * as Refine    from '../systems/refine.js';
+import * as Cards     from '../systems/cards.js';
+import * as Pets      from '../systems/pets.js';
+import * as World     from '../world/world.js';
+let _dialogOpen = false;
+
+Events.on('dialogStarted', () => { _dialogOpen = true; });
+Events.on('dialogEnded',   () => { _dialogOpen = false; });
+let _nearExitPointTargetMap = null;
+
+Events.on('exitPointNear', ({ targetMap } = {}) => {
+    _nearExitPointTargetMap = targetMap ?? null;
+});
+
+Events.on('exitPointLeft', () => {
+    _nearExitPointTargetMap = null;
+});
+
+Events.on('mapLoaded', () => {
+    _nearExitPointTargetMap = null;
+});
+
+
+// â”€â”€â”€ Estado interno â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+let _gameState     = 'loading';
+let _lastTime      = 0;
+let _rafId         = null;
+let _saveData      = null;
+let _autoSaveTimer = 0;
+const AUTO_SAVE_INTERVAL = 30000; // 30s
+
+// â”€â”€â”€ FPS â€” mÃ©dia mÃ³vel de 30 frames â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+const FPS_SAMPLES   = 30;
+const _fpsBuf       = new Float32Array(FPS_SAMPLES);
+let   _fpsBufIdx    = 0;
+let   _fpsSum       = 0;
+
+/**
+ * Atualiza buffer circular de FPS e retorna mÃ©dia arredondada.
+ * @param {number} delta  segundos
+ * @returns {number}
+ */
+function _calcFPS(delta) {
+    const sample = delta > 0 ? 1 / delta : 0;
+    _fpsSum -= _fpsBuf[_fpsBufIdx];
+    _fpsBuf[_fpsBufIdx] = sample;
+    _fpsSum += sample;
+    _fpsBufIdx = (_fpsBufIdx + 1) % FPS_SAMPLES;
+    return Math.round(_fpsSum / FPS_SAMPLES);
+}
+
+// â”€â”€â”€ Textura procedural de grama â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+/**
+ * Gera um Data URI de textura de grama 64Ã—64 via Canvas 2D.
+ * Evita dependÃªncia de arquivo externo.
+ * @returns {string} Data URI PNG
+ */
+function _makeProceduralGrassDataURI() {
+    const size   = 64;
+    const canvas = document.createElement('canvas');
+    canvas.width  = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    // Base verde
+    ctx.fillStyle = '#4a7c3f';
+    ctx.fillRect(0, 0, size, size);
+
+    // VariaÃ§Ã£o de tons para simular grama
+    const shades = ['#3d6b35', '#52883f', '#436e38', '#5a9147', '#3a6030'];
+    for (let i = 0; i < 200; i++) {
+        ctx.fillStyle = shades[Math.floor(Math.random() * shades.length)];
+        const x = Math.random() * size;
+        const y = Math.random() * size;
+        const w = 1 + Math.random() * 3;
+        const h = 1 + Math.random() * 3;
+        ctx.fillRect(x, y, w, h);
+    }
+
+    return canvas.toDataURL('image/png');
+}
+
+// â”€â”€â”€ Game Loop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+/**
+ * Loop principal via requestAnimationFrame.
+ * @param {number} timestamp
+ */
+function _loop(timestamp) {
+    _rafId = requestAnimationFrame(_loop);
+
+    let delta = (timestamp - _lastTime) / 1000;
+    _lastTime = timestamp;
+    if (delta > 0.1) delta = 0.1; // cap 100ms â€” evita spiral of death
+
+    if (_gameState !== 'playing') return;
+
+    // Auto-save a cada 30s
+    _autoSaveTimer += delta * 1000;
+    if (_autoSaveTimer >= AUTO_SAVE_INTERVAL) {
+        _autoSaveTimer = 0;
+        _doAutoSave();
+    }
+
+    const inputState = Input.getState();
+
+    // Entities
+    Player.update(delta, inputState);
+    Pets.update(delta);
+    Monsters.updateAll(delta, Player.getPosition());
+    NPCs.updateAll(delta, Player.getPosition());  
+    World.update(delta);
+    // Render
+    Scene.render(delta);
+
+    // UI
+    UI.update(delta);
+UI.setFPS(_calcFPS(delta));
+
+    // â”€â”€ PROMPT 10: tick de DoTs/buffs e overlays de cooldown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    Combat.update(delta);
+    UI.updateCooldownVisuals(delta);
+    UI.updateMonsterHpBars();
+}
+
+// â”€â”€â”€ Auto-save â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function _doAutoSave() {
+    const playerData = Player.getState();
+    const current    = Save.load() ?? {};
+Save.save({ ...current, player: { ...playerData, inventory: Inventory.serialize(), quests: Quests.getState(), pets: Pets.serialize() } });
+}
+
+// â”€â”€â”€ Assets Ready â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+async function _onAssetsReady() {
+    // Textura procedural â€” sem dependÃªncia de arquivo externo
+    const dataURI = _makeProceduralGrassDataURI();
+    Assets.loadTexture(dataURI).then(tex => {
+        tex.wrapS = tex.wrapT = 1000; // THREE.RepeatWrapping
+        tex.repeat.set(4, 4);
+        Scene.setGroundTexture(tex);
+    }).catch(() => {
+        // graceful â€” chÃ£o fica sem textura
+    });
+
+    // Inicia BGM da cidade com fade in
+    Audio.playBGM('assets/audio/bgm/bgm_city.ogg', 0.6);
+
+// â”€â”€ PROMPT 10: carregar skills.json e injetar em Classes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    try {
+        const skillsRes  = await fetch('./assets/data/skills.json');
+        const skillsData = await skillsRes.json();
+        Classes.setSkillDefs(skillsData.skills || []);
+ 
+    } catch (err) {
+        console.error('[main] Falha ao carregar skills.json:', err);
+        Classes.setSkillDefs([]);
+    }
+
+    // â”€â”€ PROMPT 16: carregar pet_defs de items.json â”€â”€â”€â”€â”€â”€
+    try {
+        const itemsRes = await fetch('./assets/data/items.json');
+        const itemsData = await itemsRes.json();
+        const petDefs = (itemsData.items ?? []).filter(i => i?.type === 'pet_def');
+        Pets.init(petDefs);
+    } catch (err) {
+        console.error('[main] Falha ao carregar petDefs de items.json:', err);
+        Pets.init([]);
+    }
+
+    // â”€â”€ PROMPT 10: modal de classe se save novo (player.class vazio) â”€â”€â”€â”€â”€â”€
+    if (!_saveData) _saveData = { player: {} };
+    if (!_saveData.player) _saveData.player = {};
+
+    if (!_saveData.player.class) {
+        await new Promise(resolve => {
+            UI.showClassSelectionModal((classId) => {
+                const CLASS_SKILLS = {
+                    swordman: ['bash', 'endure', 'provoke'],
+                    mage:     ['fireball', 'iceBolt', 'lightning'],
+                    archer:   ['doubleStrike', 'explosiveShot', 'slowShot'],
+                    assassin: ['stealthStrike', 'poison', 'evasion'],
+                };
+                const skillIds = CLASS_SKILLS[classId] || [];
+                const baseStats = Classes.getBaseStats(classId, 1);
+
+                _saveData.player.class          = classId;
+                _saveData.player.level          = _saveData.player.level ?? 1;
+                _saveData.player.baseStats      = baseStats;
+                _saveData.player.learnedSkills  = skillIds.slice();
+                _saveData.player.equippedSkills = [skillIds[0] ?? null, skillIds[1] ?? null, skillIds[2] ?? null, null];
+                _saveData.player.cooldowns      = {};
+
+                resolve();
+            });
+        });
+    }
+
+    // Spawna player com dados do save (capturado via Events.once abaixo)
+    if (!_saveData.player.pets || typeof _saveData.player.pets !== 'object') {
+        _saveData.player.pets = { collection: [], summonedIndex: null };
+    }
+    await Player.init(_saveData.player);
+    if (typeof window !== 'undefined') window.Player = Player; // debug console (PROMPT 10)
+    await Inventory.init(_saveData.player.inventory ?? null);
+    await Quests.init(_saveData.player.quests ?? null);
+    Pets.hydrate(_saveData.player.pets ?? null);
+    Combat.registerTarget(Player.getInstance());
+
+    // Atualiza hotbar com skills equipadas (apÃ³s Player.init populou _data)
+    UI.updateHotbar();
+
+    Events.on('monsterAttackRequest', ({ attacker, ability, damage }) => {
+      const player = Player.getInstance();
+      if (!player || player.hp <= 0) return;
+
+      if (ability === 'abyssPoison') {
+          Events.emit('bossAbyssPoison', { damagePerTick: 50, duration: 10000 });
+          return;
+      }
+
+      if (damage != null) {
+          Player.takeDamage(damage, `boss_${attacker.monsterId ?? attacker.id}_${ability}`);
+          return;
+      }
+
+      Combat.attack(attacker, player);
+  });
+ // â”€â”€ InventÃ¡rio â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    Events.on('itemPicked', ({ itemId, qty, dropId, refineLevel, sockets }) => {
+        Inventory.addItem(itemId, qty, {
+            ...(refineLevel != null ? { refineLevel } : {}),
+            ...(Array.isArray(sockets) && sockets.length > 0 ? { sockets } : {})
+        });
+    });
+
+    Events.on('inventoryHealRequest', ({ amount }) => {
+        Player.heal(amount);
+    });
+
+    Events.on('inventoryRestoreMpRequest', ({ amount }) => {
+        Player.restoreMp(amount);
+    });
+    Events.on('jobChangeUnlocked', ({ questId }) => {
+        Player.unlockJobChangeQuest(questId);
+    });
+    Events.on('questCompleted', ({ rewards }) => {
+        if (!rewards) return;
+        if (rewards.exp != null) Player.addExp(rewards.exp);
+        if (rewards.gold) Inventory.addItem('gold', rewards.gold);
+        if (rewards.items?.length) {
+            for (const { itemId, qty } of rewards.items) {
+                Inventory.addItem(itemId, qty);
+            }
+        }
+    });
+    Events.on('monsterDied', ({ xp }) => {
+        if (xp) Player.addExp(xp);
+    });
+    Events.on('keyPressed', ({ code }) => {
+    if (_dialogOpen) return;
+
+        if (code === 'KeyE') {
+            if (_nearExitPointTargetMap) {
+                Events.emit('exitPointAction', { targetMap: _nearExitPointTargetMap });
+            } else {
+                Events.emit('pickupRequest', { position: Player.getPosition() });
+            }
+        }
+        
+        if (code === 'KeyI') {
+            Events.emit('uiWindowToggle', { id: 'inventory' });
+        }
+ });
+
+    // â”€â”€ PROMPT 10: consumo de MP por skills (combat.js emite via R8) â”€â”€â”€â”€â”€â”€
+    Events.on('mpConsumeRequest', ({ amount }) => {
+        Player.consumeMp(amount);
+    });
+    _gameState = 'playing';
+    _lastTime  = performance.now();
+    Events.emit('gameReady');
+}
+async function _loadSetDefs() {
+    try {
+        const setsRes = await fetch('./assets/data/sets.json');
+        const setsData = await setsRes.json();
+        Equipment.setCatalogue(setsData);
+    } catch (err) {
+        console.error('[Main] Falha ao carregar sets.json:', err);
+        Equipment.setCatalogue([]);
+    }
+}
+// â”€â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+/**
+ * Inicializa todos os mÃ³dulos na ordem correta e inicia o game loop.
+ */
+export async function init() {
+    const canvas = document.getElementById('game-canvas');
+    if (!canvas) {
+        console.error('[Main] #game-canvas nÃ£o encontrado.');
+        return;
+    }
+
+    // Infraestrutura
+    Input.init();
+    Assets.init();
+    Scene.init(canvas);
+
+    // Ãudio apÃ³s cena (precisa da cÃ¢mera)
+    await Audio.init(Scene.getCamera());    
+
+    // Sistemas e UI
+    Classes.init();
+    Equipment.init();
+    await _loadSetDefs();
+    Refine.init();
+    await Cards.init();
+    UI.init();
+
+    await Monsters.init();
+    NPCs.init(Scene.getScene());
+    await World.init();
+    await World.loadMap('city_01');
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Captura save antes de tudo (one-shot)
+    Events.once('saveLoaded', (data) => {
+        _saveData = data;
+    });
+    Events.once('saveFailed', () => {
+        _saveData = null;
+    });
+
+    // Tenta carregar save existente
+    Save.init();
+
+    // Quando assets prontos, inicializa jogo
+    Events.on('assetsReady', _onAssetsReady);
+
+    Events.on('gamePaused', () => {
+        _gameState = 'paused';
+    });
+
+    Events.on('gameResumed', () => {
+        _gameState = 'playing';
+        _lastTime  = performance.now();
+    });
+
+    // Preload â€” texturas procedurais nÃ£o precisam de entry aqui;
+    // Ã¡udios sÃ£o prÃ©-carregados para cache imediato
+   Assets.preloadAll([
+        // Player models (SessÃ£o 25A)
+        { type: 'model', url: 'assets/models/player/swordman.glb' },
+        { type: 'model', url: 'assets/models/player/mage.glb' },
+        { type: 'model', url: 'assets/models/player/archer.glb' },
+        { type: 'model', url: 'assets/models/player/assassin.glb' },
+        { type: 'model', url: 'assets/models/player/knight.glb' },
+        { type: 'model', url: 'assets/models/player/shadow_assassin.glb' },
+
+        // Shared animations (KayKit)
+        { type: 'model', url: 'assets/models/animations/general.glb' },
+        { type: 'model', url: 'assets/models/animations/movement.glb' },
+
+        // Audio
+        { type: 'audio', url: 'assets/audio/bgm/bgm_city.ogg'     },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_ui_click.ogg' },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_ui_hover.ogg' },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_levelup.ogg'  },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_footstep_grass1.ogg' },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_footstep_grass2.ogg' },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_combat_swing.ogg'    },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_combat_hit.ogg'      },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_combat_critical.ogg' },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_combat_miss.ogg'     },
+    ]);
+
+    // Inicia loop (roda em 'loading' para exibir progresso na UI)
+    _lastTime = performance.now();
+    _rafId    = requestAnimationFrame(_loop);
+
+    console.log('[Main] LumieQuest booted.');
+}
+
+// â”€â”€â”€ Controles de estado â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+/**
+ * Retorna o estado atual do jogo.
+ * @returns {'loading'|'playing'|'paused'}
+ */
+export function getGameState() {
+    return _gameState;
+}
+
+/**
+ * Pausa o game loop.
+ */
+export function pause() {
+    if (_gameState !== 'playing') return;
+    _gameState = 'paused';
+    Events.emit('gamePaused');
+}
+
+/**
+ * Retoma o game loop.
+ */
+export function resume() {
+    if (_gameState !== 'paused') return;
+    _gameState = 'playing';
+    _lastTime  = performance.now();
+    Events.emit('gameResumed');
+}
+
+// â”€â”€â”€ Auto-bootstrap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}

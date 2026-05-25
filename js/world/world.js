@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { getScene, getCamera, add, remove } from './scene.js';
 import { spawnMonster, spawnGroup } from '../entities/monsters.js';
 import { spawnFromConfig } from '../entities/npcs.js';
+import * as Models from '../core/models.js';
 import { playBGM, playSFX } from '../core/audio.js';
 import { getPosition, getState } from '../entities/player.js';
 import { on, off, emit } from '../core/events.js';
@@ -11,6 +12,7 @@ let _mapsById = new Map();
 let _currentMapId = null;
 let _currentMapConfig = null;
 let _terrainMesh = null;
+let _decorationGroup = null;
 let _mapObjects = [];
 let _exitNearTarget = null;
 let _npcsConfig = null;
@@ -78,6 +80,7 @@ export async function loadMap(mapId) {
   add(_terrainMesh);
   _mapObjects.push(_terrainMesh);
 
+  await _spawnMapDecoration(nextMap);
   await _spawnMapMonsters(nextMap);
   _spawnMapNpcs(nextMap);
   _applyMapAudio(nextMap);
@@ -172,6 +175,7 @@ function _clearCurrentMap() {
   }
 
   _mapObjects = [];
+  _decorationGroup = null;
   _terrainMesh = null;
   _cycleTime = 0;
   _weatherTime = 0;
@@ -193,6 +197,151 @@ function _createTerrain(mapConfig) {
 
   return mesh;
 }
+async function _spawnMapDecoration(mapConfig) {
+  const decorations = Array.isArray(mapConfig.decoration) ? mapConfig.decoration : [];
+  if (decorations.length === 0) return;
+
+  _decorationGroup = new THREE.Group();
+  _decorationGroup.name = 'decorationGroup';
+  add(_decorationGroup);
+  _mapObjects.push(_decorationGroup);
+
+  for (const entry of decorations) {
+    const count = Math.max(0, Number(entry.count || 0));
+    if (count <= 0) continue;
+
+    if (entry.procedural === true) {
+      _spawnProceduralDecoration(entry, count, _decorationGroup);
+      continue;
+    }
+
+    await _spawnModelDecoration(entry, count, _decorationGroup);
+  }
+}
+
+async function _spawnModelDecoration(entry, count, group) {
+  if (!entry?.path) return;
+
+  let gltf = null;
+  try {
+    gltf = await Models.loadModel(entry.path);
+  } catch (err) {
+    console.warn(`[world] Falha ao carregar decoração: ${entry.model ?? entry.path}`, err);
+    return;
+  }
+
+  if (!gltf?.scene) return;
+
+  for (let i = 0; i < count; i++) {
+    const instance = Models.cloneModel(gltf);
+    if (!instance) continue;
+
+    _applyDecorationTransform(instance, entry);
+    instance.traverse?.((child) => {
+      if (child?.isMesh) {
+        child.castShadow = false;
+        child.receiveShadow = false;
+      }
+    });
+    group.add(instance);
+  }
+}
+
+function _spawnProceduralDecoration(entry, count, group) {
+  const geometry = _createProceduralGeometry(entry.model);
+  if (!geometry) return;
+
+  const material = new THREE.MeshStandardMaterial({
+    color: _getProceduralColor(entry.model),
+    roughness: 1,
+    metalness: 0
+  });
+
+  if (count > 5) {
+    const instanced = new THREE.InstancedMesh(geometry, material, count);
+    instanced.name = entry.model ?? 'procedural_decoration';
+
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < count; i++) {
+      _applyDecorationTransform(dummy, entry);
+      dummy.updateMatrix();
+      instanced.setMatrixAt(i, dummy.matrix);
+    }
+
+    instanced.instanceMatrix.needsUpdate = true;
+    instanced.castShadow = false;
+    instanced.receiveShadow = false;
+    group.add(instanced);
+    return;
+  }
+
+  for (let i = 0; i < count; i++) {
+    const mesh = new THREE.Mesh(geometry.clone(), material.clone());
+    mesh.name = entry.model ?? 'procedural_decoration';
+    _applyDecorationTransform(mesh, entry);
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
+    group.add(mesh);
+  }
+}
+
+function _applyDecorationTransform(object, entry) {
+  const area = entry.area ?? {};
+  const xMin = Number(area.xMin ?? -10);
+  const xMax = Number(area.xMax ?? 10);
+  const zMin = Number(area.zMin ?? -10);
+  const zMax = Number(area.zMax ?? 10);
+  const scaleRange = Array.isArray(entry.scaleRange) ? entry.scaleRange : [1, 1];
+  const minScale = Number(scaleRange[0] ?? 1);
+  const maxScale = Number(scaleRange[1] ?? minScale);
+  const x = THREE.MathUtils.lerp(xMin, xMax, Math.random());
+  const z = THREE.MathUtils.lerp(zMin, zMax, Math.random());
+  const y = _getGroundHeight(x, z);
+  const scale = THREE.MathUtils.lerp(minScale, maxScale, Math.random());
+
+  object.position.set(x, y, z);
+  object.scale.setScalar(scale);
+
+  if (entry.rotateY) {
+    object.rotation.y = Math.random() * Math.PI * 2;
+  }
+}
+
+function _createProceduralGeometry(kind) {
+  switch (kind) {
+    case 'pillar_cylinder':
+      return new THREE.CylinderGeometry(0.45, 0.6, 2.6, 8);
+    case 'broken_pillar':
+      return new THREE.CylinderGeometry(0.45, 0.7, 1.6, 8);
+    case 'torch_placeholder':
+      return new THREE.CylinderGeometry(0.08, 0.1, 1.4, 6);
+    case 'skull_placeholder':
+      return new THREE.SphereGeometry(0.35, 10, 8);
+    case 'rock_sphere':
+    default:
+      return new THREE.SphereGeometry(0.7, 10, 8);
+  }
+}
+
+function _getProceduralColor(kind) {
+  switch (kind) {
+    case 'pillar_cylinder':
+    case 'broken_pillar':
+      return '#7a6a56';
+    case 'torch_placeholder':
+      return '#8a5a2b';
+    case 'skull_placeholder':
+      return '#b7b0a3';
+    case 'rock_sphere':
+    default:
+      return '#7b7b82';
+  }
+}
+
+function _getGroundHeight(x, z) {
+  return 0;
+}
+
 
 async function _spawnMapMonsters(mapConfig) {
   const pool = Array.isArray(mapConfig.monsterPool) ? mapConfig.monsterPool : [];
@@ -275,6 +424,20 @@ function _distanceToExit(playerPos, exitPos) {
 
 function _disposeObject(object) {
   if (!object) return;
+
+  object.traverse?.((child) => {
+    if (child.geometry?.dispose) {
+      child.geometry.dispose();
+    }
+
+    if (Array.isArray(child.material)) {
+      for (const material of child.material) {
+        material?.dispose?.();
+      }
+    } else if (child.material?.dispose) {
+      child.material.dispose();
+    }
+  });
 
   if (object.geometry?.dispose) {
     object.geometry.dispose();
