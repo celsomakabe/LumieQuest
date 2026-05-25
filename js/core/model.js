@@ -35,17 +35,28 @@ export async function loadModel(url) {
         return _cloneGltf(_cache.get(url));
     }
 
-    const gltf = await new Promise((resolve, reject) => {
-        _loader.load(
-            url,
-            resolve,
-            undefined,
-            (err) => reject(new Error(`[models] loadModel falhou: ${url} — ${err?.message ?? err}`))
-        );
-    });
+    const previousResourcePath = _loader.resourcePath ?? '';
+    const resourcePath = _getResourcePath(url);
 
-    _cache.set(url, gltf);
-    return _cloneGltf(gltf);
+    if (resourcePath) {
+        _loader.setResourcePath(resourcePath);
+    }
+
+    try {
+        const gltf = await new Promise((resolve, reject) => {
+            _loader.load(
+                url,
+                resolve,
+                undefined,
+                (err) => reject(new Error(`[models] loadModel falhou: ${url} â€” ${err?.message ?? err}`))
+            );
+        });
+
+        _cache.set(url, gltf);
+        return _cloneGltf(gltf);
+    } finally {
+        _loader.setResourcePath(previousResourcePath);
+    }
 }
 
 /**
@@ -76,7 +87,15 @@ export function getAnimationClips(gltf) {
 export function createMixer(model) {
     return new THREE.AnimationMixer(model);
 }
+function _getResourcePath(url) {
+    if (typeof url !== 'string' || url.length === 0) return '';
 
+    const normalized = url.replace(/\\/g, '/');
+    const lastSlashIndex = normalized.lastIndexOf('/');
+
+    if (lastSlashIndex === -1) return '';
+    return normalized.slice(0, lastSlashIndex + 1);
+}
 function _cloneGltf(gltf) {
     return {
         ...gltf,
