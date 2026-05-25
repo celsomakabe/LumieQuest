@@ -84,7 +84,7 @@ async function _createNpcVisual(def) {
       const model = gltf?.scene ?? null;
       if (model) {
         _prepareModelRoot(model, def.id);
-        model.scale.set(0.5, 0.5, 0.5);
+        model.scale.set(1.0, 1.0, 1.0);
         const mixer = Models.createMixer(model);
         const clips = Models.getAnimationClips(gltf);
         const idleClip = _findIdleClip(clips);

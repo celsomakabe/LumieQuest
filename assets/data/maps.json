@@ -59,7 +59,7 @@
         "night": {
           "ambient": "#1a1a3a",
           "directional": "#4444aa",
-          "intensity": 0.3
+          "intensity": 0.6
         }
       }
     },
@@ -124,7 +124,7 @@
         "night": {
           "ambient": "#1a1a3a",
           "directional": "#4444aa",
-          "intensity": 0.3
+          "intensity": 0.6
         }
       }
     },
@@ -238,7 +238,7 @@
         "night": {
           "ambient": "#232330",
           "directional": "#5b5f88",
-          "intensity": 0.28
+          "intensity": 0.5
         }
       }
     },
@@ -294,7 +294,7 @@
         "night": {
           "ambient": "#1d1d35",
           "directional": "#5555aa",
-          "intensity": 0.25
+          "intensity": 0.5
         }
       }
     },

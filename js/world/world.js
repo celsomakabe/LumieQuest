@@ -17,7 +17,7 @@ let _mapObjects = [];
 let _exitNearTarget = null;
 let _npcsConfig = null;
 let _boundExitPointAction = null;
-let _cycleTime = 0;
+let _cycleTime = 150;
 let _weatherTime = 0;
 let _currentWeather = 'clear';
 let _currentPhase = 'day';
@@ -177,7 +177,7 @@ function _clearCurrentMap() {
   _mapObjects = [];
   _decorationGroup = null;
   _terrainMesh = null;
-  _cycleTime = 0;
+  _cycleTime = 150;
   _weatherTime = 0;
   _currentWeather = 'clear';
   _currentPhase = 'day';
