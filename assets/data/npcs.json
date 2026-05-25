@@ -3,74 +3,131 @@
     {
       "id": "mayor",
       "name": "Prefeito Aldric",
-      "position": { "x": -3, "y": 0, "z": -4 },
-      "modelPlaceholder": { "type": "capsule", "color": "#FFD700" },
+      "position": {
+        "x": -3,
+        "y": 0,
+        "z": -4
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#FFD700"
+      },
       "dialogTree": {
         "root": "root",
         "nodes": {
           "root": {
-            "text": "Saudações, aventureiro! Nossa vila precisa de ajuda.",
+            "text": "SaudaÃ§Ãµes, aventureiro! Nossa vila precisa de ajuda.",
             "options": [
-              { "text": "O que está acontecendo?", "next": "problema" },
               {
-                "text": "[Missão] Aceitar caçada aos slimes",
+                "text": "O que estÃ¡ acontecendo?",
+                "next": "problema"
+              },
+              {
+                "text": "[MissÃ£o] Aceitar caÃ§ada aos slimes",
                 "next": "aceitar_slimes",
-                "condition": { "type": "questNotStarted", "questId": "quest_slimes" },
-                "action":    { "type": "offerQuest",      "questId": "quest_slimes" }
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_slimes"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_slimes"
+                }
               },
               {
-                "text": "[Entregar] Já eliminei os slimes!",
+                "text": "[Entregar] JÃ¡ eliminei os slimes!",
                 "next": "slimes_completo",
-                "condition": { "type": "questCompletable", "questId": "quest_slimes" },
-                "action":    { "type": "completeQuest",    "questId": "quest_slimes" }
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_slimes"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_slimes"
+                }
               },
               {
-                "text": "Ainda estou caçando os slimes.",
+                "text": "Ainda estou caÃ§ando os slimes.",
                 "next": "end",
-                "condition": { "type": "questActive", "questId": "quest_slimes" }
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_slimes"
+                }
               },
               {
-                "text": "[Missão] Preciso de um pacote entregue",
+                "text": "[MissÃ£o] Preciso de um pacote entregue",
                 "next": "aceitar_entrega",
-                "condition": { "type": "questNotStarted", "questId": "quest_delivery" },
-                "action":    { "type": "offerQuest",      "questId": "quest_delivery" }
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_delivery"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_delivery"
+                }
               },
-              { "text": "Até logo.", "next": "end" }
+              {
+                "text": "AtÃ© logo.",
+                "next": "end"
+              }
             ]
           },
           "problema": {
             "text": "Slimes invadiram os arredores! E preciso de um pacote urgente no ferreiro. Pode ajudar?",
             "options": [
-              { "text": "Voltarei ao menu anterior.", "next": "root" }
+              {
+                "text": "Voltarei ao menu anterior.",
+                "next": "root"
+              }
             ]
           },
           "aceitar_slimes": {
             "text": "Excelente! Elimine 5 slimes nos arredores e volte a mim. Boa sorte!",
             "options": [
-              { "text": "Pode contar comigo.", "next": "end" }
+              {
+                "text": "Pode contar comigo.",
+                "next": "end"
+              }
             ]
           },
           "slimes_completo": {
-            "text": "Fantástico! A vila está mais segura graças a você. Aqui está sua recompensa, aventureiro!",
+            "text": "FantÃ¡stico! A vila estÃ¡ mais segura graÃ§as a vocÃª. Aqui estÃ¡ sua recompensa, aventureiro!",
             "options": [
-              { "text": "Obrigado, prefeito!", "next": "end" }
+              {
+                "text": "Obrigado, prefeito!",
+                "next": "end"
+              }
             ]
           },
           "aceitar_entrega": {
-            "text": "Preciso que este pacote chegue ao ferreiro com urgência. Você pode fazer isso?",
+            "text": "Preciso que este pacote chegue ao ferreiro com urgÃªncia. VocÃª pode fazer isso?",
             "options": [
-              { "text": "Sim, levarei o pacote.", "next": "end" },
-              { "text": "Agora não posso.", "next": "end" }
+              {
+                "text": "Sim, levarei o pacote.",
+                "next": "end"
+              },
+              {
+                "text": "Agora nÃ£o posso.",
+                "next": "end"
+              }
             ]
           }
         }
-      }
+      },
+      "modelFile": "assets/models/player/mage.glb"
     },
     {
       "id": "blacksmith",
       "name": "Ferreiro Bram",
-      "position": { "x": 4, "y": 0, "z": -3 },
-      "modelPlaceholder": { "type": "capsule", "color": "#FFD700" },
+      "position": {
+        "x": 4,
+        "y": 0,
+        "z": -3
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#FFD700"
+      },
       "dialogTree": {
         "root": "root",
         "nodes": {
@@ -78,778 +135,1436 @@
             "text": "Oi! Ocupado com as forjas agora. Tem algo pra mim?",
             "options": [
               {
-                "text": "[Entregar] Aqui está o pacote do prefeito.",
+                "text": "[Entregar] Aqui estÃ¡ o pacote do prefeito.",
                 "next": "receber_pacote",
-                "condition": { "type": "questCompletable", "questId": "quest_delivery" },
-                "action":    { "type": "completeQuest",    "questId": "quest_delivery" }
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_delivery"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_delivery"
+                }
               },
-              { "text": "Refinar Equipamento", "next": "end", "action": { "type": "refine" } },
-              { "text": "Só vim dar uma olhada.", "next": "end" }
+              {
+                "text": "Refinar Equipamento",
+                "next": "end",
+                "action": {
+                  "type": "refine"
+                }
+              },
+              {
+                "text": "SÃ³ vim dar uma olhada.",
+                "next": "end"
+              }
             ]
           },
           "receber_pacote": {
-            "text": "Ah, finalmente chegou! Estava esperando por isso. Aqui está sua recompensa pelo trabalho.",
+            "text": "Ah, finalmente chegou! Estava esperando por isso. Aqui estÃ¡ sua recompensa pelo trabalho.",
             "options": [
-              { "text": "Disponha, ferreiro!", "next": "end" }
+              {
+                "text": "Disponha, ferreiro!",
+                "next": "end"
+              }
             ]
           }
         }
-      }
+      },
+      "modelFile": "assets/models/npcs/barbarian.glb"
     },
     {
       "id": "sage",
-      "name": "Sábio Ancião",
+      "name": "SÃ¡bio AnciÃ£o",
       "type": "quest",
-      "position": { "x": 15, "y": 0, "z": -10 },
+      "position": {
+        "x": 15,
+        "y": 0,
+        "z": -10
+      },
       "dialogues": {
         "default": {
-          "text": "Jovem aventureiro... sinto uma energia especial em você. Talvez esteja pronto para o desafio do Espírito Arcano.",
+          "text": "Jovem aventureiro... sinto uma energia especial em vocÃª. Talvez esteja pronto para o desafio do EspÃ­rito Arcano.",
           "options": []
         }
       },
       "actions": [
-        { "type": "offerQuest", "questId": "quest_pet_espirito" },
-        { "type": "completeQuest", "questId": "quest_pet_espirito" }
-      ]
+        {
+          "type": "offerQuest",
+          "questId": "quest_pet_espirito"
+        },
+        {
+          "type": "completeQuest",
+          "questId": "quest_pet_espirito"
+        }
+      ],
+      "modelFile": "assets/models/npcs/rogue_hooded.glb"
     },
     {
       "id": "merchant",
       "name": "Comerciante Lyra",
-      "position": { "x": 0, "y": 0, "z": -6 },
-      "modelPlaceholder": { "type": "capsule", "color": "#FFD700" },
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": -6
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#FFD700"
+      },
       "dialogTree": {
         "root": "greet",
         "nodes": {
           "greet": {
-            "text": "Boa tarde! Lyra's Mercadorias, o melhor preço da cidade — aliás, o único preço da cidade! O que você precisa?",
+            "text": "Boa tarde! Lyra's Mercadorias, o melhor preÃ§o da cidade â€” aliÃ¡s, o Ãºnico preÃ§o da cidade! O que vocÃª precisa?",
             "options": [
-              { "text": "O que você tem para vender?", "next": "wares" },
-              { "text": "Como estão os negócios?", "next": "business" },
-              { "text": "Adeus.", "next": "end" }
+              {
+                "text": "O que vocÃª tem para vender?",
+                "next": "wares"
+              },
+              {
+                "text": "Como estÃ£o os negÃ³cios?",
+                "next": "business"
+              },
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
             ]
           },
           "wares": {
-            "text": "Poções de vida, ervas medicinais, pergaminhos... Tudo o que o aventureiro moderno precisa para sobreviver! Meu inventário completo abre em breve.",
+            "text": "PoÃ§Ãµes de vida, ervas medicinais, pergaminhos... Tudo o que o aventureiro moderno precisa para sobreviver! Meu inventÃ¡rio completo abre em breve.",
             "options": [
-              { "text": "Aguardo a abertura.", "next": "thanks" },
-              { "text": "Adeus.", "next": "end" }
+              {
+                "text": "Aguardo a abertura.",
+                "next": "thanks"
+              },
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
             ]
           },
           "business": {
-            "text": "Péssimos, para ser honesta. Com monstros bloqueando as estradas, as caravanas pararam de chegar. Se isso continuar, vou à falência.",
+            "text": "PÃ©ssimos, para ser honesta. Com monstros bloqueando as estradas, as caravanas pararam de chegar. Se isso continuar, vou Ã  falÃªncia.",
             "options": [
-              { "text": "Espero que melhore.", "next": "thanks" },
-              { "text": "Adeus.", "next": "end" }
+              {
+                "text": "Espero que melhore.",
+                "next": "thanks"
+              },
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
             ]
           },
           "thanks": {
-            "text": "Volte sempre! E se encontrar itens valiosos por aí, eu compro — pagando bem!",
+            "text": "Volte sempre! E se encontrar itens valiosos por aÃ­, eu compro â€” pagando bem!",
             "options": [
-              { "text": "Adeus.", "next": "end" }
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
             ]
           }
         }
-      }
+      },
+      "modelFile": "assets/models/player/archer.glb"
     },
     {
       "id": "priest",
       "name": "Padre Silas",
-      "position": { "x": -5, "y": 0, "z": 2 },
-      "modelPlaceholder": { "type": "capsule", "color": "#FFD700" },
+      "position": {
+        "x": -5,
+        "y": 0,
+        "z": 2
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#FFD700"
+      },
       "dialogTree": {
         "root": "greet",
         "nodes": {
           "greet": {
-            "text": "A luz de Odin guie seus passos, filho. Estou aqui para curar corpos e almas. Você veio buscar conforto ou orientação?",
+            "text": "A luz de Odin guie seus passos, filho. Estou aqui para curar corpos e almas. VocÃª veio buscar conforto ou orientaÃ§Ã£o?",
             "options": [
-              { "text": "Pode me curar?", "next": "heal" },
-              { "text": "O que é este lugar?", "next": "lore" },
-              { "text": "Adeus, Padre.", "next": "end" }
+              {
+                "text": "Pode me curar?",
+                "next": "heal"
+              },
+              {
+                "text": "O que Ã© este lugar?",
+                "next": "lore"
+              },
+              {
+                "text": "Adeus, Padre.",
+                "next": "end"
+              }
             ]
           },
           "heal": {
-            "text": "A cura divina ainda não me foi concedida neste plano... mas ore comigo e sua força se renovará. Em breve poderei fazer mais por você.",
+            "text": "A cura divina ainda nÃ£o me foi concedida neste plano... mas ore comigo e sua forÃ§a se renovarÃ¡. Em breve poderei fazer mais por vocÃª.",
             "options": [
-              { "text": "Obrigado mesmo assim.", "next": "blessing" },
-              { "text": "Adeus.", "next": "end" }
+              {
+                "text": "Obrigado mesmo assim.",
+                "next": "blessing"
+              },
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
             ]
           },
           "lore": {
-            "text": "Lumie foi construída sobre as ruínas de um antigo templo. Dizem que poder dorme sob a terra aqui. Talvez por isso os monstros circulam tanto.",
+            "text": "Lumie foi construÃ­da sobre as ruÃ­nas de um antigo templo. Dizem que poder dorme sob a terra aqui. Talvez por isso os monstros circulam tanto.",
             "options": [
-              { "text": "Interessante...", "next": "blessing" },
-              { "text": "Adeus.", "next": "end" }
+              {
+                "text": "Interessante...",
+                "next": "blessing"
+              },
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
             ]
           },
           "blessing": {
-            "text": "Que Odin proteja sua jornada. Leve esta bênção: que cada passo seu seja firme e cada golpe, certeiro.",
+            "text": "Que Odin proteja sua jornada. Leve esta bÃªnÃ§Ã£o: que cada passo seu seja firme e cada golpe, certeiro.",
             "options": [
-              { "text": "Adeus, Padre.", "next": "end" }
+              {
+                "text": "Adeus, Padre.",
+                "next": "end"
+              }
             ]
           }
         }
-      }
+      },
+      "modelFile": "assets/models/npcs/priest.glb"
     },
     {
       "id": "guard",
       "name": "Guarda Torren",
-      "position": { "x": 3, "y": 0, "z": 3 },
-      "modelPlaceholder": { "type": "capsule", "color": "#FFD700" },
+      "position": {
+        "x": 3,
+        "y": 0,
+        "z": 3
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#FFD700"
+      },
       "dialogTree": {
         "root": "root",
         "nodes": {
           "root": {
-            "text": "Alto aí! Ah, é você. Preciso de alguém de confiança para uma tarefa.",
+            "text": "Alto aÃ­! Ah, Ã© vocÃª. Preciso de alguÃ©m de confianÃ§a para uma tarefa.",
             "options": [
               {
-                "text": "[Missão] Qual tarefa?",
+                "text": "[MissÃ£o] Qual tarefa?",
                 "next": "oferecer_exploracao",
-                "condition": { "type": "questNotStarted", "questId": "quest_forest" },
-                "action":    { "type": "offerQuest",      "questId": "quest_forest" }
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_forest"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_forest"
+                }
               },
               {
-                "text": "[Entregar] Já verifiquei a floresta, está tudo certo!",
+                "text": "[Entregar] JÃ¡ verifiquei a floresta, estÃ¡ tudo certo!",
                 "next": "exploracao_completa",
-                "condition": { "type": "questCompletable", "questId": "quest_forest" },
-                "action":    { "type": "completeQuest",    "questId": "quest_forest" }
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_forest"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_forest"
+                }
               },
-              { "text": "Nada por agora.", "next": "end" }
+              {
+                "text": "Nada por agora.",
+                "next": "end"
+              }
             ]
           },
           "oferecer_exploracao": {
-            "text": "Preciso que você verifique o ponto de observação na floresta a nordeste, perto de (40, 40). Confirme que está tudo seguro.",
+            "text": "Preciso que vocÃª verifique o ponto de observaÃ§Ã£o na floresta a nordeste, perto de (40, 40). Confirme que estÃ¡ tudo seguro.",
             "options": [
-              { "text": "Entendido. Vou verificar.", "next": "end" }
+              {
+                "text": "Entendido. Vou verificar.",
+                "next": "end"
+              }
             ]
           },
           "exploracao_completa": {
-            "text": "Excelente trabalho! O ponto estava seguro, como esperávamos. A vila agradece sua coragem!",
+            "text": "Excelente trabalho! O ponto estava seguro, como esperÃ¡vamos. A vila agradece sua coragem!",
             "options": [
-              { "text": "Sempre às ordens, guarda.", "next": "end" }
+              {
+                "text": "Sempre Ã s ordens, guarda.",
+                "next": "end"
+              }
             ]
           }
         }
-      }
+      },
+      "modelFile": "assets/models/player/knight.glb"
     },
     {
       "id": "mestre_knight",
       "name": "Mestre Cavaleiro",
-      "position": { "x": 10, "y": 0, "z": 5 },
-      "modelPlaceholder": { "type": "capsule", "color": "#888888" },
+      "position": {
+        "x": 10,
+        "y": 0,
+        "z": 5
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#888888"
+      },
       "dialogTree": {
         "root": "root",
         "nodes": {
           "root": {
-            "text": "Saudações, guerreiro. Tenho uma missão para os dignos.",
+            "text": "SaudaÃ§Ãµes, guerreiro. Tenho uma missÃ£o para os dignos.",
             "options": [
               {
                 "text": "Continue treinando, Cavaleiro.",
                 "next": "already_knight",
-                "condition": { "type": "playerClassIs", "value": "knight" }
+                "condition": {
+                  "type": "playerClassIs",
+                  "value": "knight"
+                }
               },
               {
                 "text": "Aceitar Prova do Cavaleiro",
                 "next": "aceitar_prova",
-                "condition": { "type": "questNotStarted", "questId": "quest_jobchange_knight" },
-                "action":    { "type": "offerQuest",      "questId": "quest_jobchange_knight" }
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_jobchange_knight"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_jobchange_knight"
+                }
               },
               {
                 "text": "Continuo na prova.",
                 "next": "em_andamento",
-                "condition": { "type": "questActive", "questId": "quest_jobchange_knight" }
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_jobchange_knight"
+                }
               },
               {
                 "text": "Completei a Prova do Cavaleiro!",
                 "next": "completar_prova",
-                "condition": { "type": "questCompletable", "questId": "quest_jobchange_knight" },
-                "action":    { "type": "completeQuest",    "questId": "quest_jobchange_knight" }
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_jobchange_knight"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_jobchange_knight"
+                }
               },
               {
                 "text": "Estou pronto para me tornar Knight!",
                 "next": "confirmar_jobchange",
-                "condition": { "type": "questCompleted", "questId": "quest_jobchange_knight" },
-                "action":    { "type": "doJobChange",     "jobId": "knight" }
+                "condition": {
+                  "type": "questCompleted",
+                  "questId": "quest_jobchange_knight"
+                },
+                "action": {
+                  "type": "doJobChange",
+                  "jobId": "knight"
+                }
               },
-              { "text": "Adeus.", "next": "end" }
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
             ]
           },
           "already_knight": {
             "text": "Continue treinando, Cavaleiro.",
-            "options": [{ "text": "Adeus.", "next": "end" }]
+            "options": [
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
           },
           "aceitar_prova": {
-            "text": "Derrote o Orc Warrior nas ruínas e prove sua força. Volte quando terminar.",
-            "options": [{ "text": "Pode contar comigo.", "next": "end" }]
+            "text": "Derrote o Orc Warrior nas ruÃ­nas e prove sua forÃ§a. Volte quando terminar.",
+            "options": [
+              {
+                "text": "Pode contar comigo.",
+                "next": "end"
+              }
+            ]
           },
           "em_andamento": {
             "text": "Termine a prova antes de continuar.",
-            "options": [{ "text": "Voltarei.", "next": "end" }]
+            "options": [
+              {
+                "text": "Voltarei.",
+                "next": "end"
+              }
+            ]
           },
           "completar_prova": {
-            "text": "Você superou a prova. Está pronto para o juramento.",
-            "options": [{ "text": "Estou pronto.", "next": "end" }]
+            "text": "VocÃª superou a prova. EstÃ¡ pronto para o juramento.",
+            "options": [
+              {
+                "text": "Estou pronto.",
+                "next": "end"
+              }
+            ]
           },
           "confirmar_jobchange": {
-            "text": "Que a força guie sua lâmina. Você agora é um Knight!",
-            "options": [{ "text": "Obrigado, Mestre.", "next": "end" }]
+            "text": "Que a forÃ§a guie sua lÃ¢mina. VocÃª agora Ã© um Knight!",
+            "options": [
+              {
+                "text": "Obrigado, Mestre.",
+                "next": "end"
+              }
+            ]
           }
         }
-      }
+      },
+      "modelFile": "assets/models/player/knight.glb"
     },
     {
       "id": "mestre_wizard",
       "name": "Mestre Arcano",
-      "position": { "x": -10, "y": 0, "z": 5 },
-      "modelPlaceholder": { "type": "capsule", "color": "#4444ff" },
+      "position": {
+        "x": -10,
+        "y": 0,
+        "z": 5
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#4444ff"
+      },
       "dialogTree": {
         "root": "root",
         "nodes": {
           "root": {
-            "text": "A magia exige dedicação e sabedoria. Prove que você é digno.",
+            "text": "A magia exige dedicaÃ§Ã£o e sabedoria. Prove que vocÃª Ã© digno.",
             "options": [
               {
                 "text": "Continue aprimorando sua magia, Wizard.",
                 "next": "already_wizard",
-                "condition": { "type": "playerClassIs", "value": "wizard" }
+                "condition": {
+                  "type": "playerClassIs",
+                  "value": "wizard"
+                }
               },
               {
                 "text": "Aceitar o desafio da Sabedoria Arcana",
                 "next": "aceitar_prova",
-                "condition": { "type": "questNotStarted", "questId": "quest_jobchange_wizard" },
-                "action":    { "type": "offerQuest",      "questId": "quest_jobchange_wizard" }
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_jobchange_wizard"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_jobchange_wizard"
+                }
               },
               {
                 "text": "Ainda estou coletando os cristais.",
                 "next": "em_andamento",
-                "condition": { "type": "questActive", "questId": "quest_jobchange_wizard" }
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_jobchange_wizard"
+                }
               },
               {
                 "text": "Coletei os 3 Cristais Arcanos!",
                 "next": "completar_prova",
-                "condition": { "type": "questCompletable", "questId": "quest_jobchange_wizard" },
-                "action":    { "type": "completeQuest",    "questId": "quest_jobchange_wizard" }
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_jobchange_wizard"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_jobchange_wizard"
+                }
               },
               {
                 "text": "Estou pronto para me tornar Wizard!",
                 "next": "confirmar_jobchange",
-                "condition": { "type": "questCompleted", "questId": "quest_jobchange_wizard" },
-                "action":    { "type": "doJobChange",     "jobId": "wizard" }
+                "condition": {
+                  "type": "questCompleted",
+                  "questId": "quest_jobchange_wizard"
+                },
+                "action": {
+                  "type": "doJobChange",
+                  "jobId": "wizard"
+                }
               },
-              { "text": "Adeus.", "next": "end" }
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
             ]
           },
           "already_wizard": {
             "text": "Continue aprimorando sua magia, Wizard.",
-            "options": [{ "text": "Adeus.", "next": "end" }]
+            "options": [
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
           },
           "aceitar_prova": {
             "text": "Colete 3 Cristais Arcanos dos slimes elementais. A magia os atrai.",
-            "options": [{ "text": "Entendido.", "next": "end" }]
+            "options": [
+              {
+                "text": "Entendido.",
+                "next": "end"
+              }
+            ]
           },
           "em_andamento": {
-            "text": "Reúna os cristais antes de retornar.",
-            "options": [{ "text": "Voltarei.", "next": "end" }]
+            "text": "ReÃºna os cristais antes de retornar.",
+            "options": [
+              {
+                "text": "Voltarei.",
+                "next": "end"
+              }
+            ]
           },
           "completar_prova": {
-            "text": "Os cristais vibram com poder. Sua dedicação foi comprovada.",
-            "options": [{ "text": "Estou pronto.", "next": "end" }]
+            "text": "Os cristais vibram com poder. Sua dedicaÃ§Ã£o foi comprovada.",
+            "options": [
+              {
+                "text": "Estou pronto.",
+                "next": "end"
+              }
+            ]
           },
           "confirmar_jobchange": {
-            "text": "Que os arcanos guiem seus feitiços. Você agora é um Wizard!",
-            "options": [{ "text": "Obrigado, Mestre.", "next": "end" }]
+            "text": "Que os arcanos guiem seus feitiÃ§os. VocÃª agora Ã© um Wizard!",
+            "options": [
+              {
+                "text": "Obrigado, Mestre.",
+                "next": "end"
+              }
+            ]
           }
         }
-      }
+      },
+      "modelFile": "assets/models/player/mage.glb"
     },
     {
       "id": "mestre_hunter",
-      "name": "Mestre Caçador",
-      "position": { "x": 10, "y": 0, "z": -5 },
-      "modelPlaceholder": { "type": "capsule", "color": "#44aa22" },
+      "name": "Mestre CaÃ§ador",
+      "position": {
+        "x": 10,
+        "y": 0,
+        "z": -5
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#44aa22"
+      },
       "dialogTree": {
         "root": "root",
         "nodes": {
           "root": {
-            "text": "A floresta é implacável. Apenas os precisos sobrevivem.",
+            "text": "A floresta Ã© implacÃ¡vel. Apenas os precisos sobrevivem.",
             "options": [
               {
                 "text": "Continue aprimorando sua mira, Hunter.",
                 "next": "already_hunter",
-                "condition": { "type": "playerClassIs", "value": "hunter" }
+                "condition": {
+                  "type": "playerClassIs",
+                  "value": "hunter"
+                }
               },
               {
-                "text": "Aceitar a Caçada da Floresta",
+                "text": "Aceitar a CaÃ§ada da Floresta",
                 "next": "aceitar_prova",
-                "condition": { "type": "questNotStarted", "questId": "quest_jobchange_hunter" },
-                "action":    { "type": "offerQuest",      "questId": "quest_jobchange_hunter" }
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_jobchange_hunter"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_jobchange_hunter"
+                }
               },
               {
-                "text": "Ainda estou caçando.",
+                "text": "Ainda estou caÃ§ando.",
                 "next": "em_andamento",
-                "condition": { "type": "questActive", "questId": "quest_jobchange_hunter" }
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_jobchange_hunter"
+                }
               },
               {
                 "text": "Eliminei os 20 monstros!",
                 "next": "completar_prova",
-                "condition": { "type": "questCompletable", "questId": "quest_jobchange_hunter" },
-                "action":    { "type": "completeQuest",    "questId": "quest_jobchange_hunter" }
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_jobchange_hunter"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_jobchange_hunter"
+                }
               },
               {
                 "text": "Estou pronto para me tornar Hunter!",
                 "next": "confirmar_jobchange",
-                "condition": { "type": "questCompleted", "questId": "quest_jobchange_hunter" },
-                "action":    { "type": "doJobChange",     "jobId": "hunter" }
+                "condition": {
+                  "type": "questCompleted",
+                  "questId": "quest_jobchange_hunter"
+                },
+                "action": {
+                  "type": "doJobChange",
+                  "jobId": "hunter"
+                }
               },
-              { "text": "Adeus.", "next": "end" }
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
             ]
           },
           "already_hunter": {
             "text": "Continue aprimorando sua mira, Hunter.",
-            "options": [{ "text": "Adeus.", "next": "end" }]
+            "options": [
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
           },
           "aceitar_prova": {
             "text": "Elimine 20 monstros onde quiser. Quantidade revela disciplina.",
-            "options": [{ "text": "Aceito o desafio.", "next": "end" }]
+            "options": [
+              {
+                "text": "Aceito o desafio.",
+                "next": "end"
+              }
+            ]
           },
           "em_andamento": {
-            "text": "Continue caçando. Ainda não é suficiente.",
-            "options": [{ "text": "Voltarei.", "next": "end" }]
+            "text": "Continue caÃ§ando. Ainda nÃ£o Ã© suficiente.",
+            "options": [
+              {
+                "text": "Voltarei.",
+                "next": "end"
+              }
+            ]
           },
           "completar_prova": {
-            "text": "Impressionante. Sua precisão e resistência foram comprovadas.",
-            "options": [{ "text": "Estou pronto.", "next": "end" }]
+            "text": "Impressionante. Sua precisÃ£o e resistÃªncia foram comprovadas.",
+            "options": [
+              {
+                "text": "Estou pronto.",
+                "next": "end"
+              }
+            ]
           },
           "confirmar_jobchange": {
-            "text": "Que seu arco nunca falhe. Você agora é um Hunter!",
-            "options": [{ "text": "Obrigado, Mestre.", "next": "end" }]
+            "text": "Que seu arco nunca falhe. VocÃª agora Ã© um Hunter!",
+            "options": [
+              {
+                "text": "Obrigado, Mestre.",
+                "next": "end"
+              }
+            ]
           }
         }
-      }
+      },
+      "modelFile": "assets/models/player/archer.glb"
     },
     {
       "id": "mestre_assassin",
       "name": "Mestre das Sombras",
-      "position": { "x": -10, "y": 0, "z": -5 },
-      "modelPlaceholder": { "type": "capsule", "color": "#222222" },
+      "position": {
+        "x": -10,
+        "y": 0,
+        "z": -5
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#222222"
+      },
       "dialogTree": {
         "root": "root",
         "nodes": {
           "root": {
-            "text": "As sombras falam de você. Ainda não sei se merecem.",
+            "text": "As sombras falam de vocÃª. Ainda nÃ£o sei se merecem.",
             "options": [
               {
                 "text": "Continue nas sombras, Mestre.",
                 "next": "already_assassin_master",
-                "condition": { "type": "playerClassIs", "value": "assassin_master" }
+                "condition": {
+                  "type": "playerClassIs",
+                  "value": "assassin_master"
+                }
               },
               {
                 "text": "Aceitar as Sombras Mortais",
                 "next": "aceitar_prova",
-                "condition": { "type": "questNotStarted", "questId": "quest_jobchange_assassin" },
-                "action":    { "type": "offerQuest",      "questId": "quest_jobchange_assassin" }
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_jobchange_assassin"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_jobchange_assassin"
+                }
               },
               {
-                "text": "Ainda estou completando a missão.",
+                "text": "Ainda estou completando a missÃ£o.",
                 "next": "em_andamento",
-                "condition": { "type": "questActive", "questId": "quest_jobchange_assassin" }
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_jobchange_assassin"
+                }
               },
               {
                 "text": "Trouxe os venenos e eliminei o alvo.",
                 "next": "completar_prova",
-                "condition": { "type": "questCompletable", "questId": "quest_jobchange_assassin" },
-                "action":    { "type": "completeQuest",    "questId": "quest_jobchange_assassin" }
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_jobchange_assassin"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_jobchange_assassin"
+                }
               },
               {
                 "text": "Estou pronto para me tornar Assassin Master!",
                 "next": "confirmar_jobchange",
-                "condition": { "type": "questCompleted", "questId": "quest_jobchange_assassin" },
-                "action":    { "type": "doJobChange",     "jobId": "assassin_master" }
+                "condition": {
+                  "type": "questCompleted",
+                  "questId": "quest_jobchange_assassin"
+                },
+                "action": {
+                  "type": "doJobChange",
+                  "jobId": "assassin_master"
+                }
               },
-              { "text": "Adeus.", "next": "end" }
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
             ]
           },
           "already_assassin_master": {
             "text": "Continue nas sombras, Mestre.",
-            "options": [{ "text": "Adeus.", "next": "end" }]
+            "options": [
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
           },
           "aceitar_prova": {
-            "text": "Colete 5 Venenos Raros e elimine o Assassino das Sombras. Não decepcione.",
-            "options": [{ "text": "Será feito.", "next": "end" }]
+            "text": "Colete 5 Venenos Raros e elimine o Assassino das Sombras. NÃ£o decepcione.",
+            "options": [
+              {
+                "text": "SerÃ¡ feito.",
+                "next": "end"
+              }
+            ]
           },
           "em_andamento": {
-            "text": "Ainda não terminou. Volte quando completar.",
-            "options": [{ "text": "Voltarei.", "next": "end" }]
+            "text": "Ainda nÃ£o terminou. Volte quando completar.",
+            "options": [
+              {
+                "text": "Voltarei.",
+                "next": "end"
+              }
+            ]
           },
           "completar_prova": {
             "text": "As sombras o reconhecem como digno.",
-            "options": [{ "text": "Estou pronto.", "next": "end" }]
+            "options": [
+              {
+                "text": "Estou pronto.",
+                "next": "end"
+              }
+            ]
           },
           "confirmar_jobchange": {
-            "text": "Desapareça nas sombras e ressurja como Mestre. Você agora é Assassin Master!",
-            "options": [{ "text": "Obrigado, Mestre.", "next": "end" }]
+            "text": "DesapareÃ§a nas sombras e ressurja como Mestre. VocÃª agora Ã© Assassin Master!",
+            "options": [
+              {
+                "text": "Obrigado, Mestre.",
+                "next": "end"
+              }
+            ]
           }
         }
-      }
+      },
+      "modelFile": "assets/models/npcs/rogue.glb"
     },
-        {
+    {
       "id": "mestre_lord_knight",
-      "name": "Grão-Mestre do Lorde Cavaleiro",
-      "position": { "x": 15, "y": 0, "z": 8 },
-      "modelPlaceholder": { "type": "capsule", "color": "#b08d57" },
+      "name": "GrÃ£o-Mestre do Lorde Cavaleiro",
+      "position": {
+        "x": 15,
+        "y": 0,
+        "z": 8
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#b08d57"
+      },
       "dialogTree": {
         "root": "root",
         "nodes": {
           "root": {
-            "text": "A honra da ordem exige mais do que força. Exige feitos dignos de uma lenda.",
+            "text": "A honra da ordem exige mais do que forÃ§a. Exige feitos dignos de uma lenda.",
             "options": [
               {
                 "text": "Continue seu caminho, Lord Knight.",
                 "next": "already_lord_knight",
-                "condition": { "type": "playerClassIs", "value": "lord_knight" }
+                "condition": {
+                  "type": "playerClassIs",
+                  "value": "lord_knight"
+                }
               },
               {
-                "text": "Aceitar a Provação do Lorde Cavaleiro",
+                "text": "Aceitar a ProvaÃ§Ã£o do Lorde Cavaleiro",
                 "next": "aceitar_prova",
-                "condition": { "type": "questNotStarted", "questId": "quest_evo2_lord_knight" },
-                "action": { "type": "offerQuest", "questId": "quest_evo2_lord_knight" }
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_evo2_lord_knight"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_evo2_lord_knight"
+                }
               },
               {
-                "text": "Ainda estou cumprindo a provação.",
+                "text": "Ainda estou cumprindo a provaÃ§Ã£o.",
                 "next": "em_andamento",
-                "condition": { "type": "questActive", "questId": "quest_evo2_lord_knight" }
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_evo2_lord_knight"
+                }
               },
               {
-                "text": "Completei a provação épica.",
+                "text": "Completei a provaÃ§Ã£o Ã©pica.",
                 "next": "completar_prova",
-                "condition": { "type": "questCompletable", "questId": "quest_evo2_lord_knight" },
-                "action": { "type": "completeQuest", "questId": "quest_evo2_lord_knight" }
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_evo2_lord_knight"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_evo2_lord_knight"
+                }
               },
               {
                 "text": "Estou pronto para me tornar Lord Knight!",
                 "next": "confirmar_jobchange",
-                "condition": { "type": "questCompleted", "questId": "quest_evo2_lord_knight" },
-                "action": { "type": "doJobChange", "jobId": "lord_knight" }
+                "condition": {
+                  "type": "questCompleted",
+                  "questId": "quest_evo2_lord_knight"
+                },
+                "action": {
+                  "type": "doJobChange",
+                  "jobId": "lord_knight"
+                }
               },
-              { "text": "Adeus.", "next": "end" }
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
             ]
           },
           "already_lord_knight": {
-            "text": "A honra da ordem agora vive em você, Lord Knight.",
-            "options": [{ "text": "Adeus.", "next": "end" }]
+            "text": "A honra da ordem agora vive em vocÃª, Lord Knight.",
+            "options": [
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
           },
           "aceitar_prova": {
-            "text": "Vá até Eremita Kael e prove que sua lâmina serve à ordem e ao destino.",
-            "options": [{ "text": "Aceito a provação.", "next": "end" }]
+            "text": "VÃ¡ atÃ© Eremita Kael e prove que sua lÃ¢mina serve Ã  ordem e ao destino.",
+            "options": [
+              {
+                "text": "Aceito a provaÃ§Ã£o.",
+                "next": "end"
+              }
+            ]
           },
           "em_andamento": {
-            "text": "Sua jornada ainda não terminou. Volte quando concluir cada etapa.",
-            "options": [{ "text": "Voltarei.", "next": "end" }]
+            "text": "Sua jornada ainda nÃ£o terminou. Volte quando concluir cada etapa.",
+            "options": [
+              {
+                "text": "Voltarei.",
+                "next": "end"
+              }
+            ]
           },
           "completar_prova": {
-            "text": "Você atravessou a provação como um verdadeiro campeão da ordem.",
-            "options": [{ "text": "Estou pronto.", "next": "end" }]
+            "text": "VocÃª atravessou a provaÃ§Ã£o como um verdadeiro campeÃ£o da ordem.",
+            "options": [
+              {
+                "text": "Estou pronto.",
+                "next": "end"
+              }
+            ]
           },
           "confirmar_jobchange": {
-            "text": "Erga sua espada e assuma seu destino. Você agora é um Lord Knight!",
-            "options": [{ "text": "Obrigado, Grão-Mestre.", "next": "end" }]
+            "text": "Erga sua espada e assuma seu destino. VocÃª agora Ã© um Lord Knight!",
+            "options": [
+              {
+                "text": "Obrigado, GrÃ£o-Mestre.",
+                "next": "end"
+              }
+            ]
           }
         }
-      }
+      },
+      "modelFile": "assets/models/player/knight.glb"
     },
     {
       "id": "mestre_high_wizard",
-      "name": "Grão-Mestre do Grande Bruxo",
-      "position": { "x": -15, "y": 0, "z": 8 },
-      "modelPlaceholder": { "type": "capsule", "color": "#7a6cff" },
+      "name": "GrÃ£o-Mestre do Grande Bruxo",
+      "position": {
+        "x": -15,
+        "y": 0,
+        "z": 8
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#7a6cff"
+      },
       "dialogTree": {
         "root": "root",
         "nodes": {
           "root": {
-            "text": "O verdadeiro arcano não se curva ao caos. Ele o domina.",
+            "text": "O verdadeiro arcano nÃ£o se curva ao caos. Ele o domina.",
             "options": [
               {
-                "text": "Continue sua ascensão, High Wizard.",
+                "text": "Continue sua ascensÃ£o, High Wizard.",
                 "next": "already_high_wizard",
-                "condition": { "type": "playerClassIs", "value": "high_wizard" }
+                "condition": {
+                  "type": "playerClassIs",
+                  "value": "high_wizard"
+                }
               },
               {
                 "text": "Aceitar o Rito do Grande Bruxo",
                 "next": "aceitar_prova",
-                "condition": { "type": "questNotStarted", "questId": "quest_evo2_high_wizard" },
-                "action": { "type": "offerQuest", "questId": "quest_evo2_high_wizard" }
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_evo2_high_wizard"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_evo2_high_wizard"
+                }
               },
               {
                 "text": "Ainda estou cumprindo o rito.",
                 "next": "em_andamento",
-                "condition": { "type": "questActive", "questId": "quest_evo2_high_wizard" }
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_evo2_high_wizard"
+                }
               },
               {
-                "text": "Concluí o rito arcano.",
+                "text": "ConcluÃ­ o rito arcano.",
                 "next": "completar_prova",
-                "condition": { "type": "questCompletable", "questId": "quest_evo2_high_wizard" },
-                "action": { "type": "completeQuest", "questId": "quest_evo2_high_wizard" }
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_evo2_high_wizard"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_evo2_high_wizard"
+                }
               },
               {
                 "text": "Estou pronto para me tornar High Wizard!",
                 "next": "confirmar_jobchange",
-                "condition": { "type": "questCompleted", "questId": "quest_evo2_high_wizard" },
-                "action": { "type": "doJobChange", "jobId": "high_wizard" }
+                "condition": {
+                  "type": "questCompleted",
+                  "questId": "quest_evo2_high_wizard"
+                },
+                "action": {
+                  "type": "doJobChange",
+                  "jobId": "high_wizard"
+                }
               },
-              { "text": "Adeus.", "next": "end" }
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
             ]
           },
           "already_high_wizard": {
-            "text": "Os fluxos arcanos já reconhecem seu nome, High Wizard.",
-            "options": [{ "text": "Adeus.", "next": "end" }]
+            "text": "Os fluxos arcanos jÃ¡ reconhecem seu nome, High Wizard.",
+            "options": [
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
           },
           "aceitar_prova": {
-            "text": "Procure Oráculo Lyra. Só então compreenderá o que o poder realmente exige.",
-            "options": [{ "text": "Seguirei o rito.", "next": "end" }]
+            "text": "Procure OrÃ¡culo Lyra. SÃ³ entÃ£o compreenderÃ¡ o que o poder realmente exige.",
+            "options": [
+              {
+                "text": "Seguirei o rito.",
+                "next": "end"
+              }
+            ]
           },
           "em_andamento": {
-            "text": "O conhecimento ainda não foi totalmente conquistado.",
-            "options": [{ "text": "Voltarei.", "next": "end" }]
+            "text": "O conhecimento ainda nÃ£o foi totalmente conquistado.",
+            "options": [
+              {
+                "text": "Voltarei.",
+                "next": "end"
+              }
+            ]
           },
           "completar_prova": {
-            "text": "Seu domínio do arcano ultrapassou o limite dos magos comuns.",
-            "options": [{ "text": "Estou pronto.", "next": "end" }]
+            "text": "Seu domÃ­nio do arcano ultrapassou o limite dos magos comuns.",
+            "options": [
+              {
+                "text": "Estou pronto.",
+                "next": "end"
+              }
+            ]
           },
           "confirmar_jobchange": {
-            "text": "Que os céus e os elementos respondam ao seu chamado. Você agora é um High Wizard!",
-            "options": [{ "text": "Obrigado, Grão-Mestre.", "next": "end" }]
+            "text": "Que os cÃ©us e os elementos respondam ao seu chamado. VocÃª agora Ã© um High Wizard!",
+            "options": [
+              {
+                "text": "Obrigado, GrÃ£o-Mestre.",
+                "next": "end"
+              }
+            ]
           }
         }
-      }
+      },
+      "modelFile": "assets/models/player/mage.glb"
     },
     {
       "id": "mestre_sniper",
-      "name": "Grão-Mestre do Atirador de Elite",
-      "position": { "x": 15, "y": 0, "z": -8 },
-      "modelPlaceholder": { "type": "capsule", "color": "#5fae4a" },
+      "name": "GrÃ£o-Mestre do Atirador de Elite",
+      "position": {
+        "x": 15,
+        "y": 0,
+        "z": -8
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#5fae4a"
+      },
       "dialogTree": {
         "root": "root",
         "nodes": {
           "root": {
-            "text": "Um verdadeiro caçador não erra quando o destino depende de seu disparo.",
+            "text": "Um verdadeiro caÃ§ador nÃ£o erra quando o destino depende de seu disparo.",
             "options": [
               {
-                "text": "Sua mira já é lendária, Sniper.",
+                "text": "Sua mira jÃ¡ Ã© lendÃ¡ria, Sniper.",
                 "next": "already_sniper",
-                "condition": { "type": "playerClassIs", "value": "sniper" }
+                "condition": {
+                  "type": "playerClassIs",
+                  "value": "sniper"
+                }
               },
               {
                 "text": "Aceitar o Julgamento do Sniper",
                 "next": "aceitar_prova",
-                "condition": { "type": "questNotStarted", "questId": "quest_evo2_sniper" },
-                "action": { "type": "offerQuest", "questId": "quest_evo2_sniper" }
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_evo2_sniper"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_evo2_sniper"
+                }
               },
               {
                 "text": "Ainda estou em julgamento.",
                 "next": "em_andamento",
-                "condition": { "type": "questActive", "questId": "quest_evo2_sniper" }
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_evo2_sniper"
+                }
               },
               {
                 "text": "Completei o julgamento.",
                 "next": "completar_prova",
-                "condition": { "type": "questCompletable", "questId": "quest_evo2_sniper" },
-                "action": { "type": "completeQuest", "questId": "quest_evo2_sniper" }
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_evo2_sniper"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_evo2_sniper"
+                }
               },
               {
                 "text": "Estou pronto para me tornar Sniper!",
                 "next": "confirmar_jobchange",
-                "condition": { "type": "questCompleted", "questId": "quest_evo2_sniper" },
-                "action": { "type": "doJobChange", "jobId": "sniper" }
+                "condition": {
+                  "type": "questCompleted",
+                  "questId": "quest_evo2_sniper"
+                },
+                "action": {
+                  "type": "doJobChange",
+                  "jobId": "sniper"
+                }
               },
-              { "text": "Adeus.", "next": "end" }
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
             ]
           },
           "already_sniper": {
-            "text": "Cada flecha sua já encontra o alvo antes mesmo de ser disparada.",
-            "options": [{ "text": "Adeus.", "next": "end" }]
+            "text": "Cada flecha sua jÃ¡ encontra o alvo antes mesmo de ser disparada.",
+            "options": [
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
           },
           "aceitar_prova": {
-            "text": "Encontre Batedor Thorn. Ele testará sua disciplina e seus instintos.",
-            "options": [{ "text": "Aceito o julgamento.", "next": "end" }]
+            "text": "Encontre Batedor Thorn. Ele testarÃ¡ sua disciplina e seus instintos.",
+            "options": [
+              {
+                "text": "Aceito o julgamento.",
+                "next": "end"
+              }
+            ]
           },
           "em_andamento": {
-            "text": "A presa ainda não caiu. Continue.",
-            "options": [{ "text": "Voltarei.", "next": "end" }]
+            "text": "A presa ainda nÃ£o caiu. Continue.",
+            "options": [
+              {
+                "text": "Voltarei.",
+                "next": "end"
+              }
+            ]
           },
           "completar_prova": {
-            "text": "Sua precisão já não pertence ao mundo comum.",
-            "options": [{ "text": "Estou pronto.", "next": "end" }]
+            "text": "Sua precisÃ£o jÃ¡ nÃ£o pertence ao mundo comum.",
+            "options": [
+              {
+                "text": "Estou pronto.",
+                "next": "end"
+              }
+            ]
           },
           "confirmar_jobchange": {
-            "text": "Respire, mire e transcenda. Você agora é um Sniper!",
-            "options": [{ "text": "Obrigado, Grão-Mestre.", "next": "end" }]
+            "text": "Respire, mire e transcenda. VocÃª agora Ã© um Sniper!",
+            "options": [
+              {
+                "text": "Obrigado, GrÃ£o-Mestre.",
+                "next": "end"
+              }
+            ]
           }
         }
-      }
+      },
+      "modelFile": "assets/models/player/archer.glb"
     },
     {
       "id": "mestre_shadow_assassin",
-      "name": "Grão-Mestre do Assassino das Sombras",
-      "position": { "x": -15, "y": 0, "z": -8 },
-      "modelPlaceholder": { "type": "capsule", "color": "#3a3a3a" },
+      "name": "GrÃ£o-Mestre do Assassino das Sombras",
+      "position": {
+        "x": -15,
+        "y": 0,
+        "z": -8
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#3a3a3a"
+      },
       "dialogTree": {
         "root": "root",
         "nodes": {
           "root": {
-            "text": "As sombras não acolhem os fracos. Elas os consomem.",
+            "text": "As sombras nÃ£o acolhem os fracos. Elas os consomem.",
             "options": [
               {
-                "text": "As sombras já o reconhecem, Shadow Assassin.",
+                "text": "As sombras jÃ¡ o reconhecem, Shadow Assassin.",
                 "next": "already_shadow_assassin",
-                "condition": { "type": "playerClassIs", "value": "shadow_assassin" }
+                "condition": {
+                  "type": "playerClassIs",
+                  "value": "shadow_assassin"
+                }
               },
               {
-                "text": "Aceitar o Véu Final",
+                "text": "Aceitar o VÃ©u Final",
                 "next": "aceitar_prova",
-                "condition": { "type": "questNotStarted", "questId": "quest_evo2_shadow_assassin" },
-                "action": { "type": "offerQuest", "questId": "quest_evo2_shadow_assassin" }
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_evo2_shadow_assassin"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_evo2_shadow_assassin"
+                }
               },
               {
-                "text": "Ainda caminho pelo véu.",
+                "text": "Ainda caminho pelo vÃ©u.",
                 "next": "em_andamento",
-                "condition": { "type": "questActive", "questId": "quest_evo2_shadow_assassin" }
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_evo2_shadow_assassin"
+                }
               },
               {
-                "text": "Completei o Véu Final.",
+                "text": "Completei o VÃ©u Final.",
                 "next": "completar_prova",
-                "condition": { "type": "questCompletable", "questId": "quest_evo2_shadow_assassin" },
-                "action": { "type": "completeQuest", "questId": "quest_evo2_shadow_assassin" }
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_evo2_shadow_assassin"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_evo2_shadow_assassin"
+                }
               },
               {
                 "text": "Estou pronto para me tornar Shadow Assassin!",
                 "next": "confirmar_jobchange",
-                "condition": { "type": "questCompleted", "questId": "quest_evo2_shadow_assassin" },
-                "action": { "type": "doJobChange", "jobId": "shadow_assassin" }
+                "condition": {
+                  "type": "questCompleted",
+                  "questId": "quest_evo2_shadow_assassin"
+                },
+                "action": {
+                  "type": "doJobChange",
+                  "jobId": "shadow_assassin"
+                }
               },
-              { "text": "Adeus.", "next": "end" }
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
             ]
           },
           "already_shadow_assassin": {
-            "text": "Você já não caminha entre as sombras. Você é uma delas.",
-            "options": [{ "text": "Adeus.", "next": "end" }]
+            "text": "VocÃª jÃ¡ nÃ£o caminha entre as sombras. VocÃª Ã© uma delas.",
+            "options": [
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
           },
           "aceitar_prova": {
-            "text": "Procure Informante Sable. Ele o conduzirá pela etapa que separa o mortal da lenda.",
-            "options": [{ "text": "Aceito o véu.", "next": "end" }]
+            "text": "Procure Informante Sable. Ele o conduzirÃ¡ pela etapa que separa o mortal da lenda.",
+            "options": [
+              {
+                "text": "Aceito o vÃ©u.",
+                "next": "end"
+              }
+            ]
           },
           "em_andamento": {
-            "text": "Ainda há sangue e silêncio entre você e seu destino.",
-            "options": [{ "text": "Voltarei.", "next": "end" }]
+            "text": "Ainda hÃ¡ sangue e silÃªncio entre vocÃª e seu destino.",
+            "options": [
+              {
+                "text": "Voltarei.",
+                "next": "end"
+              }
+            ]
           },
           "completar_prova": {
             "text": "Nem mesmo a noite negou sua passagem.",
-            "options": [{ "text": "Estou pronto.", "next": "end" }]
+            "options": [
+              {
+                "text": "Estou pronto.",
+                "next": "end"
+              }
+            ]
           },
           "confirmar_jobchange": {
-            "text": "Desapareça do mundo antigo. Você agora é um Shadow Assassin!",
-            "options": [{ "text": "Obrigado, Grão-Mestre.", "next": "end" }]
+            "text": "DesapareÃ§a do mundo antigo. VocÃª agora Ã© um Shadow Assassin!",
+            "options": [
+              {
+                "text": "Obrigado, GrÃ£o-Mestre.",
+                "next": "end"
+              }
+            ]
           }
         }
-      }
+      },
+      "modelFile": "assets/models/npcs/rogue_hooded.glb"
     },
     {
       "id": "eremita_kael",
       "name": "Eremita Kael",
-      "position": { "x": 25, "y": 0, "z": 15 },
-      "modelPlaceholder": { "type": "capsule", "color": "#8c6b3f" },
+      "position": {
+        "x": 25,
+        "y": 0,
+        "z": 15
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#8c6b3f"
+      },
       "dialogTree": {
         "root": "root",
         "nodes": {
           "root": {
-            "text": "A lâmina só alcança grandeza quando encontra propósito. Volte ao seu mestre e complete seu juramento.",
+            "text": "A lÃ¢mina sÃ³ alcanÃ§a grandeza quando encontra propÃ³sito. Volte ao seu mestre e complete seu juramento.",
             "options": [
               {
                 "text": "Entendi.",
                 "next": "end",
-                "condition": { "type": "questActive", "questId": "quest_evo2_lord_knight" }
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_evo2_lord_knight"
+                }
               }
             ]
           }
         }
-      }
+      },
+      "modelFile": "assets/models/npcs/barbarian.glb"
     },
     {
       "id": "oraculo_lyra",
-      "name": "Oráculo Lyra",
-      "position": { "x": -25, "y": 0, "z": 15 },
-      "modelPlaceholder": { "type": "capsule", "color": "#6f63d9" },
+      "name": "OrÃ¡culo Lyra",
+      "position": {
+        "x": -25,
+        "y": 0,
+        "z": 15
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#6f63d9"
+      },
       "dialogTree": {
         "root": "root",
         "nodes": {
           "root": {
-            "text": "O poder absoluto exige visão absoluta. Leve esta compreensão de volta ao Grão-Mestre.",
+            "text": "O poder absoluto exige visÃ£o absoluta. Leve esta compreensÃ£o de volta ao GrÃ£o-Mestre.",
             "options": [
               {
                 "text": "Eu compreendo.",
                 "next": "end",
-                "condition": { "type": "questActive", "questId": "quest_evo2_high_wizard" }
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_evo2_high_wizard"
+                }
               }
             ]
           }
         }
-      }
+      },
+      "modelFile": "assets/models/player/mage.glb"
     },
     {
       "id": "batedor_thorn",
       "name": "Batedor Thorn",
-      "position": { "x": 25, "y": 0, "z": -15 },
-      "modelPlaceholder": { "type": "capsule", "color": "#4e8f3b" },
+      "position": {
+        "x": 25,
+        "y": 0,
+        "z": -15
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#4e8f3b"
+      },
       "dialogTree": {
         "root": "root",
         "nodes": {
           "root": {
-            "text": "Olhos atentos. Respiração firme. Agora volte e conclua sua prova.",
+            "text": "Olhos atentos. RespiraÃ§Ã£o firme. Agora volte e conclua sua prova.",
             "options": [
               {
                 "text": "Vou retornar.",
                 "next": "end",
-                "condition": { "type": "questActive", "questId": "quest_evo2_sniper" }
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_evo2_sniper"
+                }
               }
             ]
           }
         }
-      }
+      },
+      "modelFile": "assets/models/player/archer.glb"
     },
     {
       "id": "informante_sable",
       "name": "Informante Sable",
-      "position": { "x": -25, "y": 0, "z": -15 },
-      "modelPlaceholder": { "type": "capsule", "color": "#4a4a4a" },
+      "position": {
+        "x": -25,
+        "y": 0,
+        "z": -15
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#4a4a4a"
+      },
       "dialogTree": {
         "root": "root",
         "nodes": {
           "root": {
-            "text": "Você ouviu o sussurro certo. Agora desapareça e retorne ao Grão-Mestre.",
+            "text": "VocÃª ouviu o sussurro certo. Agora desapareÃ§a e retorne ao GrÃ£o-Mestre.",
             "options": [
               {
                 "text": "Entendido.",
                 "next": "end",
-                "condition": { "type": "questActive", "questId": "quest_evo2_shadow_assassin" }
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_evo2_shadow_assassin"
+                }
               }
             ]
           }
         }
-      }
+      },
+      "modelFile": "assets/models/npcs/rogue.glb"
     },
     {
       "id": "sage",
-      "name": "Sábio Ancião",
+      "name": "SÃ¡bio AnciÃ£o",
       "type": "quest",
-      "position": { "x": 15, "y": 0, "z": -10 },
+      "position": {
+        "x": 15,
+        "y": 0,
+        "z": -10
+      },
       "dialogues": {
         "default": {
-          "text": "Jovem aventureiro... sinto uma energia especial em você. Talvez esteja pronto para o desafio do Espírito Arcano.",
+          "text": "Jovem aventureiro... sinto uma energia especial em vocÃª. Talvez esteja pronto para o desafio do EspÃ­rito Arcano.",
           "options": []
         }
       },
       "actions": [
-        { "type": "offerQuest", "questId": "quest_pet_espirito" },
-        { "type": "completeQuest", "questId": "quest_pet_espirito" }
-      ]
+        {
+          "type": "offerQuest",
+          "questId": "quest_pet_espirito"
+        },
+        {
+          "type": "completeQuest",
+          "questId": "quest_pet_espirito"
+        }
+      ],
+      "modelFile": "assets/models/npcs/rogue_hooded.glb"
     }
   ]
 }
