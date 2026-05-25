@@ -1,5 +1,0 @@
-﻿export async function init() {
-export async function loadModel(url) {
-export function cloneModel(gltf) {
-export function getAnimationClips(gltf) {
-export function createMixer(model) {

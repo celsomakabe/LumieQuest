@@ -9,6 +9,7 @@ import * as Classes from '../systems/classes.js';
 import { updateNpcQuestIndicator } from '../ui/ui.js';
 import * as Scene from '../world/scene.js';
 import { playSFX3D } from '../core/audio.js';
+import * as Models from '../core/models.js';
 /** @type {Array<NPCInstance>} */
 const _npcs = [];
 
@@ -51,7 +52,60 @@ function _getSharedAssets() {
   }
   return { geo: _sharedGeo, mat: _sharedMat };
 }
+// --- helpers 3D (Sessao 25D) ---
 
+function _findIdleClip(clips) {
+  if (!Array.isArray(clips) || clips.length === 0) return null;
+  const byName = ['idle', 'Idle', 'IDLE', 'idle_01', 'Idle_01'];
+  for (const wanted of byName) {
+    const clip = clips.find(c => c?.name === wanted);
+    if (clip) return clip;
+  }
+  const partial = clips.find(c => /idle/i.test(c?.name ?? ''));
+  if (partial) return partial;
+  return clips[0] ?? null;
+}
+
+function _prepareModelRoot(root, npcId) {
+  root.traverse((child) => {
+    child.userData = child.userData ?? {};
+    child.userData.npcId = npcId;
+    if (child.isMesh || child.isSkinnedMesh) {
+      child.castShadow = true;
+      child.receiveShadow = false;
+    }
+  });
+}
+
+async function _createNpcVisual(def) {
+  if (def?.modelFile) {
+    try {
+      const gltf = await Models.loadModel(def.modelFile);
+      const model = gltf?.scene ?? null;
+      if (model) {
+        _prepareModelRoot(model, def.id);
+        model.scale.set(0.5, 0.5, 0.5);
+        const mixer = Models.createMixer(model);
+        const clips = Models.getAnimationClips(gltf);
+        const idleClip = _findIdleClip(clips);
+        let idleAction = null;
+        if (idleClip) {
+          idleAction = mixer.clipAction(idleClip);
+          idleAction.reset();
+          idleAction.play();
+        }
+        return { mesh: model, mixer, idleAction };
+      }
+    } catch (err) {
+      console.warn('[npcs] Falha ao carregar modelFile de ' + def.id + ': ' + def.modelFile, err);
+    }
+  }
+  const { geo, mat } = _getSharedAssets();
+  const fallback = new THREE.Mesh(geo, mat);
+  fallback.castShadow = true;
+  fallback.userData.npcId = def.id;
+  return { mesh: fallback, mixer: null, idleAction: null };
+}
 // ─── API pública ─────────────────────────────────────────────────────────────
 
 /**
@@ -72,23 +126,25 @@ export function init(scene) {
  * Cria meshes e registra NPCs a partir do JSON de configuração.
  * @param {Object} config - conteúdo parseado de assets/data/npcs.json
  */
-export function spawnFromConfig(config) {
+export async function spawnFromConfig(config) {
   if (!_scene) {
     console.error('[npcs] init() deve ser chamado antes de spawnFromConfig()');
     return;
   }
 
-  const { geo, mat } = _getSharedAssets();
-
   for (const def of config.npcs) {
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set(def.position.x, def.position.y + 0.95, def.position.z);
-    mesh.castShadow = true;
+    const { mesh, mixer, idleAction } = await _createNpcVisual(def);
+
+    mesh.position.set(def.position.x, def.position.y, def.position.z);
+    if (!mixer) {
+      mesh.position.y += 0.95;
+    }
+
+    mesh.userData = mesh.userData ?? {};
     mesh.userData.npcId = def.id;
 
     _scene.add(mesh);
 
-    /** @type {NPCInstance} */
     const instance = {
       id:           def.id,
       name:         def.name,
@@ -96,6 +152,8 @@ export function spawnFromConfig(config) {
       position:     new THREE.Vector3(def.position.x, def.position.y, def.position.z),
       dialogTree:   def.dialogTree,
       playerInRange: false,
+      mixer,
+      idleAction,
       lastAmbientSfxAt: 0,
     };
 
@@ -118,6 +176,7 @@ export function updateAll(delta, playerPos) {
   let closestDistSq = Infinity;
 
   for (const npc of _npcs) {
+    if (npc.mixer) npc.mixer.update(delta);
     const dx = playerPos.x - npc.position.x;
     const dz = playerPos.z - npc.position.z;
     const distSq = dx * dx + dz * dz;

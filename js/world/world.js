@@ -82,7 +82,7 @@ export async function loadMap(mapId) {
 
   await _spawnMapDecoration(nextMap);
   await _spawnMapMonsters(nextMap);
-  _spawnMapNpcs(nextMap);
+  await _spawnMapNpcs(nextMap);
   _applyMapAudio(nextMap);
   _updatePlayerCurrentMap(mapId);
   _cacheSceneLights();
@@ -358,7 +358,7 @@ async function _spawnMapMonsters(mapConfig) {
   }
 }
 
-function _spawnMapNpcs(mapConfig) {
+async function _spawnMapNpcs(mapConfig) {
   if (!_npcsConfig || !Array.isArray(mapConfig.npcs) || mapConfig.npcs.length === 0) return;
 
   const filtered = {
@@ -366,7 +366,7 @@ function _spawnMapNpcs(mapConfig) {
   };
 
   if (filtered.npcs.length > 0) {
-    spawnFromConfig(filtered);
+    await spawnFromConfig(filtered);
   }
 }
 
