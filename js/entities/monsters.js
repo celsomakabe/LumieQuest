@@ -24,8 +24,26 @@ import {
 import * as Inventory from '../systems/inventory.js';
 import { generateSockets } from '../systems/cards.js';
 import { playSFX3D } from '../core/audio.js';
+import * as Models from '../core/models.js';
 
 // ─── Estado interno ───────────────────────────────────────────────────────────
+// --- helpers de material para glTF/Group ---
+function _getMeshMaterial(mesh) {
+    if (!mesh) return null;
+    if ((mesh.isMesh || mesh.isSkinnedMesh) && mesh.material) {
+        return Array.isArray(mesh.material) ? (mesh.material[0] ?? null) : mesh.material;
+    }
+    let found = null;
+    mesh.traverse((child) => {
+        if (found) return;
+        if ((child.isMesh || child.isSkinnedMesh) && child.material) {
+            found = Array.isArray(child.material) ? (child.material[0] ?? null) : child.material;
+        }
+    });
+    return found;
+}
+function _getMeshColor(mesh) { const m = _getMeshMaterial(mesh); return m?.color ?? null; }
+function _getMeshEmissive(mesh) { const m = _getMeshMaterial(mesh); return m?.emissive ?? null; }
 
 /** @type {Map<string, Object>} instanceId → instância */
 const _monsters = new Map();
@@ -123,7 +141,7 @@ function _createBossMesh(def) {
  * @param {string|null} [linkedQuestId=null]
  * @returns {Object|null}
  */
-function spawnMonster(monsterId, position, linkedQuestId = null) {
+async function spawnMonster(monsterId, position, linkedQuestId = null) {
     const def = _catalogue[monsterId];
     if (!def) {
         console.warn(`[monsters] monsterId desconhecido: ${monsterId}`);
@@ -133,7 +151,29 @@ function spawnMonster(monsterId, position, linkedQuestId = null) {
     const uid = `monster_${monsterId}_${++_uidCounter}`;
 
     let mesh;
-    if (def.isBoss) {
+    if (def.modelFile) {
+        try {
+            const gltf = await Models.loadModel(def.modelFile);
+            mesh = gltf.scene;
+            mesh.scale.set(1.0, 1.0, 1.0);
+            mesh.traverse(child => {
+                if (child.isMesh || child.isSkinnedMesh) {
+                    child.castShadow = true;
+                }
+            });
+        } catch (err) {
+            console.warn(`[monsters] Falha glTF ${def.modelFile}, usando fallback`, err);
+            if (def.isBoss) {
+                const { geometry, material } = _createBossMesh(def);
+                mesh = new THREE.Mesh(geometry, material);
+            } else {
+                mesh = new THREE.Mesh(
+                    new THREE.BoxGeometry(1, 1, 1),
+                    new THREE.MeshLambertMaterial({ color: new THREE.Color(def.modelPlaceholder) }),
+                );
+            }
+        }
+    } else if (def.isBoss) {
         const { geometry, material } = _createBossMesh(def);
         mesh = new THREE.Mesh(geometry, material);
     } else {
@@ -334,9 +374,7 @@ function _updateMonster(m, dt, playerPos) {
         if (m._telegraphTimer <= 0) {
             m._telegraphing = false;
             m.mesh.scale.set(1, 1, 1);
-            m.mesh.material.color.set(new THREE.Color(
-                _catalogue[m.monsterId]?.modelPlaceholder ?? '#ffffff'
-            ));
+            { const __mc = _getMeshColor(m.mesh); if (__mc && m._originalColor) { __mc.copy(m._originalColor); } }
             if (m._pendingAoe) {
                 m._pendingAoe = false;
                 _executeBossAoe(m, playerPos);
@@ -398,7 +436,7 @@ function _checkBossPhases(m) {
     if (m.monsterId === 'boss_high_wizard' && m._phaseReflectLocked) {
         m._reflectShield = true;
         m._reflectExpires = Infinity;
-        m.mesh.material.emissiveIntensity = 0.95;
+        { const __mat = _getMeshMaterial(m.mesh); if (__mat && 'emissiveIntensity' in __mat) __mat.emissiveIntensity = 0.95; }
     }
 
     if (m.monsterId === 'boss_shadow_assassin' && m._phaseAbyssAura) {
@@ -431,21 +469,15 @@ function _triggerPhase50(m) {
 
             for (let i = 0; i < 2; i++) {
                 const angle = (i / 2) * Math.PI * 2;
-                const add = spawnMonster('goblin', {
-                    x: m.mesh.position.x + Math.cos(angle) * 2,
-                    y: 0.5,
-                    z: m.mesh.position.z + Math.sin(angle) * 2,
-                });
+                const addX = m.mesh.position.x + Math.cos(angle) * 2;
+                    const addZ = m.mesh.position.z + Math.sin(angle) * 2;
+                    spawnMonster('goblin', { x: addX, y: 0.5, z: addZ });
 
-                emit('bossAbilityUsed', {
-                    bossId: m.monsterId,
-                    ability: 'summonAdds',
-                    data: {
-                        phase: 50,
-                        summonedMonsterId: 'goblin',
-                        summonedId: add?.id ?? null,
-                    },
-                });
+                    emit('bossAbilityUsed', {
+                        bossId: m.monsterId,
+                        ability: 'summonAdds',
+                        data: { phase: 50, summonedMonsterId: 'goblin', x: addX, z: addZ },
+                    });
             }
             break;
 
@@ -575,8 +607,8 @@ function _triggerPhase25(m) {
 
             m._enraged = true;
             m.str = Math.floor(m.baseStats.str * 1.3);
-            m.mesh.material.emissive.set(0xff3333);
-            m.mesh.material.emissiveIntensity = 0.9;
+            { const __em = _getMeshEmissive(m.mesh); if (__em) __em.set(0xff3333); }
+            { const __mat = _getMeshMaterial(m.mesh); if (__mat && 'emissiveIntensity' in __mat) __mat.emissiveIntensity = 0.9; }
 
             emit('bossAbilityUsed', {
                 bossId: m.monsterId,
@@ -598,7 +630,7 @@ function _triggerPhase25(m) {
             m._phaseReflectLocked = true;
             m._reflectShield = true;
             m._reflectExpires = Infinity;
-            m.mesh.material.emissiveIntensity = 1.0;
+           { const __mat = _getMeshMaterial(m.mesh); if (__mat && 'emissiveIntensity' in __mat) __mat.emissiveIntensity = 1.0; }
 
             emit('bossAbilityUsed', {
                 bossId: m.monsterId,
@@ -640,8 +672,8 @@ function _triggerPhase25(m) {
             m._phaseAbyssAura = true;
             m._enraged = true;
             m.str = Math.floor(m.baseStats.str * 1.3);
-            m.mesh.material.emissive.set(0x7a1fa2);
-            m.mesh.material.emissiveIntensity = 0.9;
+            { const __em = _getMeshEmissive(m.mesh); if (__em) __em.set(0x7a1fa2); }
+            { const __mat = _getMeshMaterial(m.mesh); if (__mat && 'emissiveIntensity' in __mat) __mat.emissiveIntensity = 0.9; }
 
             emit('bossAbilityUsed', {
                 bossId: m.monsterId,
@@ -671,7 +703,7 @@ function _startTelegraph(m) {
     m._telegraphTimer = 2.0;
     m._pendingAoe     = true;
     m.mesh.scale.set(1.3, 1.3, 1.3);
-    m.mesh.material.color.set(0xff2200);
+   { const __mc = _getMeshColor(m.mesh); if (__mc) { if (!m._originalColor) m._originalColor = __mc.clone(); __mc.set(0xff2200); } }
     emit('uiHintShow', { msg: '⚠ AoE se aproxima! Saia do raio!', duration: 2000 });
 }
 
@@ -810,8 +842,8 @@ function _cleanupBoss(m) {
     }
 
     for (const clone of m._clonesMeshes) {
-        clone.geometry.dispose();
-        clone.material.dispose();
+        clone.geometry?.dispose?.();
+        if (Array.isArray(clone.material)) { clone.material.forEach(mat => mat?.dispose?.()); } else { clone.material?.dispose?.(); }
         sceneRemove(clone);
     }
 
@@ -908,25 +940,15 @@ function _executeBossAbility(m, ability, playerPos) {
             break;
 
         case 'summonAdds': {
-            const add = spawnMonster('goblin', {
-                x: m.mesh.position.x + (Math.random() - 0.5) * 3,
-                y: 0.5,
-                z: m.mesh.position.z + (Math.random() - 0.5) * 3,
-            });
+            const spawnX = m.mesh.position.x + (Math.random() - 0.5) * 3;
+                const spawnZ = m.mesh.position.z + (Math.random() - 0.5) * 3;
+                spawnMonster('goblin', { x: spawnX, y: 0.5, z: spawnZ });
 
-            emit('bossAbilityUsed', {
-                bossId: m.monsterId,
-                ability: 'summonAdds',
-                data: {
-                    summonedMonsterId: 'goblin',
-                    summonedId: add?.id ?? null,
-                    position: add ? {
-                        x: add.mesh.position.x,
-                        y: add.mesh.position.y,
-                        z: add.mesh.position.z,
-                    } : null,
-                },
-            });
+                emit('bossAbilityUsed', {
+                    bossId: m.monsterId,
+                    ability: 'summonAdds',
+                    data: { summonedMonsterId: 'goblin', x: spawnX, y: 0.5, z: spawnZ },
+                });
             break;
         }
 
@@ -938,7 +960,7 @@ function _executeBossAbility(m, ability, playerPos) {
             if (!m._reflectShield) {
                 m._reflectShield = true;
                 m._reflectExpires = performance.now() + 5000;
-                m.mesh.material.emissiveIntensity = 0.8;
+                { const __mat = _getMeshMaterial(m.mesh); if (__mat && 'emissiveIntensity' in __mat) __mat.emissiveIntensity = 0.8; }
 
                 emit('buffApplied', {
                     buffId: 'reflectShield',
@@ -959,7 +981,7 @@ function _executeBossAbility(m, ability, playerPos) {
                 setTimeout(() => {
                     if (m.state !== 'dead') {
                         m._reflectShield = false;
-                        m.mesh.material.emissiveIntensity = 0.3;
+                        { const __mat = _getMeshMaterial(m.mesh); if (__mat && 'emissiveIntensity' in __mat) __mat.emissiveIntensity = 0.3; }
                     }
                 }, 5000);
             }
@@ -1218,8 +1240,8 @@ function _onEntityDied({ entity }) {
 
         if (meshIndex !== -1) {
             const cloneMesh = boss._clonesMeshes[meshIndex];
-            cloneMesh.geometry.dispose();
-            cloneMesh.material.dispose();
+           cloneMesh.geometry?.dispose?.();
+            if (Array.isArray(cloneMesh.material)) { cloneMesh.material.forEach(mat => mat?.dispose?.()); } else { cloneMesh.material?.dispose?.(); }
             sceneRemove(cloneMesh);
             boss._clonesMeshes.splice(meshIndex, 1);
         }
@@ -1385,8 +1407,8 @@ function _rollCardDrops(def) {
 function _removeDrop(dropId) {
     const drop = _drops.get(dropId);
     if (!drop) return;
-    drop.mesh.geometry.dispose();
-    drop.mesh.material.dispose();
+    drop.mesh.geometry?.dispose?.();
+    if (Array.isArray(drop.mesh.material)) { drop.mesh.material.forEach(mat => mat?.dispose?.()); } else { drop.mesh.material?.dispose?.(); }
     sceneRemove(drop.mesh);
     _drops.delete(dropId);
 }

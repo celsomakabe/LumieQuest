@@ -1,530 +1,791 @@
 {
   "monsters": [
-
-  {
-    "id": "slime",
-    "name": "Slime",
-    "modelFile": "assets/models/monsters/GreenBlob.gltf",
-    "hp": 40,
-    "str": 3,
-    "def": 0,
-    "agi": 2,
-    "xp": 8,
-    "aggroRange": 4,
-    "attackRange": 1.2,
-    "speed": 1.5,
-    "modelPlaceholder": "#44cc44",
-    "drops": [
-      { "itemId": "pocao-pequena", "chance": 0.30 },
-      { "itemId": "ouro", "chance": 0.80, "qty": { "min": 1, "max": 5 } },
-      { "itemId": "cristal-arcano", "chance": 0.05 },
-      { "itemId": "veneno-raro", "chance": 0.05 },
-      { "itemId": "fragment_high_wizard", "chance": 0.20 },
-      { "itemId": "ovo_pet", "chance": 0.005 }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
+    {
+      "id": "slime",
+      "name": "Slime",
+      "modelFile": "assets/models/monsters/slime.gltf",
+      "hp": 40,
+      "str": 3,
+      "def": 0,
+      "agi": 2,
+      "xp": 8,
+      "aggroRange": 4,
+      "attackRange": 1.2,
+      "speed": 1.5,
+      "modelPlaceholder": "#44cc44",
+      "drops": [
+        {
+          "itemId": "pocao-pequena",
+          "chance": 0.3
+        },
+        {
+          "itemId": "ouro",
+          "chance": 0.8,
+          "qty": {
+            "min": 1,
+            "max": 5
+          }
+        },
+        {
+          "itemId": "cristal-arcano",
+          "chance": 0.05
+        },
+        {
+          "itemId": "veneno-raro",
+          "chance": 0.05
+        },
+        {
+          "itemId": "fragment_high_wizard",
+          "chance": 0.2
+        },
+        {
+          "itemId": "ovo_pet",
+          "chance": 0.005
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "goblin",
+      "name": "Goblin",
+      "modelFile": "assets/models/monsters/goblin.gltf",
+      "hp": 65,
+      "str": 6,
+      "def": 1,
+      "agi": 4,
+      "xp": 16,
+      "aggroRange": 5,
+      "attackRange": 1.4,
+      "speed": 1.8,
+      "modelPlaceholder": "#88aa33",
+      "drops": [
+        {
+          "itemId": "espada-enferrujada",
+          "chance": 0.08
+        },
+        {
+          "itemId": "ouro",
+          "chance": 0.85,
+          "qty": {
+            "min": 2,
+            "max": 8
+          }
+        },
+        {
+          "itemId": "fragment_lord_knight",
+          "chance": 0.2
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "lobo",
+      "name": "Lobo",
+      "modelFile": "assets/models/monsters/lobo.gltf",
+      "hp": 55,
+      "str": 5,
+      "def": 1,
+      "agi": 6,
+      "xp": 14,
+      "aggroRange": 6,
+      "attackRange": 1.3,
+      "speed": 2.2,
+      "modelPlaceholder": "#777777",
+      "drops": [
+        {
+          "itemId": "couro",
+          "chance": 0.45
+        },
+        {
+          "itemId": "ouro",
+          "chance": 0.75,
+          "qty": {
+            "min": 1,
+            "max": 6
+          }
+        },
+        {
+          "itemId": "ovo_pet",
+          "chance": 0.004
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "besouro",
+      "name": "Besouro",
+      "modelFile": "assets/models/monsters/besouro.gltf",
+      "hp": 70,
+      "str": 7,
+      "def": 2,
+      "agi": 5,
+      "xp": 18,
+      "aggroRange": 5,
+      "attackRange": 1.3,
+      "speed": 1.9,
+      "modelPlaceholder": "#553311",
+      "drops": [
+        {
+          "itemId": "casco-rigido",
+          "chance": 0.4
+        },
+        {
+          "itemId": "ouro",
+          "chance": 0.8,
+          "qty": {
+            "min": 2,
+            "max": 7
+          }
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "esqueleto",
+      "name": "Esqueleto",
+      "modelFile": "assets/models/monsters/esqueleto.gltf",
+      "hp": 85,
+      "str": 9,
+      "def": 3,
+      "agi": 4,
+      "xp": 24,
+      "aggroRange": 6,
+      "attackRange": 1.5,
+      "speed": 1.7,
+      "modelPlaceholder": "#dddddd",
+      "drops": [
+        {
+          "itemId": "osso-antigo",
+          "chance": 0.5
+        },
+        {
+          "itemId": "ouro",
+          "chance": 0.85,
+          "qty": {
+            "min": 3,
+            "max": 9
+          }
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "golem-pequeno",
+      "name": "Golem Pequeno",
+      "modelFile": "assets/models/monsters/golem-pequeno.gltf",
+      "hp": 120,
+      "str": 11,
+      "def": 6,
+      "agi": 2,
+      "xp": 32,
+      "aggroRange": 5,
+      "attackRange": 1.4,
+      "speed": 1.2,
+      "modelPlaceholder": "#8b7765",
+      "drops": [
+        {
+          "itemId": "nucleo-elemental",
+          "chance": 0.18
+        },
+        {
+          "itemId": "ouro",
+          "chance": 0.9,
+          "qty": {
+            "min": 4,
+            "max": 10
+          }
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "fada-corrompida",
+      "name": "Fada Corrompida",
+      "modelFile": "assets/models/monsters/fada-corrompida.gltf",
+      "hp": 95,
+      "str": 10,
+      "def": 2,
+      "agi": 8,
+      "xp": 28,
+      "aggroRange": 7,
+      "attackRange": 1.8,
+      "speed": 2,
+      "modelPlaceholder": "#aa33ff",
+      "drops": [
+        {
+          "itemId": "po-magico",
+          "chance": 0.35
+        },
+        {
+          "itemId": "ouro",
+          "chance": 0.85,
+          "qty": {
+            "min": 3,
+            "max": 9
+          }
+        },
+        {
+          "itemId": "cristal-arcano",
+          "chance": 0.08
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "lobisomem",
+      "name": "Lobisomem",
+      "modelFile": "assets/models/monsters/lobisomem.gltf",
+      "hp": 140,
+      "str": 14,
+      "def": 4,
+      "agi": 7,
+      "xp": 40,
+      "aggroRange": 7,
+      "attackRange": 1.6,
+      "speed": 2.1,
+      "modelPlaceholder": "#5c4b3b",
+      "drops": [
+        {
+          "itemId": "garra-afiada",
+          "chance": 0.3
+        },
+        {
+          "itemId": "ouro",
+          "chance": 0.9,
+          "qty": {
+            "min": 4,
+            "max": 12
+          }
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "orc_warrior",
+      "name": "Orc Warrior",
+      "modelFile": "assets/models/monsters/orc_warrior.gltf",
+      "hp": 160,
+      "str": 16,
+      "def": 5,
+      "agi": 5,
+      "xp": 46,
+      "aggroRange": 6,
+      "attackRange": 1.6,
+      "speed": 1.8,
+      "modelPlaceholder": "#4f7d2a",
+      "drops": [
+        {
+          "itemId": "machado-orc",
+          "chance": 0.07
+        },
+        {
+          "itemId": "ouro",
+          "chance": 0.92,
+          "qty": {
+            "min": 5,
+            "max": 13
+          }
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "assassin_shadow",
+      "name": "Assassin Shadow",
+      "modelFile": "assets/models/monsters/assassin_shadow.gltf",
+      "hp": 150,
+      "str": 18,
+      "def": 4,
+      "agi": 10,
+      "xp": 50,
+      "aggroRange": 8,
+      "attackRange": 1.7,
+      "speed": 2.3,
+      "modelPlaceholder": "#222222",
+      "drops": [
+        {
+          "itemId": "adaga-sombria",
+          "chance": 0.06
+        },
+        {
+          "itemId": "ouro",
+          "chance": 0.9,
+          "qty": {
+            "min": 5,
+            "max": 14
+          }
+        },
+        {
+          "itemId": "fragment_shadow_assassin",
+          "chance": 0.2
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "zumbi",
+      "name": "Zumbi",
+      "modelFile": "assets/models/monsters/zumbi.gltf",
+      "hp": 100,
+      "str": 9,
+      "def": 3,
+      "agi": 1,
+      "xp": 22,
+      "aggroRange": 4,
+      "attackRange": 1.3,
+      "speed": 1,
+      "modelPlaceholder": "#6f8f6f",
+      "drops": [
+        {
+          "itemId": "pano-velho",
+          "chance": 0.45
+        },
+        {
+          "itemId": "ouro",
+          "chance": 0.8,
+          "qty": {
+            "min": 2,
+            "max": 8
+          }
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "esqueleto-arqueiro",
+      "name": "Esqueleto Arqueiro",
+      "modelFile": "assets/models/monsters/esqueleto-arqueiro.gltf",
+      "hp": 110,
+      "str": 12,
+      "def": 2,
+      "agi": 6,
+      "xp": 30,
+      "aggroRange": 8,
+      "attackRange": 4.5,
+      "speed": 1.6,
+      "modelPlaceholder": "#cfcfcf",
+      "drops": [
+        {
+          "itemId": "arco-curto",
+          "chance": 0.08
+        },
+        {
+          "itemId": "ouro",
+          "chance": 0.85,
+          "qty": {
+            "min": 3,
+            "max": 9
+          }
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "golem-grande",
+      "name": "Golem Grande",
+      "modelFile": "assets/models/monsters/golem-grande.gltf",
+      "hp": 240,
+      "str": 22,
+      "def": 10,
+      "agi": 2,
+      "xp": 70,
+      "aggroRange": 6,
+      "attackRange": 1.7,
+      "speed": 1.1,
+      "modelPlaceholder": "#7b6a58",
+      "drops": [
+        {
+          "itemId": "nucleo-elemental",
+          "chance": 0.25
+        },
+        {
+          "itemId": "ouro",
+          "chance": 0.95,
+          "qty": {
+            "min": 6,
+            "max": 15
+          }
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "demonio-menor",
+      "name": "Demônio Menor",
+      "modelFile": "assets/models/monsters/demonio-menor.gltf",
+      "hp": 180,
+      "str": 20,
+      "def": 5,
+      "agi": 7,
+      "xp": 58,
+      "aggroRange": 7,
+      "attackRange": 1.7,
+      "speed": 1.9,
+      "modelPlaceholder": "#aa2222",
+      "drops": [
+        {
+          "itemId": "essencia-demoniaca",
+          "chance": 0.18
+        },
+        {
+          "itemId": "ouro",
+          "chance": 0.92,
+          "qty": {
+            "min": 5,
+            "max": 13
+          }
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "lobisomem-alfa",
+      "name": "Lobisomem Alfa",
+      "modelFile": "assets/models/monsters/lobisomem-alfa.gltf",
+      "hp": 220,
+      "str": 24,
+      "def": 6,
+      "agi": 8,
+      "xp": 72,
+      "aggroRange": 8,
+      "attackRange": 1.8,
+      "speed": 2.2,
+      "modelPlaceholder": "#4d3a2f",
+      "drops": [
+        {
+          "itemId": "garra-afiada",
+          "chance": 0.4
+        },
+        {
+          "itemId": "ouro",
+          "chance": 0.95,
+          "qty": {
+            "min": 6,
+            "max": 15
+          }
+        },
+        {
+          "itemId": "ovo_pet",
+          "chance": 0.006
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "dragao-bebe",
+      "name": "Dragão Bebê",
+      "modelFile": "assets/models/monsters/dragao-bebe.gltf",
+      "hp": 210,
+      "str": 23,
+      "def": 6,
+      "agi": 7,
+      "xp": 68,
+      "aggroRange": 8,
+      "attackRange": 2,
+      "speed": 2,
+      "modelPlaceholder": "#33aa88",
+      "drops": [
+        {
+          "itemId": "escama-draconica",
+          "chance": 0.22
+        },
+        {
+          "itemId": "ouro",
+          "chance": 0.93,
+          "qty": {
+            "min": 5,
+            "max": 14
+          }
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "fantasma",
+      "name": "Fantasma",
+      "modelFile": "assets/models/monsters/fantasma.gltf",
+      "hp": 130,
+      "str": 14,
+      "def": 1,
+      "agi": 9,
+      "xp": 36,
+      "aggroRange": 7,
+      "attackRange": 1.8,
+      "speed": 2.1,
+      "modelPlaceholder": "#99ccff",
+      "drops": [
+        {
+          "itemId": "ectoplasma",
+          "chance": 0.28
+        },
+        {
+          "itemId": "ouro",
+          "chance": 0.88,
+          "qty": {
+            "min": 4,
+            "max": 10
+          }
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "succubus",
+      "name": "Succubus",
+      "modelFile": "assets/models/monsters/succubus.gltf",
+      "hp": 190,
+      "str": 19,
+      "def": 4,
+      "agi": 11,
+      "xp": 62,
+      "aggroRange": 8,
+      "attackRange": 1.8,
+      "speed": 2.1,
+      "modelPlaceholder": "#8844cc",
+      "drops": [
+        {
+          "itemId": "essencia-demoniaca",
+          "chance": 0.22
+        },
+        {
+          "itemId": "ouro",
+          "chance": 0.92,
+          "qty": {
+            "min": 5,
+            "max": 13
+          }
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "boss_lord_knight",
+      "name": "Boss Lord Knight",
+      "modelFile": "assets/models/monsters/boss_lord_knight.gltf",
+      "hp": 1200,
+      "str": 55,
+      "def": 18,
+      "agi": 10,
+      "xp": 500,
+      "aggroRange": 10,
+      "attackRange": 2.2,
+      "speed": 2,
+      "isBoss": true,
+      "modelPlaceholder": "#cc9933",
+      "abilities": [
+        "aoeWindup",
+        "summonAdds"
+      ],
+      "drops": [
+        {
+          "itemId": "fragment_lord_knight",
+          "chance": 1,
+          "qty": 1
+        },
+        {
+          "itemId": "ouro",
+          "chance": 1,
+          "qty": {
+            "min": 50,
+            "max": 100
+          }
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "boss_high_wizard",
+      "name": "Boss High Wizard",
+      "modelFile": "assets/models/monsters/boss_high_wizard.gltf",
+      "hp": 1050,
+      "str": 48,
+      "def": 12,
+      "agi": 14,
+      "xp": 500,
+      "aggroRange": 10,
+      "attackRange": 6,
+      "speed": 1.8,
+      "isBoss": true,
+      "modelPlaceholder": "#6699ff",
+      "abilities": [
+        "teleportStrike",
+        "reflectShield"
+      ],
+      "drops": [
+        {
+          "itemId": "fragment_high_wizard",
+          "chance": 1,
+          "qty": 1
+        },
+        {
+          "itemId": "ouro",
+          "chance": 1,
+          "qty": {
+            "min": 50,
+            "max": 100
+          }
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "boss_sniper",
+      "name": "Boss Sniper",
+      "modelFile": "assets/models/monsters/boss_sniper.gltf",
+      "hp": 980,
+      "str": 46,
+      "def": 11,
+      "agi": 18,
+      "xp": 500,
+      "aggroRange": 12,
+      "attackRange": 7,
+      "speed": 2.2,
+      "isBoss": true,
+      "modelPlaceholder": "#44aa66",
+      "abilities": [
+        "invisibility",
+        "multishot"
+      ],
+      "drops": [
+        {
+          "itemId": "fragment_sniper",
+          "chance": 1,
+          "qty": 1
+        },
+        {
+          "itemId": "ouro",
+          "chance": 1,
+          "qty": {
+            "min": 50,
+            "max": 100
+          }
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
+    },
+    {
+      "id": "boss_shadow_assassin",
+      "name": "Boss Shadow Assassin",
+      "modelFile": "assets/models/monsters/boss_shadow_assassin.gltf",
+      "hp": 990,
+      "str": 50,
+      "def": 10,
+      "agi": 20,
+      "xp": 500,
+      "aggroRange": 11,
+      "attackRange": 2,
+      "speed": 2.5,
+      "isBoss": true,
+      "modelPlaceholder": "#552266",
+      "abilities": [
+        "spawnClones",
+        "abyssPoison",
+        "stealthStrikeFirst"
+      ],
+      "drops": [
+        {
+          "itemId": "fragment_shadow_assassin",
+          "chance": 1,
+          "qty": 1
+        },
+        {
+          "itemId": "ouro",
+          "chance": 1,
+          "qty": {
+            "min": 50,
+            "max": 100
+          }
+        }
+      ],
+      "soundProfile": {
+        "aggro": "sfx_monster_growl",
+        "hit": "sfx_monster_hit",
+        "die": "sfx_monster_die"
+      }
     }
-  },
-  {
-    "id": "goblin",
-    "name": "Goblin",
-    "modelFile": "assets/models/monsters/Orc.gltf",
-    "hp": 65,
-    "str": 6,
-    "def": 1,
-    "agi": 4,
-    "xp": 16,
-    "aggroRange": 5,
-    "attackRange": 1.4,
-    "speed": 1.8,
-    "modelPlaceholder": "#88aa33",
-    "drops": [
-      { "itemId": "espada-enferrujada", "chance": 0.08 },
-      { "itemId": "ouro", "chance": 0.85, "qty": { "min": 2, "max": 8 } },
-      { "itemId": "fragment_lord_knight", "chance": 0.20 }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "lobo",
-    "name": "Lobo",
-    "modelFile": "assets/models/monsters/Dog.gltf",
-    "hp": 55,
-    "str": 5,
-    "def": 1,
-    "agi": 6,
-    "xp": 14,
-    "aggroRange": 6,
-    "attackRange": 1.3,
-    "speed": 2.2,
-    "modelPlaceholder": "#777777",
-    "drops": [
-      { "itemId": "couro", "chance": 0.45 },
-      { "itemId": "ouro", "chance": 0.75, "qty": { "min": 1, "max": 6 } },
-      { "itemId": "ovo_pet", "chance": 0.004 }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "besouro",
-    "name": "Besouro",
-    "modelFile": "assets/models/monsters/Armabee.gltf",
-    "hp": 70,
-    "str": 7,
-    "def": 2,
-    "agi": 5,
-    "xp": 18,
-    "aggroRange": 5,
-    "attackRange": 1.3,
-    "speed": 1.9,
-    "modelPlaceholder": "#553311",
-    "drops": [
-      { "itemId": "casco-rigido", "chance": 0.40 },
-      { "itemId": "ouro", "chance": 0.80, "qty": { "min": 2, "max": 7 } }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "esqueleto",
-    "name": "Esqueleto",
-    "modelFile": "assets/models/monsters/Ninja.gltf",
-    "hp": 85,
-    "str": 9,
-    "def": 3,
-    "agi": 4,
-    "xp": 24,
-    "aggroRange": 6,
-    "attackRange": 1.5,
-    "speed": 1.7,
-    "modelPlaceholder": "#dddddd",
-    "drops": [
-      { "itemId": "osso-antigo", "chance": 0.50 },
-      { "itemId": "ouro", "chance": 0.85, "qty": { "min": 3, "max": 9 } }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "golem-pequeno",
-    "name": "Golem Pequeno",
-    "modelFile": "assets/models/monsters/Goleling.gltf",
-    "hp": 120,
-    "str": 11,
-    "def": 6,
-    "agi": 2,
-    "xp": 32,
-    "aggroRange": 5,
-    "attackRange": 1.4,
-    "speed": 1.2,
-    "modelPlaceholder": "#8b7765",
-    "drops": [
-      { "itemId": "nucleo-elemental", "chance": 0.18 },
-      { "itemId": "ouro", "chance": 0.90, "qty": { "min": 4, "max": 10 } }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "fada-corrompida",
-    "name": "Fada Corrompida",
-    "modelFile": "assets/models/monsters/Ghost.gltf",
-    "hp": 95,
-    "str": 10,
-    "def": 2,
-    "agi": 8,
-    "xp": 28,
-    "aggroRange": 7,
-    "attackRange": 1.8,
-    "speed": 2.0,
-    "modelPlaceholder": "#aa33ff",
-    "drops": [
-      { "itemId": "po-magico", "chance": 0.35 },
-      { "itemId": "ouro", "chance": 0.85, "qty": { "min": 3, "max": 9 } },
-      { "itemId": "cristal-arcano", "chance": 0.08 }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "lobisomem",
-    "name": "Lobisomem",
-    "modelFile": "assets/models/monsters/Yeti.gltf",
-    "hp": 140,
-    "str": 14,
-    "def": 4,
-    "agi": 7,
-    "xp": 40,
-    "aggroRange": 7,
-    "attackRange": 1.6,
-    "speed": 2.1,
-    "modelPlaceholder": "#5c4b3b",
-    "drops": [
-      { "itemId": "garra-afiada", "chance": 0.30 },
-      { "itemId": "ouro", "chance": 0.90, "qty": { "min": 4, "max": 12 } }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "orc_warrior",
-    "name": "Orc Warrior",
-    "modelFile": "assets/models/monsters/Orc.gltf",
-    "hp": 160,
-    "str": 16,
-    "def": 5,
-    "agi": 5,
-    "xp": 46,
-    "aggroRange": 6,
-    "attackRange": 1.6,
-    "speed": 1.8,
-    "modelPlaceholder": "#4f7d2a",
-    "drops": [
-      { "itemId": "machado-orc", "chance": 0.07 },
-      { "itemId": "ouro", "chance": 0.92, "qty": { "min": 5, "max": 13 } }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "assassin_shadow",
-    "name": "Assassin Shadow",
-    "modelFile": "assets/models/monsters/Ninja.gltf",
-    "hp": 150,
-    "str": 18,
-    "def": 4,
-    "agi": 10,
-    "xp": 50,
-    "aggroRange": 8,
-    "attackRange": 1.7,
-    "speed": 2.3,
-    "modelPlaceholder": "#222222",
-    "drops": [
-      { "itemId": "adaga-sombria", "chance": 0.06 },
-      { "itemId": "ouro", "chance": 0.90, "qty": { "min": 5, "max": 14 } },
-      { "itemId": "fragment_shadow_assassin", "chance": 0.20 }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "zumbi",
-    "name": "Zumbi",
-    "modelFile": "assets/models/monsters/Mushnub.gltf",
-    "hp": 100,
-    "str": 9,
-    "def": 3,
-    "agi": 1,
-    "xp": 22,
-    "aggroRange": 4,
-    "attackRange": 1.3,
-    "speed": 1.0,
-    "modelPlaceholder": "#6f8f6f",
-    "drops": [
-      { "itemId": "pano-velho", "chance": 0.45 },
-      { "itemId": "ouro", "chance": 0.80, "qty": { "min": 2, "max": 8 } }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "esqueleto-arqueiro",
-    "name": "Esqueleto Arqueiro",
-    "modelFile": "assets/models/monsters/Tribal.gltf",
-    "hp": 110,
-    "str": 12,
-    "def": 2,
-    "agi": 6,
-    "xp": 30,
-    "aggroRange": 8,
-    "attackRange": 4.5,
-    "speed": 1.6,
-    "modelPlaceholder": "#cfcfcf",
-    "drops": [
-      { "itemId": "arco-curto", "chance": 0.08 },
-      { "itemId": "ouro", "chance": 0.85, "qty": { "min": 3, "max": 9 } }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "golem-grande",
-    "name": "Golem Grande",
-    "modelFile": "assets/models/monsters/Goleling_Evolved.gltf",
-    "hp": 240,
-    "str": 22,
-    "def": 10,
-    "agi": 2,
-    "xp": 70,
-    "aggroRange": 6,
-    "attackRange": 1.7,
-    "speed": 1.1,
-    "modelPlaceholder": "#7b6a58",
-    "drops": [
-      { "itemId": "nucleo-elemental", "chance": 0.25 },
-      { "itemId": "ouro", "chance": 0.95, "qty": { "min": 6, "max": 15 } }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "demonio-menor",
-    "name": "Demônio Menor",
-    "modelFile": "assets/models/monsters/Demon.gltf",
-    "hp": 180,
-    "str": 20,
-    "def": 5,
-    "agi": 7,
-    "xp": 58,
-    "aggroRange": 7,
-    "attackRange": 1.7,
-    "speed": 1.9,
-    "modelPlaceholder": "#aa2222",
-    "drops": [
-      { "itemId": "essencia-demoniaca", "chance": 0.18 },
-      { "itemId": "ouro", "chance": 0.92, "qty": { "min": 5, "max": 13 } }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "lobisomem-alfa",
-    "name": "Lobisomem Alfa",
-    "modelFile": "assets/models/monsters/Yeti.gltf",
-    "hp": 220,
-    "str": 24,
-    "def": 6,
-    "agi": 8,
-    "xp": 72,
-    "aggroRange": 8,
-    "attackRange": 1.8,
-    "speed": 2.2,
-    "modelPlaceholder": "#4d3a2f",
-    "drops": [
-      { "itemId": "garra-afiada", "chance": 0.40 },
-      { "itemId": "ouro", "chance": 0.95, "qty": { "min": 6, "max": 15 } },
-      { "itemId": "ovo_pet", "chance": 0.006 }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "dragao-bebe",
-    "name": "Dragão Bebê",
-    "modelFile": "assets/models/monsters/Dragon.gltf",
-    "hp": 210,
-    "str": 23,
-    "def": 6,
-    "agi": 7,
-    "xp": 68,
-    "aggroRange": 8,
-    "attackRange": 2.0,
-    "speed": 2.0,
-    "modelPlaceholder": "#33aa88",
-    "drops": [
-      { "itemId": "escama-draconica", "chance": 0.22 },
-      { "itemId": "ouro", "chance": 0.93, "qty": { "min": 5, "max": 14 } }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "fantasma",
-    "name": "Fantasma",
-    "modelFile": "assets/models/monsters/Ghost_Skull.gltf",
-    "hp": 130,
-    "str": 14,
-    "def": 1,
-    "agi": 9,
-    "xp": 36,
-    "aggroRange": 7,
-    "attackRange": 1.8,
-    "speed": 2.1,
-    "modelPlaceholder": "#99ccff",
-    "drops": [
-      { "itemId": "ectoplasma", "chance": 0.28 },
-      { "itemId": "ouro", "chance": 0.88, "qty": { "min": 4, "max": 10 } }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "succubus",
-    "name": "Succubus",
-    "modelFile": "assets/models/monsters/BlueDemon.gltf",
-    "hp": 190,
-    "str": 19,
-    "def": 4,
-    "agi": 11,
-    "xp": 62,
-    "aggroRange": 8,
-    "attackRange": 1.8,
-    "speed": 2.1,
-    "modelPlaceholder": "#8844cc",
-    "drops": [
-      { "itemId": "essencia-demoniaca", "chance": 0.22 },
-      { "itemId": "ouro", "chance": 0.92, "qty": { "min": 5, "max": 13 } }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "boss_lord_knight",
-    "name": "Boss Lord Knight",
-    "modelFile": "assets/models/monsters/Demon.gltf",
-    "hp": 1200,
-    "str": 55,
-    "def": 18,
-    "agi": 10,
-    "xp": 500,
-    "aggroRange": 10,
-    "attackRange": 2.2,
-    "speed": 2.0,
-    "isBoss": true,
-    "modelPlaceholder": "#cc9933",
-    "abilities": ["aoeWindup", "summonAdds"],
-    "drops": [
-      { "itemId": "fragment_lord_knight", "chance": 1.0, "qty": 1 },
-      { "itemId": "ouro", "chance": 1.0, "qty": { "min": 50, "max": 100 } }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "boss_high_wizard",
-    "name": "Boss High Wizard",
-    "modelFile": "assets/models/monsters/Wizard.gltf",
-    "hp": 1050,
-    "str": 48,
-    "def": 12,
-    "agi": 14,
-    "xp": 500,
-    "aggroRange": 10,
-    "attackRange": 6.0,
-    "speed": 1.8,
-    "isBoss": true,
-    "modelPlaceholder": "#6699ff",
-    "abilities": ["teleportStrike", "reflectShield"],
-    "drops": [
-      { "itemId": "fragment_high_wizard", "chance": 1.0, "qty": 1 },
-      { "itemId": "ouro", "chance": 1.0, "qty": { "min": 50, "max": 100 } }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "boss_sniper",
-    "name": "Boss Sniper",
-    "modelFile": "assets/models/monsters/Dragon_Evolved.gltf",
-    "hp": 980,
-    "str": 46,
-    "def": 11,
-    "agi": 18,
-    "xp": 500,
-    "aggroRange": 12,
-    "attackRange": 7.0,
-    "speed": 2.2,
-    "isBoss": true,
-    "modelPlaceholder": "#44aa66",
-    "abilities": ["invisibility", "multishot"],
-    "drops": [
-      { "itemId": "fragment_sniper", "chance": 1.0, "qty": 1 },
-      { "itemId": "ouro", "chance": 1.0, "qty": { "min": 50, "max": 100 } }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  },
-  {
-    "id": "boss_shadow_assassin",
-    "name": "Boss Shadow Assassin",
-    "modelFile": "assets/models/monsters/Orc_Skull.gltf",
-    "hp": 990,
-    "str": 50,
-    "def": 10,
-    "agi": 20,
-    "xp": 500,
-    "aggroRange": 11,
-    "attackRange": 2.0,
-    "speed": 2.5,
-    "isBoss": true,
-    "modelPlaceholder": "#552266",
-    "abilities": ["spawnClones", "abyssPoison", "stealthStrikeFirst"],
-    "drops": [
-      { "itemId": "fragment_shadow_assassin", "chance": 1.0, "qty": 1 },
-      { "itemId": "ouro", "chance": 1.0, "qty": { "min": 50, "max": 100 } }
-    ],
-    "soundProfile": {
-      "aggro": "sfx_monster_growl",
-      "hit": "sfx_monster_hit",
-      "die": "sfx_monster_die"
-    }
-  }
-]
-    
-  
+  ]
 }
