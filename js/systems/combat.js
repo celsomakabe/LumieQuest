@@ -1,5 +1,5 @@
 // js/systems/combat.js
-import { emit }    from '../core/events.js';
+import { emit, on }    from '../core/events.js';
 import { playSFX }     from '../core/audio.js';
 import * as Classes    from './classes.js';
 
@@ -47,7 +47,66 @@ function _distXZ(a, b) {
   const dz = (a.position?.z ?? 0) - (b.position?.z ?? 0);
   return Math.sqrt(dx * dx + dz * dz);
 }
+function _applyDebuff(target, debuffData) {
+  if (!target) return;
+  if (!Array.isArray(target._activeDebuffs)) target._activeDebuffs = [];
 
+  const now = performance.now();
+  const existing = target._activeDebuffs.find(d => d.id === debuffData.id);
+
+  const nextDebuff = {
+    id: debuffData.id,
+    damagePerTick: debuffData.damagePerTick ?? 0,
+    tickRate: debuffData.tickRate ?? 2000,
+    duration: debuffData.duration ?? 0,
+    expiresAt: now + (debuffData.duration ?? 0),
+    lastTick: now,
+    sourceBossId: debuffData.sourceBossId ?? null,
+    isPercentMaxHp: !!debuffData.isPercentMaxHp,
+  };
+
+  if (existing) {
+    Object.assign(existing, nextDebuff);
+  } else {
+    target._activeDebuffs.push(nextDebuff);
+  }
+
+  emit('debuffApplied', {
+    target,
+    debuffId: nextDebuff.id,
+    icon: nextDebuff.id,
+    duration: nextDebuff.duration,
+    tickRate: nextDebuff.tickRate,
+    sourceBossId: nextDebuff.sourceBossId,
+  });
+}
+
+function _applyReflectDamage(attacker, target, dealtDamage) {
+  if (!attacker || !target) return;
+  if (attacker.type !== 'player') return;
+  if (!target.isBoss) return;
+  if (!target._reflectShield) return;
+  if (dealtDamage <= 0) return;
+
+  const reflected = Math.max(1, Math.floor(dealtDamage * 0.5));
+  attacker.hp = Math.max(0, attacker.hp - reflected);
+
+  emit('damageReflected', {
+    attacker,
+    target,
+    amount: reflected,
+    source: 'reflectShield',
+  });
+
+  emit('playerHpChanged', {
+    current: attacker.hp,
+    max: attacker.maxHp,
+  });
+
+  if (attacker.hp <= 0) {
+    emit('playerDied');
+  }
+}
 // ─── API pública ─────────────────────────────────────────────────────────────
 
 /**
@@ -55,6 +114,7 @@ function _distXZ(a, b) {
  * @param {object} entity - deve ter .position {x,y,z}, .hp, .def ou .baseStats.vit
  */
 function registerTarget(entity) {
+  _ensureCombatEventHooks();
   _targets.add(entity);
 }
 
@@ -138,10 +198,31 @@ function attack(attacker, target) {
     }
   }
 
-  const str        = attacker.baseStats?.str ?? 1;
+  const str        = attacker.baseStats?.str ?? attacker.str ?? 1;
   const def        = _getDef(target);
   const isCritical = Math.random() < 0.05;
-  let amount       = Math.max(1, str - def);
+
+  let effectiveStr = str;
+  if (
+    attacker.monsterId === 'boss_shadow_assassin' &&
+    attacker._stealthUsed === false &&
+    (attacker._invisible || attacker._surpriseStrikeReady || attacker._playerSawBoss === false)
+  ) {
+    effectiveStr = Math.floor(effectiveStr * 2);
+    attacker._stealthUsed = true;
+    attacker._surpriseStrikeReady = false;
+
+    emit('bossAbilityUsed', {
+      bossId: attacker.monsterId,
+      ability: 'stealthStrikeFirst',
+      data: {
+        integratedByCombat: true,
+        damageMultiplier: 2,
+      },
+    });
+  }
+
+  let amount = Math.max(1, effectiveStr - def);
   if (isCritical) amount = amount * 2;
 
   // ── Endure: target com buff 'endure' reduz dano recebido ──
@@ -164,6 +245,8 @@ function attack(attacker, target) {
   playSFX(isCritical ? SFX.critical : SFX.hit);
 
   emit('damageDealt', { attacker, target, amount, isCritical });
+
+  _applyReflectDamage(attacker, target, amount);
 
   if (target.hp <= 0) {
     unregisterTarget(target);
@@ -270,22 +353,32 @@ function update(_delta) {
         }
       }
 
-      return true;
-            // DoTs de boss (deadly_poison, abyss_poison)
+      // DoTs de boss (deadly_poison, abyss_poison)
       if (
         (debuff.id === 'deadly_poison' || debuff.id === 'abyss_poison') &&
         debuff.damagePerTick && debuff.tickRate
       ) {
         if (now - debuff.lastTick >= debuff.tickRate) {
           debuff.lastTick = now;
-          entity.hp = Math.max(0, entity.hp - debuff.damagePerTick);
+
+          const dotAmount = debuff.isPercentMaxHp
+            ? Math.max(1, Math.floor((entity.maxHp ?? entity.hp ?? 1) * debuff.damagePerTick))
+            : debuff.damagePerTick;
+
+          entity.hp = Math.max(0, entity.hp - dotAmount);
+
+          if (entity.type === 'player') {
+            emit('playerHpChanged', { current: entity.hp, max: entity.maxHp });
+          }
+
           emit('damageDealt', {
-            attacker:   null,
-            target:     entity,
-            amount:     debuff.damagePerTick,
+            attacker: null,
+            target: entity,
+            amount: dotAmount,
             isCritical: false,
-            source:     debuff.id,
+            source: debuff.id,
           });
+
           if (entity.hp <= 0) {
             unregisterTarget(entity);
             emit('entityDied', { entity });
@@ -293,9 +386,40 @@ function update(_delta) {
           }
         }
       }
+
+      return true;
     });
   }
 }
+// ─── Boss combat hooks ───────────────────────────────────────────────────────
+
+let _bossCombatHooksRegistered = false;
+
+function _onBossAbilityUsed({ bossId, ability, data } = {}) {
+  if (bossId !== 'boss_shadow_assassin') return;
+  if (ability !== 'abyssPoison') return;
+
+  const player = Array.from(_targets).find(t => t.type === 'player');
+  if (!player) return;
+
+  _applyDebuff(player, {
+    id: 'abyss_poison',
+    damagePerTick: data?.damagePerTickValue ?? 0.05,
+    tickRate: data?.tickRateMs ?? 2000,
+    duration: data?.durationMs ?? 10000,
+    sourceBossId: bossId,
+    isPercentMaxHp: true,
+  });
+}
+
+function _ensureCombatEventHooks() {
+  if (_bossCombatHooksRegistered) return;
+  _bossCombatHooksRegistered = true;
+  on('bossAbilityUsed', _onBossAbilityUsed);
+}
+
+// Balanceamento boss XP verificado: 4 bosses T2 com 500 XP cada (vs 8-72 XP monstros comuns).
+
 // ─── Exports ─────────────────────────────────────────────────────────────────
 
 export { registerTarget, unregisterTarget, findNearestTarget, canAttack, attack, castSkill, update };
