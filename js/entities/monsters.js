@@ -202,10 +202,15 @@ function spawnMonster(monsterId, position, linkedQuestId = null) {
         _telegraphTimer:     0,
         _pendingAoe:         false,
         _invisible:          false,
+        _invisibilityUntil:  0,
+        _surpriseStrikeReady:false,
         _reflectShield:      false,
         _reflectExpires:     0,
         _clonesMeshes:       [],
-
+        _clones:             [],
+        _stealthUsed:        false,
+        _playerSawBoss:      false,
+        _multishotPending:   0,
         // Debuffs ativos (DoT de boss sobre o player são emitidos via evento)
         _activeDebuffs: [],
 
@@ -338,6 +343,15 @@ function _updateMonster(m, dt, playerPos) {
     if (m.isBoss) _checkBossPhases(m);
 
     const dist = m.mesh.position.distanceTo(playerPos);
+    if (
+        m.isBoss &&
+        !m._playerSawBoss &&
+        !m._invisible &&
+        m.mesh.visible &&
+        dist <= (m.aggroRange + 2)
+    ) {
+        m._playerSawBoss = true;
+    }
     switch (m.state) {
         case 'idle':   _stateIdle(m, dt, dist);              break;
         case 'aggro':
@@ -479,11 +493,28 @@ function _startTelegraph(m) {
  * @param {Object} m @param {THREE.Vector3} playerPos
  */
 function _executeBossAoe(m, playerPos) {
-    const AOE_RADIUS = 3.5;
+    const AOE_RADIUS = 3.0;
     const dx = playerPos.x - m.mesh.position.x;
     const dz = playerPos.z - m.mesh.position.z;
-    if (Math.sqrt(dx * dx + dz * dz) <= AOE_RADIUS) {
-        const dmg = Math.floor(m.str * 2.5);
+    const hit = Math.sqrt(dx * dx + dz * dz) <= AOE_RADIUS;
+    const dmg = Math.floor(m.str * 2.5);
+
+    emit('bossAbilityUsed', {
+        bossId: m.monsterId,
+        ability: 'aoeWindup',
+        data: {
+            radius: AOE_RADIUS,
+            damage: dmg,
+            position: {
+                x: m.mesh.position.x,
+                y: m.mesh.position.y,
+                z: m.mesh.position.z,
+            },
+            hit,
+        },
+    });
+
+    if (hit) {
         emit('monsterAttackRequest', { attacker: m, ability: 'aoeWindup', damage: dmg });
     }
 }
@@ -496,6 +527,20 @@ function _bossTeleportStrike(m) {
     const angle = Math.random() * Math.PI * 2;
     m.mesh.position.x = _playerPos.x + Math.cos(angle) * 1.5;
     m.mesh.position.z = _playerPos.z + Math.sin(angle) * 1.5;
+
+    emit('bossAbilityUsed', {
+        bossId: m.monsterId,
+        ability: 'teleportStrike',
+        data: {
+            position: {
+                x: m.mesh.position.x,
+                y: m.mesh.position.y,
+                z: m.mesh.position.z,
+            },
+            strikeDelayMs: 200,
+        },
+    });
+
     setTimeout(() => {
         if (m.state !== 'dead') {
             const dmg = Math.floor(m.str * 2.0);
@@ -509,23 +554,61 @@ function _bossTeleportStrike(m) {
  * @param {Object} m
  */
 function _spawnShadowClones(m) {
+    const created = [];
+
     for (let i = 0; i < 2; i++) {
-        const angle  = (i / 2) * Math.PI * 2;
+        const angle = (i / 2) * Math.PI * 2;
         const cloneGeo = new THREE.DodecahedronGeometry(0.8);
         const cloneMat = new THREE.MeshLambertMaterial({
             color:       new THREE.Color(_catalogue[m.monsterId]?.modelPlaceholder ?? '#330033'),
             transparent: true,
             opacity:     0.5,
         });
-        const clone = new THREE.Mesh(cloneGeo, cloneMat);
-        clone.position.set(
+        const cloneMesh = new THREE.Mesh(cloneGeo, cloneMat);
+        cloneMesh.position.set(
             m.mesh.position.x + Math.cos(angle) * 2,
             0.5,
             m.mesh.position.z + Math.sin(angle) * 2,
         );
-        sceneAdd(clone);
-        m._clonesMeshes.push(clone);
+        cloneMesh.castShadow = false;
+        cloneMesh.name = `${m.id}_clone_${i + 1}`;
+
+        const cloneEntity = {
+            id: cloneMesh.name,
+            monsterId: `${m.monsterId}_clone`,
+            type: 'monster',
+            isBoss: false,
+            isClone: true,
+            hp: 1,
+            maxHp: 1,
+            def: 0,
+            baseStats: { str: 0, vit: 0 },
+            state: 'idle',
+            mesh: cloneMesh,
+            parentBossId: m.id,
+            get position() { return this.mesh.position; },
+        };
+
+        sceneAdd(cloneMesh);
+        registerTarget(cloneEntity);
+        m._clonesMeshes.push(cloneMesh);
+        m._clones.push(cloneEntity);
+        created.push({
+            id: cloneEntity.id,
+            x: cloneMesh.position.x,
+            y: cloneMesh.position.y,
+            z: cloneMesh.position.z,
+        });
     }
+
+    emit('bossAbilityUsed', {
+        bossId: m.monsterId,
+        ability: 'spawnClones',
+        data: {
+            count: created.length,
+            clones: created,
+        },
+    });
 }
 
 /**
@@ -533,12 +616,20 @@ function _spawnShadowClones(m) {
  * @param {Object} m
  */
 function _cleanupBoss(m) {
+    if (Array.isArray(m._clones)) {
+        for (const cloneEntity of m._clones) {
+            unregisterTarget(cloneEntity);
+        }
+    }
+
     for (const clone of m._clonesMeshes) {
         clone.geometry.dispose();
         clone.material.dispose();
         sceneRemove(clone);
     }
+
     m._clonesMeshes = [];
+    m._clones = [];
 }
 
 // ─── Estados de IA ────────────────────────────────────────────────────────────
@@ -610,16 +701,43 @@ function _executeBossAbility(m, ability, playerPos) {
     switch (ability) {
         case 'aoeWindup':
             _startTelegraph(m);
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'aoeWindup',
+                data: {
+                    telegraphSeconds: 2,
+                    radius: 3.0,
+                    position: {
+                        x: m.mesh.position.x,
+                        y: m.mesh.position.y,
+                        z: m.mesh.position.z,
+                    },
+                },
+            });
             break;
 
-        case 'summonAdds':
-            if (!m._phase50Done) break;
-            spawnMonster('goblin', {
+        case 'summonAdds': {
+            const add = spawnMonster('goblin', {
                 x: m.mesh.position.x + (Math.random() - 0.5) * 3,
                 y: 0.5,
                 z: m.mesh.position.z + (Math.random() - 0.5) * 3,
             });
+
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'summonAdds',
+                data: {
+                    summonedMonsterId: 'goblin',
+                    summonedId: add?.id ?? null,
+                    position: add ? {
+                        x: add.mesh.position.x,
+                        y: add.mesh.position.y,
+                        z: add.mesh.position.z,
+                    } : null,
+                },
+            });
             break;
+        }
 
         case 'teleportStrike':
             _bossTeleportStrike(m);
@@ -627,14 +745,26 @@ function _executeBossAbility(m, ability, playerPos) {
 
         case 'reflectShield':
             if (!m._reflectShield) {
-                m._reflectShield  = true;
+                m._reflectShield = true;
                 m._reflectExpires = performance.now() + 5000;
                 m.mesh.material.emissiveIntensity = 0.8;
+
                 emit('buffApplied', {
-                    buffId:    'reflectShield',
-                    casterId:  m.monsterId,
+                    buffId: 'reflectShield',
+                    casterId: m.monsterId,
                     expiresAt: m._reflectExpires,
                 });
+
+                emit('bossAbilityUsed', {
+                    bossId: m.monsterId,
+                    ability: 'reflectShield',
+                    data: {
+                        durationMs: 5000,
+                        reflectsPct: 0.5,
+                        expiresAt: m._reflectExpires,
+                    },
+                });
+
                 setTimeout(() => {
                     if (m.state !== 'dead') {
                         m._reflectShield = false;
@@ -647,38 +777,127 @@ function _executeBossAbility(m, ability, playerPos) {
         case 'invisibility':
             if (!m._invisible) {
                 m._invisible = true;
-                m.mesh.material.transparent = true;
-                m.mesh.material.opacity     = 0.2;
+                m._invisibilityUntil = performance.now() + 3000;
+                m._surpriseStrikeReady = true;
+                m.mesh.visible = false;
+
+                emit('bossAbilityUsed', {
+                    bossId: m.monsterId,
+                    ability: 'invisibility',
+                    data: {
+                        durationMs: 3000,
+                        surpriseDamageMultiplier: 2,
+                    },
+                });
+
                 setTimeout(() => {
                     if (m.state !== 'dead') {
                         m._invisible = false;
-                        m.mesh.material.opacity = 1.0;
+                        m.mesh.visible = true;
                     }
                 }, 3000);
             }
             break;
 
         case 'multishot': {
-            const dmg = Math.floor(m.str * 1.2);
-            emit('monsterAttackRequest', { attacker: m, ability: 'multishot', damage: dmg });
+            const projectiles = [];
+            const baseDamage = Math.max(1, Math.floor(m.str * 0.6));
+
+            for (let i = 0; i < 3; i++) {
+                projectiles.push({
+                    index: i,
+                    spreadOffset: i - 1,
+                    damage: baseDamage,
+                });
+                emit('monsterAttackRequest', {
+                    attacker: m,
+                    ability: 'multishot',
+                    damage: baseDamage,
+                });
+            }
+
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'multishot',
+                data: {
+                    count: 3,
+                    damagePerProjectile: baseDamage,
+                    projectiles,
+                },
+            });
             break;
         }
 
         case 'stealthStrikeFirst': {
-            const dmg = Math.floor(m.str * 3.0);
-            emit('monsterAttackRequest', { attacker: m, ability: 'stealthStrikeFirst', damage: dmg });
+            if (m._stealthUsed) {
+                emit('monsterAttackRequest', { attacker: m, ability: null, damage: null });
+                break;
+            }
+
+            const unseenByPlayer = !m._playerSawBoss || m._invisible;
+            const multiplier = unseenByPlayer ? 2 : 1;
+            const dmg = Math.max(1, Math.floor(m.str * multiplier));
+
+            m._stealthUsed = true;
+
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'stealthStrikeFirst',
+                data: {
+                    unseenByPlayer,
+                    damageMultiplier: multiplier,
+                    damage: dmg,
+                },
+            });
+
+            emit('monsterAttackRequest', {
+                attacker: m,
+                ability: 'stealthStrikeFirst',
+                damage: dmg,
+            });
             break;
         }
 
         case 'spawnClones':
-            if (m._clonesMeshes.length === 0) _spawnShadowClones(m);
+            if (m._clonesMeshes.length === 0) {
+                _spawnShadowClones(m);
+            } else {
+                emit('bossAbilityUsed', {
+                    bossId: m.monsterId,
+                    ability: 'spawnClones',
+                    data: {
+                        count: m._clonesMeshes.length,
+                        reused: true,
+                    },
+                });
+            }
             break;
 
         case 'abyssPoison':
-            emit('monsterAttackRequest', { attacker: m, ability: 'abyssPoison', damage: 50 });
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'abyssPoison',
+                data: {
+                    tickRateMs: 2000,
+                    durationMs: 10000,
+                    damagePerTickType: 'maxHpPct',
+                    damagePerTickValue: 0.05,
+                },
+            });
+
+            emit('monsterAttackRequest', {
+                attacker: m,
+                ability: 'abyssPoison',
+                damage: null,
+            });
             break;
 
         default:
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability,
+                data: {},
+            });
             emit('monsterAttackRequest', { attacker: m, ability, damage: null });
     }
 }
@@ -708,20 +927,34 @@ function _faceTarget(m, target) {
 /** @param {{ entity:Object }} payload */
 function _onPetAttack({ targetId, damage } = {}) {
     if (!targetId) return;
-    const monster = _monsters.get(targetId);
+
+    let monster = _monsters.get(targetId);
+
+    if (!monster) {
+        for (const [, boss] of _monsters) {
+            if (!Array.isArray(boss._clones)) continue;
+            const foundClone = boss._clones.find(clone => clone.id === targetId);
+            if (foundClone) {
+                monster = foundClone;
+                break;
+            }
+        }
+    }
+
     if (!monster || monster.state === 'dead') return;
 
     const rawDamage = Math.floor(Number(damage ?? 0));
     if (!Number.isFinite(rawDamage) || rawDamage <= 0) return;
 
-    monster.hp = Math.max(0, monster.hp - rawDamage);
+    const finalDamage = monster.isClone ? 1 : rawDamage;
+    monster.hp = Math.max(0, monster.hp - finalDamage);
 
     emit('damageDealt', {
         attackerId: 'pet',
         attackerType: 'pet',
         targetId: monster.id,
         targetType: 'monster',
-        amount: rawDamage
+        amount: finalDamage
     });
 
     if (monster.hp <= 0) {
@@ -730,41 +963,77 @@ function _onPetAttack({ targetId, damage } = {}) {
 }
 
 function _onEntityDied({ entity }) {
-    if (!_monsters.has(entity.id)) return;
-    const m = _monsters.get(entity.id);
-    if (m.state === 'dead') return;
+    if (_monsters.has(entity.id)) {
+        const m = _monsters.get(entity.id);
+        if (m.state === 'dead') return;
 
-    m.state = 'dead';
-    const deadDef = _catalogue[m.monsterId];
-    const dieSfx = deadDef?.soundProfile?.die;
-    if (dieSfx) {
-        playSFX3D(`assets/audio/sfx/${dieSfx}.ogg`, m.mesh.position);
-    }
-    m.hp    = 0;
-    m.mesh.visible = false;
+        m.state = 'dead';
+        const deadDef = _catalogue[m.monsterId];
+        const dieSfx = deadDef?.soundProfile?.die;
+        if (dieSfx) {
+            playSFX3D(`assets/audio/sfx/${dieSfx}.ogg`, m.mesh.position);
+        }
+        m.hp = 0;
+        m.mesh.visible = false;
 
-    if (m.isBoss) _cleanupBoss(m);
+        if (m.isBoss) _cleanupBoss(m);
 
-    const def = _catalogue[m.monsterId];
-    _rollDrops(def, m.mesh.position);
-    _rollCardDrops(def);
-    unregisterTarget(m);
+        const def = _catalogue[m.monsterId];
+        _rollDrops(def, m.mesh.position);
+        _rollCardDrops(def);
+        unregisterTarget(m);
 
-    emit('monsterDied', {
-        id:       m.id,
-        monsterId: m.monsterId,
-        xp:       m.xp,
-        isBoss:   m.isBoss,
-        linkedQuestId: m.linkedQuestId,
-    });
-
-    if (m.isBoss) {
-        emit('uiHintShow', {
-            msg:      `Boss derrotado: ${def.name}! +${m.xp} XP`,
-            duration: 5000,
+        emit('monsterDied', {
+            id: m.id,
+            monsterId: m.monsterId,
+            xp: m.xp,
+            isBoss: m.isBoss,
+            linkedQuestId: m.linkedQuestId,
         });
-    } else {
-        m._respawnTimeout = setTimeout(() => _respawn(m), 30_000);
+
+        if (m.isBoss) {
+            emit('uiHintShow', {
+                msg: `Boss derrotado: ${def.name}! +${m.xp} XP`,
+                duration: 5000,
+            });
+        } else {
+            m._respawnTimeout = setTimeout(() => _respawn(m), 30_000);
+        }
+        return;
+    }
+
+    for (const [, boss] of _monsters) {
+        if (!Array.isArray(boss._clones)) continue;
+        const cloneIndex = boss._clones.findIndex(clone => clone.id === entity.id);
+        if (cloneIndex === -1) continue;
+
+        const cloneEntity = boss._clones[cloneIndex];
+        const meshIndex = boss._clonesMeshes.findIndex(mesh => mesh === cloneEntity.mesh);
+
+        unregisterTarget(cloneEntity);
+        cloneEntity.hp = 0;
+        cloneEntity.state = 'dead';
+        cloneEntity.mesh.visible = false;
+
+        if (meshIndex !== -1) {
+            const cloneMesh = boss._clonesMeshes[meshIndex];
+            cloneMesh.geometry.dispose();
+            cloneMesh.material.dispose();
+            sceneRemove(cloneMesh);
+            boss._clonesMeshes.splice(meshIndex, 1);
+        }
+
+        boss._clones.splice(cloneIndex, 1);
+
+        emit('bossAbilityUsed', {
+            bossId: boss.monsterId,
+            ability: 'spawnClones',
+            data: {
+                cloneDestroyedId: entity.id,
+                remainingClones: boss._clones.length,
+            },
+        });
+        return;
     }
 }
 
@@ -780,13 +1049,16 @@ function _respawn(m) {
     m._attackCounter    = 0;
     m._phase50Done      = false;
     m._phase25Done      = false;
-    m._telegraphing     = false;
-    m._pendingAoe       = false;
-    m._reflectShield    = false;
-    m._invisible        = false;
-    m._multishotPending = 0;
-    m._respawnTimeout   = null;
-
+    m._telegraphing      = false;
+    m._pendingAoe        = false;
+    m._reflectShield     = false;
+    m._invisible         = false;
+    m._invisibilityUntil = 0;
+    m._surpriseStrikeReady = false;
+    m._multishotPending  = 0;
+    m._stealthUsed       = false;
+    m._playerSawBoss     = false;
+    m._respawnTimeout    = null;
     registerTarget(m);
     emit('monsterSpawned', {
         id:       m.id,

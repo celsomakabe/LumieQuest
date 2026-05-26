@@ -44,13 +44,13 @@ export function init(canvas) {
 
   // --- Câmera perspectiva ---
   _camera = new THREE.PerspectiveCamera(
-    75,                                     // FOV: 75°
+    38,                                     // FOV: 75°
     window.innerWidth / window.innerHeight, // Aspect ratio
     0.1,                                    // Near plane
     1000                                    // Far plane
   );
-  _camera.position.set(0, 5, 10);
-  _camera.lookAt(0, 0, 0);
+    _camera.position.set(0, 14, 14);
+    _camera.lookAt(0, 0, 0);
 
   // --- Luz ambiente (HemisphereLight) ---
   // Céu azul de cima, reflexo verde do chão de baixo — mais natural que AmbientLight puro
