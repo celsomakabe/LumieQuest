@@ -211,6 +211,12 @@ function spawnMonster(monsterId, position, linkedQuestId = null) {
         _stealthUsed:        false,
         _playerSawBoss:      false,
         _multishotPending:   0,
+        _enraged:            false,
+        _phaseAuraLocked:    false,
+        _phaseMultishotAuto: false,
+        _phaseStealthLoop:   false,
+        _phaseReflectLocked: false,
+        _phaseAbyssAura:     false,
         // Debuffs ativos (DoT de boss sobre o player são emitidos via evento)
         _activeDebuffs: [],
 
@@ -384,89 +390,270 @@ function _checkBossPhases(m) {
         m._phase25Done = true;
         _triggerPhase25(m);
     }
+
+    if (m.monsterId === 'boss_sniper' && m._phaseStealthLoop && !m._invisible && m.mesh.visible) {
+        m.mesh.visible = true;
+    }
+
+    if (m.monsterId === 'boss_high_wizard' && m._phaseReflectLocked) {
+        m._reflectShield = true;
+        m._reflectExpires = Infinity;
+        m.mesh.material.emissiveIntensity = 0.95;
+    }
+
+    if (m.monsterId === 'boss_shadow_assassin' && m._phaseAbyssAura) {
+        const now = performance.now();
+        if (!m._phaseAbyssAuraNextTick || now >= m._phaseAbyssAuraNextTick) {
+            m._phaseAbyssAuraNextTick = now + 2000;
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'abyssPoison',
+                data: {
+                    phasePersistent: true,
+                    tickRateMs: 2000,
+                    durationMs: 10000,
+                    damagePerTickType: 'maxHpPct',
+                    damagePerTickValue: 0.05,
+                },
+            });
+        }
+    }
 }
 
 /** @param {Object} m */
 function _triggerPhase50(m) {
-    emit('uiHintShow', { msg: `${_catalogue[m.monsterId].name}: FASE 2!`, duration: 3000 });
-
     switch (m.monsterId) {
         case 'boss_lord_knight':
-            // Summon 2 adds (goblins) próximos ao boss
+            emit('uiHintShow', {
+                msg: `${_catalogue[m.monsterId].name}: reforços avançam para a arena!`,
+                duration: 3500,
+            });
+
             for (let i = 0; i < 2; i++) {
                 const angle = (i / 2) * Math.PI * 2;
-                spawnMonster('goblin', {
+                const add = spawnMonster('goblin', {
                     x: m.mesh.position.x + Math.cos(angle) * 2,
                     y: 0.5,
                     z: m.mesh.position.z + Math.sin(angle) * 2,
+                });
+
+                emit('bossAbilityUsed', {
+                    bossId: m.monsterId,
+                    ability: 'summonAdds',
+                    data: {
+                        phase: 50,
+                        summonedMonsterId: 'goblin',
+                        summonedId: add?.id ?? null,
+                    },
                 });
             }
             break;
 
         case 'boss_high_wizard':
-            // Ativa escudo refletivo 5s
-            m._reflectShield  = true;
-            m._reflectExpires = performance.now() + 5000;
-            m.mesh.material.emissiveIntensity = 0.8;
-            emit('buffApplied', {
-                buffId:   'reflectShield',
-                casterId: m.monsterId,
-                expiresAt: m._reflectExpires,
+            emit('uiHintShow', {
+                msg: `${_catalogue[m.monsterId].name}: o arcanista convergiu energia no centro da arena!`,
+                duration: 3500,
             });
-            setTimeout(() => {
-                if (m.state !== 'dead') {
-                    m._reflectShield = false;
-                    m.mesh.material.emissiveIntensity = 0.3;
-                }
-            }, 5000);
+
+            m.mesh.position.set(0, m.mesh.position.y, 0);
+
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'teleportStrike',
+                data: {
+                    phase: 50,
+                    teleportedToCenter: true,
+                    position: { x: 0, y: m.mesh.position.y, z: 0 },
+                },
+            });
+
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'aoeWindup',
+                data: {
+                    phase: 50,
+                    telegraphSeconds: 2,
+                    radius: 5.0,
+                    position: { x: 0, y: m.mesh.position.y, z: 0 },
+                },
+            });
+
+            _startTelegraph(m);
             break;
 
         case 'boss_sniper':
-            // Invisibilidade 3s (opacity 0.2)
+            emit('uiHintShow', {
+                msg: `${_catalogue[m.monsterId].name}: sumiu nas sombras e prepara tiros furtivos!`,
+                duration: 3500,
+            });
+
+            m._phaseStealthLoop = true;
             m._invisible = true;
-            m.mesh.material.transparent = true;
-            m.mesh.material.opacity     = 0.2;
-            setTimeout(() => {
-                if (m.state !== 'dead') {
-                    m._invisible = false;
-                    m.mesh.material.opacity = 1.0;
-                }
-            }, 3000);
+            m.mesh.visible = false;
+
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'invisibility',
+                data: {
+                    phase: 50,
+                    persistentStealth: true,
+                    revealWindowMs: 1000,
+                },
+            });
             break;
 
         case 'boss_shadow_assassin':
-            // Spawna 2 clones visuais (sem dano, sem registerTarget)
-            _spawnShadowClones(m);
+            emit('uiHintShow', {
+                msg: `${_catalogue[m.monsterId].name}: a arena foi tomada por sombras ilusórias!`,
+                duration: 3500,
+            });
+
+            if (m._clonesMeshes.length === 0) {
+                _spawnShadowClones(m);
+            }
+
+            // terceira cópia adicional para fase 50
+            {
+                const cloneGeo = new THREE.DodecahedronGeometry(0.8);
+                const cloneMat = new THREE.MeshLambertMaterial({
+                    color:       new THREE.Color(_catalogue[m.monsterId]?.modelPlaceholder ?? '#330033'),
+                    transparent: true,
+                    opacity:     0.5,
+                });
+                const cloneMesh = new THREE.Mesh(cloneGeo, cloneMat);
+                cloneMesh.position.set(
+                    m.mesh.position.x,
+                    0.5,
+                    m.mesh.position.z + 2.5,
+                );
+                cloneMesh.castShadow = false;
+                cloneMesh.name = `${m.id}_clone_phase50`;
+
+                const cloneEntity = {
+                    id: cloneMesh.name,
+                    monsterId: `${m.monsterId}_clone`,
+                    type: 'monster',
+                    isBoss: false,
+                    isClone: true,
+                    hp: 1,
+                    maxHp: 1,
+                    def: 0,
+                    baseStats: { str: 0, vit: 0 },
+                    state: 'idle',
+                    mesh: cloneMesh,
+                    parentBossId: m.id,
+                    get position() { return this.mesh.position; },
+                };
+
+                sceneAdd(cloneMesh);
+                registerTarget(cloneEntity);
+                m._clonesMeshes.push(cloneMesh);
+                m._clones.push(cloneEntity);
+
+                emit('bossAbilityUsed', {
+                    bossId: m.monsterId,
+                    ability: 'spawnClones',
+                    data: {
+                        phase: 50,
+                        count: 3,
+                        extraCloneId: cloneEntity.id,
+                    },
+                });
+            }
             break;
     }
 }
 
 /** @param {Object} m */
 function _triggerPhase25(m) {
-    emit('uiHintShow', { msg: `${_catalogue[m.monsterId].name}: FASE FINAL!`, duration: 3000 });
-
     switch (m.monsterId) {
         case 'boss_lord_knight':
-            // Força AoE telegrafado imediato
-            _startTelegraph(m);
+            emit('uiHintShow', {
+                msg: `${_catalogue[m.monsterId].name}: entrou em fúria total!`,
+                duration: 3500,
+            });
+
+            m._enraged = true;
+            m.str = Math.floor(m.baseStats.str * 1.3);
+            m.mesh.material.emissive.set(0xff3333);
+            m.mesh.material.emissiveIntensity = 0.9;
+
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'enrage',
+                data: {
+                    phase: 25,
+                    attackMultiplier: 1.3,
+                    speedMultiplier: 1.5,
+                },
+            });
             break;
 
         case 'boss_high_wizard':
-            // Segundo teleport strike
-            _bossTeleportStrike(m);
+            emit('uiHintShow', {
+                msg: `${_catalogue[m.monsterId].name}: o espelho arcano tornou-se permanente!`,
+                duration: 3500,
+            });
+
+            m._phaseReflectLocked = true;
+            m._reflectShield = true;
+            m._reflectExpires = Infinity;
+            m.mesh.material.emissiveIntensity = 1.0;
+
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'reflectShield',
+                data: {
+                    phase: 25,
+                    permanent: true,
+                    reflectsPct: 0.5,
+                },
+            });
             break;
 
         case 'boss_sniper':
-            // Multishot: forçar 3 ataques rápidos via flag
-            m._multishotPending = 3;
+            emit('uiHintShow', {
+                msg: `${_catalogue[m.monsterId].name}: cada ataque agora se divide em múltiplos tiros!`,
+                duration: 3500,
+            });
+
+            m._phaseMultishotAuto = true;
+
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'multishot',
+                data: {
+                    phase: 25,
+                    continuous: true,
+                    count: 3,
+                    damagePerProjectile: Math.max(1, Math.floor(m.str * 0.6)),
+                },
+            });
             break;
 
         case 'boss_shadow_assassin':
-            // Abyss poison ativo direto no player via evento
-            emit('bossAbyssPoison', {
-                bossId:        m.monsterId,
-                damagePerTick: 50,
-                duration:      10000,
+            emit('uiHintShow', {
+                msg: `${_catalogue[m.monsterId].name}: o veneno do abismo cobriu toda a arena!`,
+                duration: 3500,
+            });
+
+            m._phaseAbyssAura = true;
+            m._enraged = true;
+            m.str = Math.floor(m.baseStats.str * 1.3);
+            m.mesh.material.emissive.set(0x7a1fa2);
+            m.mesh.material.emissiveIntensity = 0.9;
+
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'abyssPoison',
+                data: {
+                    phase: 25,
+                    permanent: true,
+                    tickRateMs: 2000,
+                    damagePerTickType: 'maxHpPct',
+                    damagePerTickValue: 0.05,
+                    enrage: true,
+                },
             });
             break;
     }
@@ -666,16 +853,20 @@ function _stateAttack(m, dt, playerPos, dist) {
     if (dist > m.attackRange) { m.state = 'chase'; return; }
     _faceTarget(m, playerPos);
 
-    const cooldown = m.isBoss ? 1.5 : 1.0;
-    const now      = performance.now() / 1000;
+    const baseCooldown = m.isBoss ? 1.5 : 1.0;
+    const cooldown = m._enraged ? (baseCooldown / 1.5) : baseCooldown;
+    const now = performance.now() / 1000;
     if (now - m._lastAttackTime < cooldown) return;
     m._lastAttackTime = now;
 
-    // Multishot pendente para boss_sniper fase 25%
+    if (m.monsterId === 'boss_sniper' && m._phaseMultishotAuto) {
+        _executeBossAbility(m, 'multishot', playerPos);
+        return;
+    }
+
     if (m._multishotPending && m._multishotPending > 0) {
         m._multishotPending--;
-        const dmg = Math.floor(m.str * 1.2);
-        emit('monsterAttackRequest', { attacker: m, ability: 'multishot', damage: dmg });
+        _executeBossAbility(m, 'multishot', playerPos);
         return;
     }
 
@@ -774,7 +965,7 @@ function _executeBossAbility(m, ability, playerPos) {
             }
             break;
 
-        case 'invisibility':
+                case 'invisibility':
             if (!m._invisible) {
                 m._invisible = true;
                 m._invisibilityUntil = performance.now() + 3000;
@@ -787,6 +978,7 @@ function _executeBossAbility(m, ability, playerPos) {
                     data: {
                         durationMs: 3000,
                         surpriseDamageMultiplier: 2,
+                        phaseStealthLoop: !!m._phaseStealthLoop,
                     },
                 });
 
@@ -794,6 +986,15 @@ function _executeBossAbility(m, ability, playerPos) {
                     if (m.state !== 'dead') {
                         m._invisible = false;
                         m.mesh.visible = true;
+
+                        if (m._phaseStealthLoop) {
+                            setTimeout(() => {
+                                if (m.state !== 'dead') {
+                                    m._invisible = true;
+                                    m.mesh.visible = false;
+                                }
+                            }, 1000);
+                        }
                     }
                 }, 3000);
             }
@@ -1049,16 +1250,24 @@ function _respawn(m) {
     m._attackCounter    = 0;
     m._phase50Done      = false;
     m._phase25Done      = false;
-    m._telegraphing      = false;
-    m._pendingAoe        = false;
-    m._reflectShield     = false;
-    m._invisible         = false;
-    m._invisibilityUntil = 0;
-    m._surpriseStrikeReady = false;
-    m._multishotPending  = 0;
-    m._stealthUsed       = false;
-    m._playerSawBoss     = false;
-    m._respawnTimeout    = null;
+    m._telegraphing        = false;
+        m._pendingAoe          = false;
+        m._reflectShield       = false;
+        m._invisible           = false;
+        m._invisibilityUntil   = 0;
+        m._surpriseStrikeReady = false;
+        m._multishotPending    = 0;
+        m._stealthUsed         = false;
+        m._playerSawBoss       = false;
+        m._enraged             = false;
+        m._phaseAuraLocked     = false;
+        m._phaseMultishotAuto  = false;
+        m._phaseStealthLoop    = false;
+        m._phaseReflectLocked  = false;
+        m._phaseAbyssAura      = false;
+        m._phaseAbyssAuraNextTick = 0;
+        m._respawnTimeout      = null;
+        m.str                  = m.baseStats.str;
     registerTarget(m);
     emit('monsterSpawned', {
         id:       m.id,
