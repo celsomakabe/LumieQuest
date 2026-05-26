@@ -711,9 +711,117 @@ if (code === 'Escape' && _dialogOpen) _closeDialog();
     Events.on('petUnsummoned',  () => { if (_petWindowOpen) _refreshPetWindowUI(); });
     Events.on('petLevelUp',     () => { if (_petWindowOpen) _refreshPetWindowUI(); });
     Events.on('petBonusChanged',() => { if (_petWindowOpen) _refreshPetWindowUI(); });
+    // Boss HP bar
+    Events.on('questBossSpawnRequest', _onQuestBossSpawnRequest);
+    Events.on('damageDealt', _onDamageDealt);
+    Events.on('monsterDied', _onMonsterDiedBoss);
+    _ensureBossHpBar();
 }
 
+// ─── Boss HP bar ─────────────────────────────────────────────────────────────
 
+let _bossHpRoot = null;
+let _bossHpName = null;
+let _bossHpFill = null;
+let _activeBossBar = null;
+
+function _ensureBossHpBar() {
+    if (_bossHpRoot) return;
+
+    _bossHpRoot = document.createElement('div');
+    _bossHpRoot.id = 'boss-hp-bar';
+    _bossHpRoot.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);width:400px;pointer-events:none;z-index:1200;display:none;background:rgba(10,10,10,0.88);border:2px solid #d4af37;border-radius:10px;padding:8px 10px 10px 10px;box-shadow:0 0 16px rgba(0,0,0,0.35)';
+
+    _bossHpName = document.createElement('div');
+    _bossHpName.style.cssText = 'color:#f5e6a8;font-weight:700;font-size:14px;margin-bottom:6px;text-align:center';
+    _bossHpName.textContent = 'Boss';
+
+    const track = document.createElement('div');
+    track.style.cssText = 'width:100%;height:20px;background:#1b1b1b;border:1px solid #8a6b1f;border-radius:999px;overflow:hidden';
+
+    _bossHpFill = document.createElement('div');
+    _bossHpFill.style.cssText = 'width:100%;height:100%;background:#35c759;transition:width 120ms linear,background 120ms linear';
+
+    track.appendChild(_bossHpFill);
+    _bossHpRoot.appendChild(_bossHpName);
+    _bossHpRoot.appendChild(track);
+    document.body.appendChild(_bossHpRoot);
+}
+
+function _getBossHpColor(pct) {
+    if (pct > 0.5) return '#35c759';
+    if (pct > 0.25) return '#f4c542';
+    return '#d64545';
+}
+
+function _showBossHpBar(boss = {}) {
+    _ensureBossHpBar();
+    const current = Number(boss.hp ?? 0);
+    const max = Math.max(1, Number(boss.maxHp ?? 1));
+    const pct = Math.max(0, Math.min(1, current / max));
+
+    _activeBossBar = {
+        id: boss.id ?? _activeBossBar?.id ?? null,
+        monsterId: boss.monsterId ?? _activeBossBar?.monsterId ?? null,
+        name: boss.name ?? _activeBossBar?.name ?? 'Boss',
+        hp: current,
+        maxHp: max,
+    };
+
+    _bossHpName.textContent = _activeBossBar.name;
+    _bossHpFill.style.width = `${pct * 100}%`;
+    _bossHpFill.style.background = _getBossHpColor(pct);
+    _bossHpRoot.style.display = 'block';
+}
+
+function _hideBossHpBar() {
+    if (!_bossHpRoot) return;
+    _activeBossBar = null;
+    _bossHpRoot.style.display = 'none';
+}
+
+function _onQuestBossSpawnRequest({ bossId } = {}) {
+    if (!bossId) return;
+    const bossNames = {
+        boss_lord_knight: 'Boss Lord Knight',
+        boss_high_wizard: 'Boss High Wizard',
+        boss_sniper: 'Boss Sniper',
+        boss_shadow_assassin: 'Boss Shadow Assassin',
+    };
+    const bossMaxHp = {
+        boss_lord_knight: 1200,
+        boss_high_wizard: 1050,
+        boss_sniper: 980,
+        boss_shadow_assassin: 990,
+    };
+    _showBossHpBar({
+        monsterId: bossId,
+        name: bossNames[bossId] ?? bossId,
+        hp: bossMaxHp[bossId] ?? 1,
+        maxHp: bossMaxHp[bossId] ?? 1,
+    });
+}
+
+function _onDamageDealt({ target } = {}) {
+    if (!target?.isBoss) return;
+    _showBossHpBar({
+        id: target.id,
+        monsterId: target.monsterId,
+        name: _activeBossBar?.name ?? target.monsterId ?? 'Boss',
+        hp: target.hp,
+        maxHp: target.maxHp,
+    });
+}
+
+function _onMonsterDiedBoss(payload = {}) {
+    if (!payload.isBoss) return;
+    const sameBoss =
+        (_activeBossBar?.id && payload.id && _activeBossBar.id === payload.id) ||
+        (_activeBossBar?.monsterId && payload.monsterId && _activeBossBar.monsterId === payload.monsterId) ||
+        (!_activeBossBar);
+    if (!sameBoss) return;
+    _hideBossHpBar();
+}
 // ─── construção DOM (diálogo) ────────────────────────────────────────────────
 
 function _buildDialogWindow() {
