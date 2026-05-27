@@ -194,6 +194,7 @@ function _createTerrain(mapConfig) {
   mesh.rotation.x = -Math.PI / 2;
   mesh.receiveShadow = true;
   mesh.name = `terrain_${mapConfig.id}`;
+  mesh.position.y = -0.01;
 
   return mesh;
 }

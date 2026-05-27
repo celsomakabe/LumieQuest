@@ -22,6 +22,7 @@ let _renderer;
  * @type {THREE.Mesh|null}
  */
 let _ground = null;
+let _sun = null;
 
 /**
  * Inicializa cena, câmera, luzes, chão e renderer.
@@ -62,25 +63,23 @@ export function init(canvas) {
   _scene.add(hemiLight);
 
   // --- Sol (DirectionalLight com shadow map limitado a 30m) ---
-  const sun = new THREE.DirectionalLight(0xfff4e0, 1.0); // Luz solar levemente quente
-  sun.position.set(10, 20, 10);
-  sun.castShadow = true;
+  _sun = new THREE.DirectionalLight(0xfff4e0, 1.0);
+  _sun.position.set(10, 20, 10);
+  _sun.castShadow = true;
 
-  // Shadow map de 1024x1024 — boa qualidade sem explodir a VRAM (R6)
-  sun.shadow.mapSize.width = 1024;
-  sun.shadow.mapSize.height = 1024;
+  _sun.shadow.mapSize.width = 1024;
+  _sun.shadow.mapSize.height = 1024;
 
-  // Raio de sombra de 30m centrado na origem (conforme blueprint R6)
-  sun.shadow.camera.left   = -30;
-  sun.shadow.camera.right  =  30;
-  sun.shadow.camera.top    =  30;
-  sun.shadow.camera.bottom = -30;
-  sun.shadow.camera.near   = 0.5;
-  sun.shadow.camera.far    = 100;
-  sun.shadow.bias = -0.001; // Elimina shadow acne no chão
+  _sun.shadow.camera.left   = -30;
+  _sun.shadow.camera.right  =  30;
+  _sun.shadow.camera.top    =  30;
+  _sun.shadow.camera.bottom = -30;
+  _sun.shadow.camera.near   = 0.5;
+  _sun.shadow.camera.far    = 100;
+  _sun.shadow.bias = -0.001;
 
-  _scene.add(sun);
-  _scene.add(sun.target); // Target padrão na origem (0,0,0)
+  _scene.add(_sun);
+  _scene.add(_sun.target);
 
   // --- Chão verde (PlaneGeometry 20×20) ---
   // Atribuído a _ground (escopo de módulo) para permitir setGroundTexture() depois.
@@ -136,7 +135,7 @@ export function getCamera() { return _camera; }
  * @returns {THREE.WebGLRenderer}
  */
 export function getRenderer() { return _renderer; }
-
+export function getSun() { return _sun; }
 /**
  * Adiciona um Object3D à cena.
  * @param {THREE.Object3D} obj - Objeto a adicionar

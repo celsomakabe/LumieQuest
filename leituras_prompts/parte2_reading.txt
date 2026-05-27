@@ -1,4 +1,2975 @@
 /**
+ * scene.js — Cena 3D principal do LumieQuest.
+ * Responsável por: THREE.Scene, câmera, luzes, chão e renderer.
+ * Não importa entities nem systems (R8 — acoplamento zero com camadas superiores).
+ */
+
+import * as THREE from 'three';
+import * as events from '../core/events.js';
+
+/** @type {THREE.Scene} */
+let _scene;
+
+/** @type {THREE.PerspectiveCamera} */
+let _camera;
+
+/** @type {THREE.WebGLRenderer} */
+let _renderer;
+
+/**
+ * Mesh do chão. Mantido em escopo de módulo para permitir aplicação de textura
+ * via setGroundTexture() após o pipeline de assets ficar pronto (PROMPT 2).
+ * @type {THREE.Mesh|null}
+ */
+let _ground = null;
+
+/**
+ * Inicializa cena, câmera, luzes, chão e renderer.
+ * Deve ser chamado uma única vez em main.js durante o boot.
+ * Emite 'sceneReady' ao concluir.
+ * @param {HTMLCanvasElement} canvas - Elemento canvas do DOM
+ */
+export function init(canvas) {
+  // --- Renderer ---
+  _renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  _renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Máx 2x para poupar GPU (R6)
+  _renderer.setSize(window.innerWidth, window.innerHeight);
+  _renderer.shadowMap.enabled = true;
+  _renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Sombras suaves sem custo excessivo
+  _renderer.setClearColor(0x87CEEB); // Azul céu
+
+  // --- Cena ---
+  _scene = new THREE.Scene();
+  _scene.fog = new THREE.Fog(0x87CEEB, 60, 200); // Névoa distante combina com céu
+
+  // --- Câmera perspectiva ---
+  _camera = new THREE.PerspectiveCamera(
+    38,                                     // FOV: 75°
+    window.innerWidth / window.innerHeight, // Aspect ratio
+    0.1,                                    // Near plane
+    1000                                    // Far plane
+  );
+    _camera.position.set(0, 14, 14);
+    _camera.lookAt(0, 0, 0);
+
+  // --- Luz ambiente (HemisphereLight) ---
+  // Céu azul de cima, reflexo verde do chão de baixo — mais natural que AmbientLight puro
+  const hemiLight = new THREE.HemisphereLight(
+    0xb0d8ff, // skyColor: azul claro
+    0x4a7c3a, // groundColor: verde grama
+    0.4       // intensidade baixa — o sol faz o trabalho principal
+  );
+  _scene.add(hemiLight);
+
+  // --- Sol (DirectionalLight com shadow map limitado a 30m) ---
+  const sun = new THREE.DirectionalLight(0xfff4e0, 1.0); // Luz solar levemente quente
+  sun.position.set(10, 20, 10);
+  sun.castShadow = true;
+
+  // Shadow map de 1024x1024 — boa qualidade sem explodir a VRAM (R6)
+  sun.shadow.mapSize.width = 1024;
+  sun.shadow.mapSize.height = 1024;
+
+  // Raio de sombra de 30m centrado na origem (conforme blueprint R6)
+  sun.shadow.camera.left   = -30;
+  sun.shadow.camera.right  =  30;
+  sun.shadow.camera.top    =  30;
+  sun.shadow.camera.bottom = -30;
+  sun.shadow.camera.near   = 0.5;
+  sun.shadow.camera.far    = 100;
+  sun.shadow.bias = -0.001; // Elimina shadow acne no chão
+
+  _scene.add(sun);
+  _scene.add(sun.target); // Target padrão na origem (0,0,0)
+
+  // --- Chão verde (PlaneGeometry 20×20) ---
+  // Atribuído a _ground (escopo de módulo) para permitir setGroundTexture() depois.
+  const groundGeo = new THREE.PlaneGeometry(20, 20);
+  const groundMat = new THREE.MeshStandardMaterial({
+    color: 0x4a7c3a, // Verde grama (será resetado para branco quando textura for aplicada)
+    roughness: 0.9,
+    metalness: 0.0,
+  });
+  _ground = new THREE.Mesh(groundGeo, groundMat);
+  _ground.rotation.x = -Math.PI / 2; // Rotaciona para horizontal (XZ)
+  _ground.receiveShadow = true;
+  _scene.add(_ground);
+
+  // --- Resize handler ---
+  window.addEventListener('resize', _onResize);
+
+  events.emit('sceneReady');
+}
+
+/**
+ * Atualiza câmera e renderer quando a janela é redimensionada.
+ * @private
+ */
+function _onResize() {
+  _camera.aspect = window.innerWidth / window.innerHeight;
+  _camera.updateProjectionMatrix();
+  _renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+/**
+ * Executa um frame de render. Chamado pelo game loop a cada requestAnimationFrame.
+ * @param {number} delta - Tempo desde o último frame em ms (não usado aqui ainda)
+ */
+export function render(delta) {
+  _renderer.render(_scene, _camera);
+}
+
+/**
+ * Retorna a instância da THREE.Scene.
+ * @returns {THREE.Scene}
+ */
+export function getScene() { return _scene; }
+
+/**
+ * Retorna a câmera perspectiva ativa.
+ * @returns {THREE.PerspectiveCamera}
+ */
+export function getCamera() { return _camera; }
+
+/**
+ * Retorna o WebGLRenderer.
+ * @returns {THREE.WebGLRenderer}
+ */
+export function getRenderer() { return _renderer; }
+
+/**
+ * Adiciona um Object3D à cena.
+ * @param {THREE.Object3D} obj - Objeto a adicionar
+ */
+export function add(obj) { _scene.add(obj); }
+
+/**
+ * Remove um Object3D da cena.
+ * @param {THREE.Object3D} obj - Objeto a remover
+ */
+export function remove(obj) { _scene.remove(obj); }
+
+/**
+ * Retorna o mesh do chão para inspeção externa (usado por physics e debug).
+ * @returns {THREE.Mesh|null} Retorna null se init() ainda não foi chamado.
+ */
+export function getGround() {
+  return _ground;
+}
+
+/**
+ * Aplica uma textura ao material do chão.
+ * Configura repeat e wrapping para tile correto em terrenos grandes.
+ * Chamado por main.js após o pipeline de assets emitir 'assetsReady'.
+ * @param {THREE.Texture} texture - Textura carregada via assets.loadTexture()
+ * @returns {void}
+ */
+export function setGroundTexture(texture) {
+  if (!_ground) {
+    console.warn('[scene] setGroundTexture: mesh do chão não encontrado (init() chamado?)');
+    return;
+  }
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(8, 8); // Tile 8x8 sobre o plano de 20×20 unidades
+  _ground.material.map = texture;
+  _ground.material.color.set(0xffffff); // Reseta cor para branco para não tingir a textura
+  _ground.material.needsUpdate = true;
+}
+/**
+ * @module player
+ * @description Personagem do jogador: spawn, movimento, câmera e atributos.
+ * Dependências: events.js, input.js, scene.js, physics.js, classes.js
+ */
+
+import * as THREE        from 'three';
+import { emit, on }      from '../core/events.js';
+import { getState as getInput } from '../core/input.js';
+import { getCamera, add, remove } from '../world/scene.js';
+import { getGroundHeight }          from '../world/physics.js';
+import { getBaseStats, getJobMeta } from '../systems/classes.js';
+import * as Audio from '../core/audio.js';
+import { findNearestTarget, attack } from '../systems/combat.js';
+import { getCardBonuses } from '../systems/cards.js';
+import { getPetBonuses } from '../systems/pets.js';
+import * as Models from '../core/models.js';
+
+let _dialogOpen = false;
+
+on('dialogStarted', () => { _dialogOpen = true; });
+on('dialogEnded',   () => { _dialogOpen = false; });
+
+// Combat.castSkill emite mpConsumeRequest — player deduz o MP localmente.
+on('mpConsumeRequest', ({ amount }) => {
+    if (typeof amount === 'number' && amount > 0 && _data) {
+        _data.mp = Math.max(0, _data.mp - amount);
+        emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+    }
+});
+on('bossAbyssPoison', ({ damagePerTick, duration }) => {
+    const ticks    = Math.floor(duration / 1000);
+    let ticksDone  = 0;
+    const interval = setInterval(() => {
+        if (ticksDone >= ticks || _isDead) { clearInterval(interval); return; }
+        takeDamage(damagePerTick, 'abyss_poison');
+        ticksDone++;
+    }, 1000);
+});
+// ─── Constantes ───────────────────────────────────────────────────────────────
+
+const MOVE_SPEED         = 5;
+const MOUSE_SENSITIVITY  = 0.003;
+const CAM_OFFSET         = new THREE.Vector3(0, 5, 8);
+const CAM_ZOOM_MIN       = 3;
+const CAM_ZOOM_MAX       = 20;
+const CAM_ZOOM_STEP      = 0.5;
+const ANIM_FADE_DURATION = 0.2;
+
+const CLASS_MODELS = {
+    swordman:        'assets/models/player/swordman.glb',
+    mage:            'assets/models/player/mage.glb',
+    archer:          'assets/models/player/archer.glb',
+    assassin:        'assets/models/player/assassin.glb',
+    knight:          'assets/models/player/knight.glb',
+    wizard:          'assets/models/player/mage.glb',
+    hunter:          'assets/models/player/archer.glb',
+    assassin_master: 'assets/models/player/assassin.glb',
+    lord_knight:     'assets/models/player/knight.glb',
+    high_wizard:     'assets/models/player/mage.glb',
+    sniper:          'assets/models/player/archer.glb',
+    shadow_assassin: 'assets/models/player/shadow_assassin.glb'
+};// ─── Estado interno ──────────────────────────────────────────────────────────
+
+/** @type {THREE.Object3D|null} */
+let _mesh = null;
+/** @type {THREE.Group|null} */
+let _model = null;
+/** @type {THREE.AnimationMixer|null} */
+let _mixer = null;
+/** @type {{ idle: THREE.AnimationAction|null, walk: THREE.AnimationAction|null, attack: THREE.AnimationAction|null }} */
+let _actions = { idle: null, walk: null, attack: null };
+/** @type {THREE.AnimationAction|null} */
+let _currentAction = null;
+/** @type {THREE.AnimationClip[]} */
+let _animClips = [];
+let _attackAnimTimer = null;
+let _isDead = false;
+/** @type {Object|null} */
+let _data = null;
+/** @type {{
+ *  totalStats: { str:number, agi:number, vit:number, int:number, dex:number, luk:number },
+ *  hp_pct: number,
+ *  mp_pct: number
+ * }} */
+let _setBonusCache = {
+    totalStats: { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 },
+    hp_pct: 0,
+    mp_pct: 0
+};
+
+let _cardBonusCache = {
+    totalStats: { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 },
+    hp_pct: 0,
+    mp_pct: 0
+};
+let _petBonusCache = {
+    totalStats: { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 },
+    hp_pct: 0,
+    mp_pct: 0,
+    maxHp: 0,
+    maxMp: 0
+};
+
+let _rotationY   = 0;
+let _lastMouseX  = null;
+let _cameraDistance = 5;
+let _hasMoved    = false;
+
+const _prevPosition = new THREE.Vector3();
+
+// ─── BUG-05: Footsteps ───────────────────────────────────────────────────────
+let _footstepIndex    = 0;
+let _lastFootstepTime = 0;
+
+const FOOTSTEP_COOLDOWN_MS = 350;
+const FOOTSTEP_VOLUME      = 0.4;
+const FOOTSTEP_THRESHOLD   = 0.01;
+
+// ─── Regen passivo (Ragnarok-style) ─────────────────────────────────────────
+const REGEN_TICK_S = 6;
+let _regenTimer    = 0;
+
+const FOOTSTEP_SFXS = [
+    'assets/audio/sfx/sfx_footstep_grass1.ogg',
+    'assets/audio/sfx/sfx_footstep_grass2.ogg'
+];
+// ─── API pública ──────────────────────────────────────────────────────────────
+
+/**
+ * Inicializa o player com dados do save ou defaults.
+ * @param {Object|null} [saveData]
+ * @returns {void}
+ */
+/**
+ * Inicializa o player com dados do save ou defaults.
+ * @param {Object|null} [saveData]
+ * @returns {Promise<void>}
+ */
+export async function init(saveData = null) {
+    _setBonusCache = {
+        totalStats: { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 },
+        hp_pct: 0,
+        mp_pct: 0
+    };
+    _cardBonusCache = {
+        totalStats: { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 },
+        hp_pct: 0,
+        mp_pct: 0
+    };
+    _petBonusCache = {
+        totalStats: { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 },
+        hp_pct: 0,
+        mp_pct: 0,
+        maxHp: 0,
+        maxMp: 0
+    };
+
+    _data = _buildData(saveData);
+
+    _data.hp = _data.maxHp;
+    _data.mp = _data.maxMp;
+
+    await _loadPlayerVisual(_data.class);
+
+    _mesh.position.set(_data.position.x, _data.position.y, _data.position.z);
+    _mesh.rotation.y = _rotationY;
+    _prevPosition.copy(_mesh.position);
+
+    add(_model);
+
+    on('cardBonusChanged', _onCardBonusChanged);
+    on('itemEquipped', _onItemEquipped);
+    on('setBonusChanged', _onSetBonusChanged);
+    on('petBonusChanged', _onPetBonusChanged);
+    on('playerMoved', _onPlayerMoved);
+    on('mouseScrolled', ({ deltaY }) => {
+        const dir = deltaY > 0 ? 1 : -1;
+        _cameraDistance = Math.max(CAM_ZOOM_MIN, Math.min(CAM_ZOOM_MAX, _cameraDistance + dir * CAM_ZOOM_STEP));
+    });
+    on('playerCurrentMapChanged', ({ mapId }) => {
+        if (_data && mapId) _data.currentMap = mapId;
+    });
+
+    on('mouseClicked', (e) => {
+        if (e.button !== 0) return;
+        if (_dialogOpen) return;
+        if (_data.hp <= 0) return;
+
+        const pos    = _data.position;
+        const target = findNearestTarget(pos, 3);
+        if (!target) {
+            Audio.playSFX('assets/audio/sfx/sfx_combat_miss.ogg');
+            return;
+        }
+
+        const result = attack(_data, target);
+        if (!result) return;
+
+        _playAttackAnimation();
+    });
+
+    emit('playerSpawned', { position: _mesh.position.clone() });
+    console.log('[player] Spawnou em', _mesh.position);
+}
+
+/**
+ * Retorna estado completo serializável para o save.
+ * @returns {Object|null}
+ */
+/**
+ * Retorna estado completo serializável para o save.
+ * @returns {Object|null}
+ */
+export function getState() {
+    if (!_data || !_mesh) return null;
+    return {
+        ..._data,
+        position: { x: _mesh.position.x, y: _mesh.position.y, z: _mesh.position.z },
+    };
+}
+
+/**
+ * Retorna posição atual do player.
+ * @returns {THREE.Vector3}
+ */
+export function getPosition() {
+    return _mesh ? _mesh.position.clone() : new THREE.Vector3();
+}
+
+/**
+ * Aplica dano ao player.
+ * @param {number} amount
+ * @param {string} source
+ * @returns {void}
+ */
+export function takeDamage(amount, source) {
+    if (_isDead) return;
+    if (!_data) return;
+    // ── redução de dano por buff 'endure' ─────────────────────────────────
+    let dmg = typeof amount === 'number' ? Math.max(0, amount) : 0;
+    if (Array.isArray(_data._activeBuffs)) {
+        const endureBuff = _data._activeBuffs.find(
+            b => b.id === 'endure' && b.expiresAt > performance.now()
+        );
+        if (endureBuff && endureBuff.modifier && typeof endureBuff.modifier.defenseMultiplier === 'number') {
+            dmg = Math.floor(dmg * (1 - endureBuff.modifier.defenseMultiplier));
+        }
+    }
+
+    _data.hp = Math.max(0, _data.hp - dmg);
+    emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+    if (_data.hp <= 0) {
+        _isDead = true;
+        emit('playerDied');
+        console.log(`[player] Morreu (fonte: ${source})`);
+    }
+}
+
+/**
+ * Restaura HP do player.
+ * @param {number} amount
+ * @returns {void}
+ */
+export function heal(amount) {
+    if (_isDead) return;
+    if (!_data) return;
+    _data.hp = Math.min(_data.maxHp, _data.hp + amount);
+    emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+}
+/**
+ * Restaura MP do player.
+ * @param {number} amount
+ * @returns {void}
+ */
+export function restoreMp(amount) {
+    if (_isDead) return;
+    if (!_data) return;
+    _data.mp = Math.min(_data.maxMp, _data.mp + amount);
+    emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+}
+/**
+ * Adiciona XP e verifica level up. Fórmula: 100 * level².
+ * @param {number} amount
+ * @returns {void}
+ */
+/**
+ * Deduz MP do player, respeitando mínimo 0. Emite playerMpChanged.
+ * @param {number} amount - quantidade a deduzir (positivo). Math.abs aplicado.
+ */
+export function consumeMp(amount) {
+    if (_isDead) return;
+    if (!_data) return;
+    _data.mp = Math.max(0, _data.mp - Math.abs(amount));
+    emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+}
+export function addExp(amount) {
+    if (!_data) return;
+
+    const gain = Number(amount);
+    if (!Number.isFinite(gain) || gain <= 0) return;
+
+    _data.exp += gain;
+    emit('expChanged', { current: _data.exp, needed: 100 * (_data.level * _data.level) });
+    while (true) {
+        if (_data.level >= 99) {
+            _data.exp = 0;
+            break;
+        }
+        const xpNeeded = 100 * (_data.level * _data.level);
+        if (_data.exp < xpNeeded) break;
+
+        _data.exp   -= xpNeeded;
+        _data.level += 1;
+
+        // Pre-Renewal: floor((BaseLv-1)/5) + 3 statPoints por level
+        _data.statPoints += Math.floor((_data.level - 1) / 5) + 3;
+
+        _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+        _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+        _data.hp = _data.maxHp;
+        _data.mp = _data.maxMp;
+        emit('levelUp', { newLevel: _data.level });
+        emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+        emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+        console.log(`[player] Level up! Nível ${_data.level}`);
+    }
+}
+/**
+ * Marca quest de job-change como completada no estado do player.
+ * Idempotente: ignora se já estava na lista.
+ * @param {string} questId
+ * @returns {void}
+ */
+/**
+ * Marca quest de job-change como completada no estado do player.
+ * Idempotente: ignora se já estava na lista.
+ * @param {string} questId
+ * @returns {void}
+ */
+export function unlockJobChangeQuest(questId) {
+    if (!_data) return;
+    if (!Array.isArray(_data.jobChangeQuestsCompleted)) {
+        _data.jobChangeQuestsCompleted = [];
+    }
+    if (!_data.jobChangeQuestsCompleted.includes(questId)) {
+        _data.jobChangeQuestsCompleted.push(questId);
+        console.log(`[player] Quest de job-change desbloqueada: ${questId}`);
+    }
+}
+
+/**
+ /**
+ * Aplica mudança de job ao estado real do player.
+ * @param {string} newJobId
+ * @returns {Promise<boolean>}
+ */
+export async function applyJobChange(newJobId) {
+    if (!_data) return false;
+    const Classes = await import('../systems/classes.js');
+    const check = Classes.canJobChange(_data);
+    if (!check.canChange) {
+        console.warn('[player] applyJobChange bloqueado:', check.reason);
+        return false;
+    }
+
+    const meta = Classes.getJobMeta(newJobId);
+    if (!meta) {
+        console.warn('[player] JOBS_META não encontrado para', newJobId);
+        return false;
+    }
+
+    const oldClass = _data.class;
+    const oldModelUrl = _getClassModelUrl(oldClass);
+    const newModelUrl = _getClassModelUrl(newJobId);
+
+    _data.class      = newJobId;
+    _data.title      = meta.title ?? '';
+    _data.jobLevel   = 1;
+    _data.jobExp     = 0;
+    _data.statPoints += 5;
+
+    if (meta.statBonus) {
+        Object.keys(meta.statBonus).forEach(stat => {
+            if (_data.baseStats[stat] !== undefined) {
+                _data.baseStats[stat] += meta.statBonus[stat];
+            }
+        });
+    }
+
+    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.hp = _data.maxHp;
+    _data.mp = _data.maxMp;
+    emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+    emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+
+    if (newModelUrl !== oldModelUrl) {
+        if (_model) {
+            remove(_model);
+        }
+
+        await _loadPlayerVisual(newJobId);
+        _mesh.position.set(_data.position.x, _data.position.y, _data.position.z);
+        _mesh.rotation.y = _rotationY;
+        add(_model);
+    }
+
+    if (!Array.isArray(_data.jobHistory)) _data.jobHistory = [];
+    _data.jobHistory.push({ jobId: newJobId, changedAt: Date.now(), level: _data.level });
+
+    emit('jobChanged', { oldClass, newClass: newJobId, player: _data });
+    emit('levelUp', { newLevel: _data.level });
+    console.log(`[player] Job change: ${oldClass} → ${newJobId}`);
+    return true;
+}
+/**
+ * Atualiza movimento, rotação e câmera. Chamado pelo game loop.
+ * @param {number} delta
+ * @param {Object} inputState
+ * @returns {void}
+ */
+/**
+ * Atualiza movimento, rotação e câmera. Chamado pelo game loop.
+ * @param {number} delta
+ * @param {Object} inputState
+ * @returns {void}
+ */
+export function update(delta, inputState) {
+    if (_isDead) return;
+    if (!_mesh || !_data) return;
+
+    if (_mixer) {
+        _mixer.update(delta);
+    }
+
+    if (Array.isArray(_data._activeBuffs) && _data._activeBuffs.length > 0) {
+        const now = performance.now();
+        _data._activeBuffs = _data._activeBuffs.filter(buff => {
+            if (now >= buff.expiresAt) {
+                emit('buffExpired', { buffId: buff.id, casterId: _data.name });
+                return false;
+            }
+            return true;
+        });
+    }
+
+    _regenTimer += delta;
+    if (_regenTimer >= REGEN_TICK_S) {
+        _regenTimer -= REGEN_TICK_S;
+        const hpRegen = Math.floor(_data.maxHp / 200) + Math.floor((_data.baseStats?.vit ?? 0) / 5);
+        const mpRegen = 1 + Math.floor(_data.maxMp / 100) + Math.floor((_data.baseStats?.int ?? 0) / 6);
+        if (hpRegen > 0 && _data.hp < _data.maxHp) {
+            _data.hp = Math.min(_data.maxHp, _data.hp + hpRegen);
+            emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+        }
+        if (mpRegen > 0 && _data.mp < _data.maxMp) {
+            _data.mp = Math.min(_data.maxMp, _data.mp + mpRegen);
+            emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+        }
+    }
+
+    _prevPosition.copy(_mesh.position);
+    _hasMoved = false;
+
+    _updateMovement(delta, inputState);
+    _updateCamera();
+    _syncMovementAnimation();
+
+    if (_hasMoved) {
+        _data.position.x = _mesh.position.x;
+        _data.position.y = _mesh.position.y;
+        _data.position.z = _mesh.position.z;
+        emit('playerMoved', {
+            position: _mesh.position.clone(),
+            previousPosition: _prevPosition.clone(),
+            mapId: _data.currentMap,
+        });
+    }
+}
+ 
+export function getInstance() {
+    return _data;
+}
+function _getClassModelUrl(classId) {
+    return CLASS_MODELS[classId] || CLASS_MODELS.swordman;
+}
+
+async function _loadPlayerVisual(classId) {
+    const modelUrl = _getClassModelUrl(classId);
+
+    const [playerGltf, generalGltf, movementGltf] = await Promise.all([
+        Models.loadModel(modelUrl),
+        Models.loadModel('assets/models/animations/general.glb'),
+        Models.loadModel('assets/models/animations/movement.glb')
+    ]);
+
+    _model = playerGltf.scene;
+    _mesh = _model;
+
+    _model.traverse((child) => {
+        if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = false;
+        }
+    });
+
+    _mixer = Models.createMixer(_model);
+    _animClips = [
+        ...Models.getAnimationClips(generalGltf),
+        ...Models.getAnimationClips(movementGltf)
+    ];
+
+    _actions = {
+        idle: _makeAction(_findClip(['idle'])),
+        walk: _makeAction(_findClip(['walk', 'walking', 'run', 'running'])),
+        attack: _makeAction(_findClip(['attack', 'melee', 'slash', 'slice']))
+    };
+
+    if (_actions.attack) {
+        _actions.attack.setLoop(THREE.LoopOnce, 1);
+        _actions.attack.clampWhenFinished = true;
+        _actions.attack.enabled = true;
+        _actions.attack.reset();
+        _actions.attack.paused = false;
+        _actions.attack.stop();
+        _actions.attack.getMixer().addEventListener('finished', _onAttackFinished);
+    }
+
+    _currentAction = null;
+    _playAction('idle', 0);
+}
+
+function _makeAction(clip) {
+    if (!_mixer || !clip) return null;
+    const action = _mixer.clipAction(clip);
+    action.enabled = true;
+    return action;
+}
+
+function _findClip(substrings) {
+    if (!Array.isArray(_animClips) || _animClips.length === 0) return null;
+
+    const normalized = substrings.map((value) => String(value).toLowerCase());
+
+    for (const clip of _animClips) {
+        const clipName = String(clip.name || '').toLowerCase();
+        if (normalized.some((term) => clipName.includes(term))) {
+            return clip;
+        }
+    }
+
+    return null;
+}
+
+function _playAction(name, fadeDuration = ANIM_FADE_DURATION) {
+    const nextAction = _actions[name];
+    if (!nextAction) return;
+    if (_currentAction === nextAction) return;
+
+    const previousAction = _currentAction;
+    _currentAction = nextAction;
+
+    nextAction.reset();
+    nextAction.enabled = true;
+
+    if (name === 'attack') {
+        nextAction.setLoop(THREE.LoopOnce, 1);
+        nextAction.clampWhenFinished = true;
+    } else {
+        nextAction.setLoop(THREE.LoopRepeat, Infinity);
+        nextAction.clampWhenFinished = false;
+    }
+
+    if (previousAction) {
+        previousAction.crossFadeTo(nextAction, fadeDuration, true);
+    }
+
+    nextAction.play();
+}
+
+function _syncMovementAnimation() {
+    if (!_actions.attack || _currentAction !== _actions.attack) {
+        _playAction(_hasMoved ? 'walk' : 'idle');
+    }
+}
+
+function _playAttackAnimation() {
+    if (!_actions.attack) return;
+    _playAction('attack', 0.1);
+}
+
+function _onAttackFinished(event) {
+    if (!_actions.attack) return;
+    if (event.action !== _actions.attack) return;
+    _playAction(_hasMoved ? 'walk' : 'idle', 0.1);
+}
+// ─── Helpers privados ─────────────────────────────────────────────────────────
+
+/**
+ * Processa WASD e rotação por mouse.
+ * Usa _lastMouseX para calcular dx real — evita rotação contínua quando
+ * mouse.dx de input.js persiste o último delta entre frames sem movimento.
+ * @param {number} delta
+ * @param {Object} inputState
+ */
+/**
+ * Processa WASD e rotação por mouse.
+ * Usa _lastMouseX para calcular dx real — evita rotação contínua quando
+ * mouse.dx de input.js persiste o último delta entre frames sem movimento.
+ * @param {number} delta
+ * @param {Object} inputState
+ */
+function _updateMovement(delta, inputState) {
+    const { keys, mouse } = inputState;
+
+    if (mouse.buttons?.right) {
+        if (_lastMouseX !== null) {
+            const dx = mouse.x - _lastMouseX;
+            if (dx !== 0) {
+                _rotationY -= dx * MOUSE_SENSITIVITY;
+                _mesh.rotation.y = _rotationY;
+            }
+        }
+        _lastMouseX = mouse.x;
+    } else {
+        _lastMouseX = null;
+    }
+
+    let moveX = 0;
+    let moveZ = 0;
+
+    if (!_dialogOpen) {
+        if (keys['KeyW']) moveZ -= 1;
+        if (keys['KeyS']) moveZ += 1;
+        if (keys['KeyA']) moveX -= 1;
+        if (keys['KeyD']) moveX += 1;
+    }
+
+    if (moveX !== 0 || moveZ !== 0) {
+        const len = Math.sqrt(moveX * moveX + moveZ * moveZ);
+        moveX /= len;
+        moveZ /= len;
+
+        const cos    = Math.cos(_rotationY);
+        const sin    = Math.sin(_rotationY);
+        const worldX = moveX * cos - moveZ * sin;
+        const worldZ = moveX * sin + moveZ * cos;
+
+        _mesh.position.x += worldX * MOVE_SPEED * delta;
+        _mesh.position.z += worldZ * MOVE_SPEED * delta;
+        _mesh.position.y  = getGroundHeight(_mesh.position.x, _mesh.position.z);
+        _mesh.rotation.y = Math.atan2(worldX, worldZ);
+        _hasMoved = true;
+    }
+
+    if (!_hasMoved && _prevPosition.distanceTo(_mesh.position) > 0.0001) {
+        _hasMoved = true;
+    }
+}
+
+
+
+function _updateCamera() {
+    const camera = getCamera();
+    if (!camera || !_mesh) return;
+
+    const cos = Math.cos(_rotationY);
+    const sin = Math.sin(_rotationY);
+
+    const zoomScale = _cameraDistance / 8;
+    const offsetX = (CAM_OFFSET.x * cos - CAM_OFFSET.z * sin) * zoomScale;
+    const offsetZ = (CAM_OFFSET.x * sin + CAM_OFFSET.z * cos) * zoomScale;
+
+    camera.position.set(
+        _mesh.position.x + offsetX,
+        _mesh.position.y + CAM_OFFSET.y * zoomScale,
+        _mesh.position.z + offsetZ,
+    );
+
+    const lookTarget = _mesh.position.clone();
+    lookTarget.y += 1.0;
+    camera.lookAt(lookTarget);
+}
+
+/**
+ * Monta PlayerData a partir do save ou com valores padrão.
+ * @param {Object|null} saveData
+ * @returns {Object}
+ */
+/**
+ * Calcula maxHp Ragnarok-style.
+ * @param {string} job
+ * @param {number} level
+ * @param {{vit:number}} stats
+ * @returns {number}
+ */
+function _calcMaxHp(job, level, stats, setBonus = null, cardBonus = null, petBonus = null) {
+    const meta = getJobMeta(job);
+    const jobModHP = meta?.jobModHP ?? 1.0;
+    const hpPct = Number(setBonus?.hp_pct || 0) + Number(cardBonus?.hp_pct || 0) + Number(petBonus?.hp_pct || 0);
+    const effectiveVit = (stats.vit ?? 0)
+        + (setBonus?.totalStats?.vit ?? 0)
+        + (cardBonus?.totalStats?.vit ?? 0)
+        + (petBonus?.totalStats?.vit || 0);
+    const flatHp = Number(petBonus?.maxHp || 0);
+    return Math.floor((35 + level * 8) * (1 + effectiveVit / 100) * jobModHP * (1 + hpPct / 100)) + flatHp;
+}
+
+/**
+ * Calcula maxMp Ragnarok-style.
+ * @param {string} job
+ * @param {number} level
+ * @param {{int:number}} stats
+ * @returns {number}
+ */
+function _calcMaxMp(job, level, stats, setBonus = null, cardBonus = null, petBonus = null) {
+    const meta = getJobMeta(job);
+    const jobModMP = meta?.jobModMP ?? 1.0;
+    const mpPct = Number(setBonus?.mp_pct || 0) + Number(cardBonus?.mp_pct || 0) + Number(petBonus?.mp_pct || 0);
+    const effectiveInt = (stats.int ?? 0)
+        + (setBonus?.totalStats?.int ?? 0)
+        + (cardBonus?.totalStats?.int ?? 0)
+        + (petBonus?.totalStats?.int || 0);
+    const flatMp = Number(petBonus?.maxMp || 0);
+    return Math.floor((40 + level * 5) * (1 + effectiveInt / 100) * jobModMP * (1 + mpPct / 100)) + flatMp;
+}
+
+function _buildData(saveData) {
+    const job   = saveData?.class ?? 'swordman';
+    const level = saveData?.level ?? 1;
+    const stats = getBaseStats(job, level);
+
+    return {
+        type:          'player',
+        name:          saveData?.name          ?? 'Hero',
+        title:         saveData?.title         ?? '',
+        class:         job,
+        level:         level,
+        jobLevel:      saveData?.jobLevel      ?? 1,
+        exp:           saveData?.exp           ?? 0,
+        jobExp:        saveData?.jobExp        ?? 0,
+        hp:            saveData?.hp            ?? _calcMaxHp(job, level, stats, _setBonusCache, _cardBonusCache, _petBonusCache),
+        maxHp:         saveData?.maxHp         ?? _calcMaxHp(job, level, stats, _setBonusCache, _cardBonusCache, _petBonusCache),
+        mp:            saveData?.mp            ?? _calcMaxMp(job, level, stats, _setBonusCache, _cardBonusCache, _petBonusCache),
+        maxMp:         saveData?.maxMp         ?? _calcMaxMp(job, level, stats, _setBonusCache, _cardBonusCache, _petBonusCache),
+        baseStats:     saveData?.baseStats     ?? stats,
+        statPoints:    saveData?.statPoints    ?? 0,
+        skillPoints:   saveData?.skillPoints   ?? 0,
+        learnedSkills: saveData?.learnedSkills ?? [],
+        position:      saveData?.position      ?? { x: 0, y: 0, z: 0 },
+        currentMap:    saveData?.currentMap    ?? 'city_01',
+
+        playtime:      saveData?.playtime      ?? 0,
+        equippedSkills: Array.isArray(saveData?.equippedSkills)
+            ? saveData.equippedSkills
+            : [null, null, null, null],
+        jobHistory: Array.isArray(saveData?.jobHistory) ? saveData.jobHistory : [],
+        jobChangeQuestsCompleted: Array.isArray(saveData?.jobChangeQuestsCompleted) ? saveData.jobChangeQuestsCompleted : [],
+        cooldowns:     {}, // sempre zerado no boot — performance.now() reinicia em 0
+        _activeBuffs:  [],
+    };
+    
+}
+
+/**
+ * Recebe bônus de equipamento via bus (R8 — sem import de equipment.js).
+ * @param {Object} _payload
+ */
+function _onItemEquipped(_payload) {
+    // PROMPT 11: aplicar bônus de stats ao player
+    console.log('[player] itemEquipped recebido — bônus aplicado no PROMPT 11');
+}
+/**
+ * Atualiza cache de bônus percentuais e stats de set, depois recalcula HP/MP máximos.
+ * @param {{ totalStats?: Object, hpPctBonus?: number, mpPctBonus?: number }} payload
+ */
+function _onSetBonusChanged(payload) {
+    if (!_data) return;
+
+    _setBonusCache.totalStats = {
+        str: Number(payload?.totalStats?.str || 0),
+        agi: Number(payload?.totalStats?.agi || 0),
+        vit: Number(payload?.totalStats?.vit || 0),
+        int: Number(payload?.totalStats?.int || 0),
+        dex: Number(payload?.totalStats?.dex || 0),
+        luk: Number(payload?.totalStats?.luk || 0)
+    };
+    _setBonusCache.hp_pct = Number(payload?.hpPctBonus || 0);
+    _setBonusCache.mp_pct = Number(payload?.mpPctBonus || 0);
+
+    const hpRatio = _data.maxHp > 0 ? (_data.hp / _data.maxHp) : 1;
+    const mpRatio = _data.maxMp > 0 ? (_data.mp / _data.maxMp) : 1;
+
+    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+
+    _data.hp = Math.max(1, Math.min(_data.maxHp, Math.floor(_data.maxHp * hpRatio)));
+    _data.mp = Math.max(0, Math.min(_data.maxMp, Math.floor(_data.maxMp * mpRatio)));
+
+    emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+    emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+}
+
+function _onCardBonusChanged(_payload) {
+    if (!_data) return;
+
+    const bonus = getCardBonuses?.() ?? {
+        stats: { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 },
+        hp_pct: 0,
+        mp_pct: 0
+    };
+
+    _cardBonusCache.totalStats = {
+        str: Number(bonus?.stats?.str || 0),
+        agi: Number(bonus?.stats?.agi || 0),
+        vit: Number(bonus?.stats?.vit || 0),
+        int: Number(bonus?.stats?.int || 0),
+        dex: Number(bonus?.stats?.dex || 0),
+        luk: Number(bonus?.stats?.luk || 0)
+    };
+    _cardBonusCache.hp_pct = Number(bonus?.hp_pct || 0);
+    _cardBonusCache.mp_pct = Number(bonus?.mp_pct || 0);
+
+    const hpRatio = _data.maxHp > 0 ? (_data.hp / _data.maxHp) : 1;
+    const mpRatio = _data.maxMp > 0 ? (_data.mp / _data.maxMp) : 1;
+
+    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+
+    _data.hp = Math.max(1, Math.min(_data.maxHp, Math.floor(_data.maxHp * hpRatio)));
+    _data.mp = Math.max(0, Math.min(_data.maxMp, Math.floor(_data.maxMp * mpRatio)));
+
+    emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+    emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+}
+
+function _onPetBonusChanged(_payload) {
+    if (!_data) return;
+
+    const bonus = getPetBonuses?.() ?? {};
+
+    _petBonusCache.totalStats = {
+        str: Number(bonus?.str || 0),
+        agi: Number(bonus?.agi || 0),
+        vit: Number(bonus?.vit || 0),
+        int: Number(bonus?.int || 0),
+        dex: Number(bonus?.dex || 0),
+        luk: Number(bonus?.luk || 0)
+    };
+    _petBonusCache.hp_pct = 0;
+    _petBonusCache.mp_pct = 0;
+    _petBonusCache.maxHp = Number(bonus?.maxHp || 0);
+    _petBonusCache.maxMp = Number(bonus?.maxMp || 0);
+
+    const hpRatio = _data.maxHp > 0 ? (_data.hp / _data.maxHp) : 1;
+    const mpRatio = _data.maxMp > 0 ? (_data.mp / _data.maxMp) : 1;
+
+    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+
+    _data.hp = Math.max(1, Math.min(_data.maxHp, Math.floor(_data.maxHp * hpRatio)));
+    _data.mp = Math.max(0, Math.min(_data.maxMp, Math.floor(_data.maxMp * mpRatio)));
+
+    emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+    emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+}
+
+
+
+/**
+ * Toca SFX de footstep alternado ao detectar deslocamento real no plano XZ.
+ * @param {{ position: THREE.Vector3, previousPosition: THREE.Vector3, mapId: string }} data
+ */
+function _onPlayerMoved(data) {
+    if (!data.previousPosition) return;
+
+    const dx   = data.position.x - data.previousPosition.x;
+    const dz   = data.position.z - data.previousPosition.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+    if (dist < FOOTSTEP_THRESHOLD) return;
+
+    const now = performance.now();
+    if (now - _lastFootstepTime < FOOTSTEP_COOLDOWN_MS) return;
+
+    _lastFootstepTime = now;
+    Audio.playSFX(FOOTSTEP_SFXS[_footstepIndex], FOOTSTEP_VOLUME);
+    _footstepIndex = (_footstepIndex + 1) % FOOTSTEP_SFXS.length;
+}
+/**
+ * @module monsters
+ * @description Gerencia catálogo, spawn, IA e respawn de monstros.
+ * Sessão 17 — PROMPT 12 Parte 2:
+ *   - 4 bosses gated: só spawnam via questBossSpawnRequest (quests.js Parte 3)
+ *   - spawnQuestBoss(bossId, questId) e despawnQuestBoss(bossId): exports públicos
+ *   - Geometria diferenciada por boss + anel dourado
+ *   - Fases de boss: 100%/50%/25% HP com gatilhos específicos por tipo
+ *   - Telegrafia visual AoE: scale 1.3x + cor vermelha por 2s antes do dano
+ *   - _stateAttack: _attackCounter % 2 alterna normal/ability
+ *   - combat.js update() precisa de patch para deadly_poison/abyss_poison (ver R10)
+ * Cross-layer imports justificados:
+ *   entities→systems/combat (BUG-02 deferido),
+ *   entities→world/scene: named imports { add, remove }.
+ */
+
+import * as THREE from 'three';
+import { add as sceneAdd, remove as sceneRemove } from '../world/scene.js';
+import { on, emit } from '../core/events.js';
+import {
+    registerTarget,
+    unregisterTarget,
+} from '../systems/combat.js';
+import * as Inventory from '../systems/inventory.js';
+import { generateSockets } from '../systems/cards.js';
+import { playSFX3D } from '../core/audio.js';
+import * as Models from '../core/models.js';
+
+// ─── Estado interno ───────────────────────────────────────────────────────────
+// --- helpers de material para glTF/Group ---
+function _getMeshMaterial(mesh) {
+    if (!mesh) return null;
+    if ((mesh.isMesh || mesh.isSkinnedMesh) && mesh.material) {
+        return Array.isArray(mesh.material) ? (mesh.material[0] ?? null) : mesh.material;
+    }
+    let found = null;
+    mesh.traverse((child) => {
+        if (found) return;
+        if ((child.isMesh || child.isSkinnedMesh) && child.material) {
+            found = Array.isArray(child.material) ? (child.material[0] ?? null) : child.material;
+        }
+    });
+    return found;
+}
+function _getMeshColor(mesh) { const m = _getMeshMaterial(mesh); return m?.color ?? null; }
+function _getMeshEmissive(mesh) { const m = _getMeshMaterial(mesh); return m?.emissive ?? null; }
+
+/** @type {Map<string, Object>} instanceId → instância */
+const _monsters = new Map();
+
+/** @type {Object.<string, Object>} monsterId → def do catálogo */
+let _catalogue = {};
+
+/** @type {number} */
+let _uidCounter = 0;
+
+/** @type {boolean} */
+let _initialized = false;
+
+/** @type {Object.<string, Object>} itemId → def para cor de drops */
+let _itemCatalogue = {};
+
+/** @type {Map<string, {itemId:string, qty:number, mesh:THREE.Mesh, spawnTime:number, refineLevel?:number, sockets?:(string|null)[]}>} */
+const _drops = new Map();
+
+/** @type {number} */
+let _dropIdCounter = 0;
+
+/** @type {{x,y,z}} posição do player — atualizada em updateAll */
+let _playerPos = { x: 0, y: 0, z: 0 };
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Carrega monsters.json + items.json e registra listeners.
+ * @returns {Promise<void>}
+ */
+async function init() {
+    if (_initialized) return;
+
+    const res = await fetch('assets/data/monsters.json');
+    if (!res.ok) throw new Error(`[monsters] Falha monsters.json: ${res.status}`);
+    const data = await res.json();
+    for (const m of data.monsters) _catalogue[m.id] = m;
+
+    const itemsRes = await fetch('assets/data/items.json');
+    if (!itemsRes.ok) throw new Error(`[monsters] Falha items.json: ${itemsRes.status}`);
+    const itemsData = await itemsRes.json();
+    for (const item of itemsData.items) _itemCatalogue[item.id] = item;
+
+    on('entityDied',              _onEntityDied);
+    on('pickupRequest',           _onPickupRequest);
+    on('questBossSpawnRequest',   _onQuestBossSpawnRequest);
+    on('questBossDespawnRequest', _onQuestBossDespawnRequest);
+    on('petAttack', _onPetAttack);
+
+    _initialized = true;
+    console.log(`[monsters] Catálogo: ${Object.keys(_catalogue).length} tipos.`);
+}
+
+// ─── Geometria por tipo de boss ───────────────────────────────────────────────
+
+/**
+ * Cria geometry + material correto para o bossId dado.
+ * Monstros normais usam BoxGeometry padrão.
+ * @param {Object} def
+ * @returns {{ geometry: THREE.BufferGeometry, material: THREE.Material }}
+ */
+function _createBossMesh(def) {
+    let geometry;
+    switch (def.id) {
+        case 'boss_lord_knight':
+            geometry = new THREE.OctahedronGeometry(1.2);
+            break;
+        case 'boss_high_wizard':
+            geometry = new THREE.IcosahedronGeometry(1.0);
+            break;
+        case 'boss_sniper':
+            geometry = new THREE.ConeGeometry(0.8, 2.0, 8);
+            break;
+        case 'boss_shadow_assassin':
+            geometry = new THREE.DodecahedronGeometry(1.0);
+            break;
+        default:
+            geometry = new THREE.BoxGeometry(1, 1, 1);
+    }
+    const material = new THREE.MeshLambertMaterial({
+        color:             new THREE.Color(def.modelPlaceholder),
+        emissive:          new THREE.Color(def.modelPlaceholder),
+        emissiveIntensity: 0.3,
+    });
+    return { geometry, material };
+}
+
+// ─── Factory ──────────────────────────────────────────────────────────────────
+
+/**
+ * Cria e registra uma instância de monstro na cena e no combat.
+ * @param {string} monsterId
+ * @param {{x,y,z}} position
+ * @param {string|null} [linkedQuestId=null]
+ * @returns {Object|null}
+ */
+async function spawnMonster(monsterId, position, linkedQuestId = null) {
+    const def = _catalogue[monsterId];
+    if (!def) {
+        console.warn(`[monsters] monsterId desconhecido: ${monsterId}`);
+        return null;
+    }
+
+    const uid = `monster_${monsterId}_${++_uidCounter}`;
+
+    let mesh;
+    if (def.modelFile) {
+        try {
+            const gltf = await Models.loadModel(def.modelFile);
+            mesh = gltf.scene;
+            mesh.scale.set(1.0, 1.0, 1.0);
+            mesh.traverse(child => {
+                if (child.isMesh || child.isSkinnedMesh) {
+                    child.castShadow = true;
+                }
+            });
+        } catch (err) {
+            console.warn(`[monsters] Falha glTF ${def.modelFile}, usando fallback`, err);
+            if (def.isBoss) {
+                const { geometry, material } = _createBossMesh(def);
+                mesh = new THREE.Mesh(geometry, material);
+            } else {
+                mesh = new THREE.Mesh(
+                    new THREE.BoxGeometry(1, 1, 1),
+                    new THREE.MeshLambertMaterial({ color: new THREE.Color(def.modelPlaceholder) }),
+                );
+            }
+        }
+    } else if (def.isBoss) {
+        const { geometry, material } = _createBossMesh(def);
+        mesh = new THREE.Mesh(geometry, material);
+    } else {
+        mesh = new THREE.Mesh(
+            new THREE.BoxGeometry(1, 1, 1),
+            new THREE.MeshLambertMaterial({ color: new THREE.Color(def.modelPlaceholder) }),
+        );
+    }
+
+    mesh.position.set(position.x, position.y ?? 0.5, position.z);
+    mesh.castShadow = true;
+    mesh.name = uid;
+
+    // Anel dourado para todos os bosses
+    if (def.isBoss) {
+        const ring = new THREE.Mesh(
+            new THREE.RingGeometry(0.7, 1.0, 24),
+            new THREE.MeshLambertMaterial({ color: 0xffcc00, side: THREE.DoubleSide }),
+        );
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.y = -0.6;
+        mesh.add(ring);
+    }
+
+    sceneAdd(mesh);
+
+    const instance = {
+        id:         uid,
+        monsterId,
+        type:       'monster',
+        isBoss:     def.isBoss ?? false,
+        linkedQuestId,
+
+        mesh,
+
+        hp:          def.hp,
+        maxHp:       def.hp,
+        str:         def.str,
+        def:         def.def,
+        agi:         def.agi,
+        xp:          def.xp,
+        aggroRange:  def.aggroRange,
+        attackRange: def.attackRange,
+        speed:       def.speed,
+        baseStats:   { str: def.str, vit: def.def },
+
+        drops:      def.drops      ?? [],
+        cardDrop:   def.cardDrop   ?? null,
+        cardDrops:  def.cardDrops  ?? [],
+        abilities:  def.abilities  ?? [],
+
+        // IA
+        state:           'idle',
+        _spawnPosition:  new THREE.Vector3(position.x, position.y ?? 0.5, position.z),
+        _idleTarget:     null,
+        _idleTimer:      0,
+        _lastAttackTime: 0,
+        _attackCounter:  0,
+
+        // Fases (flags para disparar apenas uma vez)
+        _phase50Done: false,
+        _phase25Done: false,
+
+        // Estado de telegrafia / habilidades especiais
+        _telegraphing:       false,
+        _telegraphTimer:     0,
+        _pendingAoe:         false,
+        _invisible:          false,
+        _invisibilityUntil:  0,
+        _surpriseStrikeReady:false,
+        _reflectShield:      false,
+        _reflectExpires:     0,
+        _clonesMeshes:       [],
+        _clones:             [],
+        _stealthUsed:        false,
+        _playerSawBoss:      false,
+        _multishotPending:   0,
+        _enraged:            false,
+        _phaseAuraLocked:    false,
+        _phaseMultishotAuto: false,
+        _phaseStealthLoop:   false,
+        _phaseReflectLocked: false,
+        _phaseAbyssAura:     false,
+        // Debuffs ativos (DoT de boss sobre o player são emitidos via evento)
+        _activeDebuffs: [],
+
+        get position() { return this.mesh.position; },
+    };
+
+    _monsters.set(uid, instance);
+    registerTarget(instance);
+
+    emit('monsterSpawned', { id: uid, monsterId, position: { ...position } });
+    return instance;
+}
+
+/**
+ * Spawna count monstros do mesmo tipo em área circular.
+ * @param {string} monsterId
+ * @param {number} count
+ * @param {{ center:{x,z}, radius:number }} area
+ */
+function spawnGroup(monsterId, count, area) {
+    for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const r     = Math.random() * area.radius;
+        spawnMonster(monsterId, {
+            x: area.center.x + Math.cos(angle) * r,
+            y: 0.5,
+            z: area.center.z + Math.sin(angle) * r,
+        });
+    }
+}
+
+/**
+ * Spawna um boss vinculado a uma quest. Chamado via event bus questBossSpawnRequest.
+ * @param {string} bossId
+ * @param {string} questId
+ * @param {{x,y,z}} position
+ * @returns {Object|null}
+ */
+function spawnQuestBoss(bossId, questId, position) {
+    // Evitar spawn duplicado do mesmo boss para a mesma quest
+    for (const [, m] of _monsters) {
+        if (m.monsterId === bossId && m.linkedQuestId === questId && m.state !== 'dead') {
+            console.warn(`[monsters] Boss ${bossId} já ativo para quest ${questId}.`);
+            return null;
+        }
+    }
+    const instance = spawnMonster(bossId, position, questId);
+    if (instance) {
+        emit('uiHintShow', {
+            msg: `Boss apareceu: ${_catalogue[bossId]?.name ?? bossId}!`,
+            duration: 4000,
+        });
+    }
+    return instance;
+}
+
+/**
+ * Remove um boss da cena ao abandonar/completar a quest.
+ * @param {string} bossId
+ */
+function despawnQuestBoss(bossId) {
+    for (const [uid, m] of _monsters) {
+        if (m.monsterId === bossId && m.isBoss) {
+            _cleanupBoss(m);
+            unregisterTarget(m);
+            sceneRemove(m.mesh);
+            _monsters.delete(uid);
+            console.log(`[monsters] Boss ${bossId} despawnado.`);
+            return;
+        }
+    }
+}
+
+/**
+ * Retorna cópia readonly do catálogo.
+ * @returns {Object.<string, Object>}
+ */
+function getCatalog() {
+    return { ..._catalogue };
+}
+
+// ─── Listeners de eventos de boss ─────────────────────────────────────────────
+
+/** @param {{ bossId:string, questId:string, position:{x,y,z} }} payload */
+function _onQuestBossSpawnRequest({ bossId, questId, position }) {
+    spawnQuestBoss(bossId, questId, position ?? { x: 0, y: 0.5, z: 0 });
+}
+
+/** @param {{ bossId:string }} payload */
+function _onQuestBossDespawnRequest({ bossId }) {
+    despawnQuestBoss(bossId);
+}
+
+// ─── Loop de IA ───────────────────────────────────────────────────────────────
+
+/**
+ * Atualiza todos os monstros vivos. Chamado no game loop.
+ * @param {number} dt - delta em segundos
+ * @param {THREE.Vector3} playerPosition
+ */
+function updateAll(dt, playerPosition) {
+    _playerPos = playerPosition;
+    for (const [, m] of _monsters) {
+        if (m.state === 'dead') continue;
+        _updateMonster(m, dt, playerPosition);
+    }
+    _updateDrops(dt, playerPosition);
+}
+
+/** @param {Object} m @param {number} dt @param {THREE.Vector3} playerPos */
+function _updateMonster(m, dt, playerPos) {
+    // Telegrafia: conta down antes do AoE
+    if (m._telegraphing) {
+        m._telegraphTimer -= dt;
+        if (m._telegraphTimer <= 0) {
+            m._telegraphing = false;
+            m.mesh.scale.set(1, 1, 1);
+            { const __mc = _getMeshColor(m.mesh); if (__mc && m._originalColor) { __mc.copy(m._originalColor); } }
+            if (m._pendingAoe) {
+                m._pendingAoe = false;
+                _executeBossAoe(m, playerPos);
+            }
+        }
+        return;
+    }
+
+    // Checar fases por HP
+    if (m.isBoss) _checkBossPhases(m);
+
+    const dist = m.mesh.position.distanceTo(playerPos);
+    if (
+        m.isBoss &&
+        !m._playerSawBoss &&
+        !m._invisible &&
+        m.mesh.visible &&
+        dist <= (m.aggroRange + 2)
+    ) {
+        m._playerSawBoss = true;
+    }
+    switch (m.state) {
+        case 'idle':   _stateIdle(m, dt, dist);              break;
+        case 'aggro':
+            if (!m._aggroSfxPlayed) {
+                const aggroDef = _catalogue[m.monsterId];
+                const aggroSfx = aggroDef?.soundProfile?.aggro;
+                if (aggroSfx) {
+                    playSFX3D(`assets/audio/sfx/${aggroSfx}.ogg`, m.mesh.position);
+                }
+                m._aggroSfxPlayed = true;
+            }
+            m.state = 'chase';
+            break;
+        case 'chase':  _stateChase(m, dt, playerPos, dist);  break;
+        case 'attack': _stateAttack(m, dt, playerPos, dist); break;
+    }
+}
+
+// ─── Fases de boss ────────────────────────────────────────────────────────────
+
+/** @param {Object} m */
+function _checkBossPhases(m) {
+    const pct = m.hp / m.maxHp;
+
+    if (!m._phase50Done && pct <= 0.5) {
+        m._phase50Done = true;
+        _triggerPhase50(m);
+    }
+    if (!m._phase25Done && pct <= 0.25) {
+        m._phase25Done = true;
+        _triggerPhase25(m);
+    }
+
+    if (m.monsterId === 'boss_sniper' && m._phaseStealthLoop && !m._invisible && m.mesh.visible) {
+        m.mesh.visible = true;
+    }
+
+    if (m.monsterId === 'boss_high_wizard' && m._phaseReflectLocked) {
+        m._reflectShield = true;
+        m._reflectExpires = Infinity;
+        { const __mat = _getMeshMaterial(m.mesh); if (__mat && 'emissiveIntensity' in __mat) __mat.emissiveIntensity = 0.95; }
+    }
+
+    if (m.monsterId === 'boss_shadow_assassin' && m._phaseAbyssAura) {
+        const now = performance.now();
+        if (!m._phaseAbyssAuraNextTick || now >= m._phaseAbyssAuraNextTick) {
+            m._phaseAbyssAuraNextTick = now + 2000;
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'abyssPoison',
+                data: {
+                    phasePersistent: true,
+                    tickRateMs: 2000,
+                    durationMs: 10000,
+                    damagePerTickType: 'maxHpPct',
+                    damagePerTickValue: 0.05,
+                },
+            });
+        }
+    }
+}
+
+/** @param {Object} m */
+function _triggerPhase50(m) {
+    switch (m.monsterId) {
+        case 'boss_lord_knight':
+            emit('uiHintShow', {
+                msg: `${_catalogue[m.monsterId].name}: reforços avançam para a arena!`,
+                duration: 3500,
+            });
+
+            for (let i = 0; i < 2; i++) {
+                const angle = (i / 2) * Math.PI * 2;
+                const addX = m.mesh.position.x + Math.cos(angle) * 2;
+                    const addZ = m.mesh.position.z + Math.sin(angle) * 2;
+                    spawnMonster('goblin', { x: addX, y: 0.5, z: addZ });
+
+                    emit('bossAbilityUsed', {
+                        bossId: m.monsterId,
+                        ability: 'summonAdds',
+                        data: { phase: 50, summonedMonsterId: 'goblin', x: addX, z: addZ },
+                    });
+            }
+            break;
+
+        case 'boss_high_wizard':
+            emit('uiHintShow', {
+                msg: `${_catalogue[m.monsterId].name}: o arcanista convergiu energia no centro da arena!`,
+                duration: 3500,
+            });
+
+            m.mesh.position.set(0, m.mesh.position.y, 0);
+
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'teleportStrike',
+                data: {
+                    phase: 50,
+                    teleportedToCenter: true,
+                    position: { x: 0, y: m.mesh.position.y, z: 0 },
+                },
+            });
+
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'aoeWindup',
+                data: {
+                    phase: 50,
+                    telegraphSeconds: 2,
+                    radius: 5.0,
+                    position: { x: 0, y: m.mesh.position.y, z: 0 },
+                },
+            });
+
+            _startTelegraph(m);
+            break;
+
+        case 'boss_sniper':
+            emit('uiHintShow', {
+                msg: `${_catalogue[m.monsterId].name}: sumiu nas sombras e prepara tiros furtivos!`,
+                duration: 3500,
+            });
+
+            m._phaseStealthLoop = true;
+            m._invisible = true;
+            m.mesh.visible = false;
+
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'invisibility',
+                data: {
+                    phase: 50,
+                    persistentStealth: true,
+                    revealWindowMs: 1000,
+                },
+            });
+            break;
+
+        case 'boss_shadow_assassin':
+            emit('uiHintShow', {
+                msg: `${_catalogue[m.monsterId].name}: a arena foi tomada por sombras ilusórias!`,
+                duration: 3500,
+            });
+
+            if (m._clonesMeshes.length === 0) {
+                _spawnShadowClones(m);
+            }
+
+            // terceira cópia adicional para fase 50
+            {
+                const cloneGeo = new THREE.DodecahedronGeometry(0.8);
+                const cloneMat = new THREE.MeshLambertMaterial({
+                    color:       new THREE.Color(_catalogue[m.monsterId]?.modelPlaceholder ?? '#330033'),
+                    transparent: true,
+                    opacity:     0.5,
+                });
+                const cloneMesh = new THREE.Mesh(cloneGeo, cloneMat);
+                cloneMesh.position.set(
+                    m.mesh.position.x,
+                    0.5,
+                    m.mesh.position.z + 2.5,
+                );
+                cloneMesh.castShadow = false;
+                cloneMesh.name = `${m.id}_clone_phase50`;
+
+                const cloneEntity = {
+                    id: cloneMesh.name,
+                    monsterId: `${m.monsterId}_clone`,
+                    type: 'monster',
+                    isBoss: false,
+                    isClone: true,
+                    hp: 1,
+                    maxHp: 1,
+                    def: 0,
+                    baseStats: { str: 0, vit: 0 },
+                    state: 'idle',
+                    mesh: cloneMesh,
+                    parentBossId: m.id,
+                    get position() { return this.mesh.position; },
+                };
+
+                sceneAdd(cloneMesh);
+                registerTarget(cloneEntity);
+                m._clonesMeshes.push(cloneMesh);
+                m._clones.push(cloneEntity);
+
+                emit('bossAbilityUsed', {
+                    bossId: m.monsterId,
+                    ability: 'spawnClones',
+                    data: {
+                        phase: 50,
+                        count: 3,
+                        extraCloneId: cloneEntity.id,
+                    },
+                });
+            }
+            break;
+    }
+}
+
+/** @param {Object} m */
+function _triggerPhase25(m) {
+    switch (m.monsterId) {
+        case 'boss_lord_knight':
+            emit('uiHintShow', {
+                msg: `${_catalogue[m.monsterId].name}: entrou em fúria total!`,
+                duration: 3500,
+            });
+
+            m._enraged = true;
+            m.str = Math.floor(m.baseStats.str * 1.3);
+            { const __em = _getMeshEmissive(m.mesh); if (__em) __em.set(0xff3333); }
+            { const __mat = _getMeshMaterial(m.mesh); if (__mat && 'emissiveIntensity' in __mat) __mat.emissiveIntensity = 0.9; }
+
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'enrage',
+                data: {
+                    phase: 25,
+                    attackMultiplier: 1.3,
+                    speedMultiplier: 1.5,
+                },
+            });
+            break;
+
+        case 'boss_high_wizard':
+            emit('uiHintShow', {
+                msg: `${_catalogue[m.monsterId].name}: o espelho arcano tornou-se permanente!`,
+                duration: 3500,
+            });
+
+            m._phaseReflectLocked = true;
+            m._reflectShield = true;
+            m._reflectExpires = Infinity;
+           { const __mat = _getMeshMaterial(m.mesh); if (__mat && 'emissiveIntensity' in __mat) __mat.emissiveIntensity = 1.0; }
+
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'reflectShield',
+                data: {
+                    phase: 25,
+                    permanent: true,
+                    reflectsPct: 0.5,
+                },
+            });
+            break;
+
+        case 'boss_sniper':
+            emit('uiHintShow', {
+                msg: `${_catalogue[m.monsterId].name}: cada ataque agora se divide em múltiplos tiros!`,
+                duration: 3500,
+            });
+
+            m._phaseMultishotAuto = true;
+
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'multishot',
+                data: {
+                    phase: 25,
+                    continuous: true,
+                    count: 3,
+                    damagePerProjectile: Math.max(1, Math.floor(m.str * 0.6)),
+                },
+            });
+            break;
+
+        case 'boss_shadow_assassin':
+            emit('uiHintShow', {
+                msg: `${_catalogue[m.monsterId].name}: o veneno do abismo cobriu toda a arena!`,
+                duration: 3500,
+            });
+
+            m._phaseAbyssAura = true;
+            m._enraged = true;
+            m.str = Math.floor(m.baseStats.str * 1.3);
+            { const __em = _getMeshEmissive(m.mesh); if (__em) __em.set(0x7a1fa2); }
+            { const __mat = _getMeshMaterial(m.mesh); if (__mat && 'emissiveIntensity' in __mat) __mat.emissiveIntensity = 0.9; }
+
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'abyssPoison',
+                data: {
+                    phase: 25,
+                    permanent: true,
+                    tickRateMs: 2000,
+                    damagePerTickType: 'maxHpPct',
+                    damagePerTickValue: 0.05,
+                    enrage: true,
+                },
+            });
+            break;
+    }
+}
+
+// ─── Habilidades específicas de boss ──────────────────────────────────────────
+
+/**
+ * Inicia telegrafia visual 2s antes do AoE do boss_lord_knight.
+ * @param {Object} m
+ */
+function _startTelegraph(m) {
+    if (m._telegraphing) return;
+    m._telegraphing   = true;
+    m._telegraphTimer = 2.0;
+    m._pendingAoe     = true;
+    m.mesh.scale.set(1.3, 1.3, 1.3);
+   { const __mc = _getMeshColor(m.mesh); if (__mc) { if (!m._originalColor) m._originalColor = __mc.clone(); __mc.set(0xff2200); } }
+    emit('uiHintShow', { msg: '⚠ AoE se aproxima! Saia do raio!', duration: 2000 });
+}
+
+/**
+ * Executa o dano AoE do boss_lord_knight após telegrafia.
+ * @param {Object} m @param {THREE.Vector3} playerPos
+ */
+function _executeBossAoe(m, playerPos) {
+    const AOE_RADIUS = 3.0;
+    const dx = playerPos.x - m.mesh.position.x;
+    const dz = playerPos.z - m.mesh.position.z;
+    const hit = Math.sqrt(dx * dx + dz * dz) <= AOE_RADIUS;
+    const dmg = Math.floor(m.str * 2.5);
+
+    emit('bossAbilityUsed', {
+        bossId: m.monsterId,
+        ability: 'aoeWindup',
+        data: {
+            radius: AOE_RADIUS,
+            damage: dmg,
+            position: {
+                x: m.mesh.position.x,
+                y: m.mesh.position.y,
+                z: m.mesh.position.z,
+            },
+            hit,
+        },
+    });
+
+    if (hit) {
+        emit('monsterAttackRequest', { attacker: m, ability: 'aoeWindup', damage: dmg });
+    }
+}
+
+/**
+ * Teleport strike do boss_high_wizard: teletransporta ao lado do player e ataca.
+ * @param {Object} m
+ */
+function _bossTeleportStrike(m) {
+    const angle = Math.random() * Math.PI * 2;
+    m.mesh.position.x = _playerPos.x + Math.cos(angle) * 1.5;
+    m.mesh.position.z = _playerPos.z + Math.sin(angle) * 1.5;
+
+    emit('bossAbilityUsed', {
+        bossId: m.monsterId,
+        ability: 'teleportStrike',
+        data: {
+            position: {
+                x: m.mesh.position.x,
+                y: m.mesh.position.y,
+                z: m.mesh.position.z,
+            },
+            strikeDelayMs: 200,
+        },
+    });
+
+    setTimeout(() => {
+        if (m.state !== 'dead') {
+            const dmg = Math.floor(m.str * 2.0);
+            emit('monsterAttackRequest', { attacker: m, ability: 'teleportStrike', damage: dmg });
+        }
+    }, 200);
+}
+
+/**
+ * Spawna 2 clones visuais do boss_shadow_assassin (sem dano).
+ * @param {Object} m
+ */
+function _spawnShadowClones(m) {
+    const created = [];
+
+    for (let i = 0; i < 2; i++) {
+        const angle = (i / 2) * Math.PI * 2;
+        const cloneGeo = new THREE.DodecahedronGeometry(0.8);
+        const cloneMat = new THREE.MeshLambertMaterial({
+            color:       new THREE.Color(_catalogue[m.monsterId]?.modelPlaceholder ?? '#330033'),
+            transparent: true,
+            opacity:     0.5,
+        });
+        const cloneMesh = new THREE.Mesh(cloneGeo, cloneMat);
+        cloneMesh.position.set(
+            m.mesh.position.x + Math.cos(angle) * 2,
+            0.5,
+            m.mesh.position.z + Math.sin(angle) * 2,
+        );
+        cloneMesh.castShadow = false;
+        cloneMesh.name = `${m.id}_clone_${i + 1}`;
+
+        const cloneEntity = {
+            id: cloneMesh.name,
+            monsterId: `${m.monsterId}_clone`,
+            type: 'monster',
+            isBoss: false,
+            isClone: true,
+            hp: 1,
+            maxHp: 1,
+            def: 0,
+            baseStats: { str: 0, vit: 0 },
+            state: 'idle',
+            mesh: cloneMesh,
+            parentBossId: m.id,
+            get position() { return this.mesh.position; },
+        };
+
+        sceneAdd(cloneMesh);
+        registerTarget(cloneEntity);
+        m._clonesMeshes.push(cloneMesh);
+        m._clones.push(cloneEntity);
+        created.push({
+            id: cloneEntity.id,
+            x: cloneMesh.position.x,
+            y: cloneMesh.position.y,
+            z: cloneMesh.position.z,
+        });
+    }
+
+    emit('bossAbilityUsed', {
+        bossId: m.monsterId,
+        ability: 'spawnClones',
+        data: {
+            count: created.length,
+            clones: created,
+        },
+    });
+}
+
+/**
+ * Remove clones e anel ao desaparecer o boss.
+ * @param {Object} m
+ */
+function _cleanupBoss(m) {
+    if (Array.isArray(m._clones)) {
+        for (const cloneEntity of m._clones) {
+            unregisterTarget(cloneEntity);
+        }
+    }
+
+    for (const clone of m._clonesMeshes) {
+        clone.geometry?.dispose?.();
+        if (Array.isArray(clone.material)) { clone.material.forEach(mat => mat?.dispose?.()); } else { clone.material?.dispose?.(); }
+        sceneRemove(clone);
+    }
+
+    m._clonesMeshes = [];
+    m._clones = [];
+}
+
+// ─── Estados de IA ────────────────────────────────────────────────────────────
+
+function _stateIdle(m, dt, distToPlayer) {
+    if (distToPlayer < m.aggroRange) { m.state = 'aggro'; return; }
+    m._idleTimer -= dt;
+    if (m._idleTimer <= 0 || !m._idleTarget) {
+        m._idleTimer = 2 + Math.random() * 2;
+        const angle  = Math.random() * Math.PI * 2;
+        const r      = Math.random() * 3;
+        m._idleTarget = new THREE.Vector3(
+            m._spawnPosition.x + Math.cos(angle) * r,
+            m._spawnPosition.y,
+            m._spawnPosition.z + Math.sin(angle) * r,
+        );
+    }
+    _moveTowards(m, m._idleTarget, m.speed * 0.4, dt);
+}
+
+function _stateChase(m, dt, playerPos, dist) {
+    if (dist < m.attackRange) { m.state = 'attack'; return; }
+    if (dist > m.aggroRange * 1.5) { m.state = 'idle'; m._idleTimer = 0; m._aggroSfxPlayed = false; return; }
+
+    // boss_sniper fica parado atirando à distância se dentro do attackRange estendido
+    if (m.monsterId === 'boss_sniper' && dist <= m.attackRange) {
+        m.state = 'attack';
+        return;
+    }
+    _moveTowards(m, playerPos, m.speed, dt);
+}
+
+function _stateAttack(m, dt, playerPos, dist) {
+    if (dist > m.attackRange) { m.state = 'chase'; return; }
+    _faceTarget(m, playerPos);
+
+    const baseCooldown = m.isBoss ? 1.5 : 1.0;
+    const cooldown = m._enraged ? (baseCooldown / 1.5) : baseCooldown;
+    const now = performance.now() / 1000;
+    if (now - m._lastAttackTime < cooldown) return;
+    m._lastAttackTime = now;
+
+    if (m.monsterId === 'boss_sniper' && m._phaseMultishotAuto) {
+        _executeBossAbility(m, 'multishot', playerPos);
+        return;
+    }
+
+    if (m._multishotPending && m._multishotPending > 0) {
+        m._multishotPending--;
+        _executeBossAbility(m, 'multishot', playerPos);
+        return;
+    }
+
+    if (!m.isBoss || m.abilities.length === 0) {
+        emit('monsterAttackRequest', { attacker: m, ability: null, damage: null });
+        return;
+    }
+
+    m._attackCounter++;
+    if (m._attackCounter % 2 === 0) {
+        const ability = m.abilities[Math.floor(m._attackCounter / 2) % m.abilities.length];
+        _executeBossAbility(m, ability, playerPos);
+    } else {
+        emit('monsterAttackRequest', { attacker: m, ability: null, damage: null });
+    }
+}
+
+/**
+ * Despacha lógica de ability específica do boss.
+ * @param {Object} m @param {string} ability @param {THREE.Vector3} playerPos
+ */
+function _executeBossAbility(m, ability, playerPos) {
+    switch (ability) {
+        case 'aoeWindup':
+            _startTelegraph(m);
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'aoeWindup',
+                data: {
+                    telegraphSeconds: 2,
+                    radius: 3.0,
+                    position: {
+                        x: m.mesh.position.x,
+                        y: m.mesh.position.y,
+                        z: m.mesh.position.z,
+                    },
+                },
+            });
+            break;
+
+        case 'summonAdds': {
+            const spawnX = m.mesh.position.x + (Math.random() - 0.5) * 3;
+                const spawnZ = m.mesh.position.z + (Math.random() - 0.5) * 3;
+                spawnMonster('goblin', { x: spawnX, y: 0.5, z: spawnZ });
+
+                emit('bossAbilityUsed', {
+                    bossId: m.monsterId,
+                    ability: 'summonAdds',
+                    data: { summonedMonsterId: 'goblin', x: spawnX, y: 0.5, z: spawnZ },
+                });
+            break;
+        }
+
+        case 'teleportStrike':
+            _bossTeleportStrike(m);
+            break;
+
+        case 'reflectShield':
+            if (!m._reflectShield) {
+                m._reflectShield = true;
+                m._reflectExpires = performance.now() + 5000;
+                { const __mat = _getMeshMaterial(m.mesh); if (__mat && 'emissiveIntensity' in __mat) __mat.emissiveIntensity = 0.8; }
+
+                emit('buffApplied', {
+                    buffId: 'reflectShield',
+                    casterId: m.monsterId,
+                    expiresAt: m._reflectExpires,
+                });
+
+                emit('bossAbilityUsed', {
+                    bossId: m.monsterId,
+                    ability: 'reflectShield',
+                    data: {
+                        durationMs: 5000,
+                        reflectsPct: 0.5,
+                        expiresAt: m._reflectExpires,
+                    },
+                });
+
+                setTimeout(() => {
+                    if (m.state !== 'dead') {
+                        m._reflectShield = false;
+                        { const __mat = _getMeshMaterial(m.mesh); if (__mat && 'emissiveIntensity' in __mat) __mat.emissiveIntensity = 0.3; }
+                    }
+                }, 5000);
+            }
+            break;
+
+                case 'invisibility':
+            if (!m._invisible) {
+                m._invisible = true;
+                m._invisibilityUntil = performance.now() + 3000;
+                m._surpriseStrikeReady = true;
+                m.mesh.visible = false;
+
+                emit('bossAbilityUsed', {
+                    bossId: m.monsterId,
+                    ability: 'invisibility',
+                    data: {
+                        durationMs: 3000,
+                        surpriseDamageMultiplier: 2,
+                        phaseStealthLoop: !!m._phaseStealthLoop,
+                    },
+                });
+
+                setTimeout(() => {
+                    if (m.state !== 'dead') {
+                        m._invisible = false;
+                        m.mesh.visible = true;
+
+                        if (m._phaseStealthLoop) {
+                            setTimeout(() => {
+                                if (m.state !== 'dead') {
+                                    m._invisible = true;
+                                    m.mesh.visible = false;
+                                }
+                            }, 1000);
+                        }
+                    }
+                }, 3000);
+            }
+            break;
+
+        case 'multishot': {
+            const projectiles = [];
+            const baseDamage = Math.max(1, Math.floor(m.str * 0.6));
+
+            for (let i = 0; i < 3; i++) {
+                projectiles.push({
+                    index: i,
+                    spreadOffset: i - 1,
+                    damage: baseDamage,
+                });
+                emit('monsterAttackRequest', {
+                    attacker: m,
+                    ability: 'multishot',
+                    damage: baseDamage,
+                });
+            }
+
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'multishot',
+                data: {
+                    count: 3,
+                    damagePerProjectile: baseDamage,
+                    projectiles,
+                },
+            });
+            break;
+        }
+
+        case 'stealthStrikeFirst': {
+            if (m._stealthUsed) {
+                emit('monsterAttackRequest', { attacker: m, ability: null, damage: null });
+                break;
+            }
+
+            const unseenByPlayer = !m._playerSawBoss || m._invisible;
+            const multiplier = unseenByPlayer ? 2 : 1;
+            const dmg = Math.max(1, Math.floor(m.str * multiplier));
+
+            m._stealthUsed = true;
+
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'stealthStrikeFirst',
+                data: {
+                    unseenByPlayer,
+                    damageMultiplier: multiplier,
+                    damage: dmg,
+                },
+            });
+
+            emit('monsterAttackRequest', {
+                attacker: m,
+                ability: 'stealthStrikeFirst',
+                damage: dmg,
+            });
+            break;
+        }
+
+        case 'spawnClones':
+            if (m._clonesMeshes.length === 0) {
+                _spawnShadowClones(m);
+            } else {
+                emit('bossAbilityUsed', {
+                    bossId: m.monsterId,
+                    ability: 'spawnClones',
+                    data: {
+                        count: m._clonesMeshes.length,
+                        reused: true,
+                    },
+                });
+            }
+            break;
+
+        case 'abyssPoison':
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability: 'abyssPoison',
+                data: {
+                    tickRateMs: 2000,
+                    durationMs: 10000,
+                    damagePerTickType: 'maxHpPct',
+                    damagePerTickValue: 0.05,
+                },
+            });
+
+            emit('monsterAttackRequest', {
+                attacker: m,
+                ability: 'abyssPoison',
+                damage: null,
+            });
+            break;
+
+        default:
+            emit('bossAbilityUsed', {
+                bossId: m.monsterId,
+                ability,
+                data: {},
+            });
+            emit('monsterAttackRequest', { attacker: m, ability, damage: null });
+    }
+}
+
+// ─── Helpers de movimento ─────────────────────────────────────────────────────
+
+/** @param {Object} m @param {THREE.Vector3} target @param {number} speed @param {number} dt */
+function _moveTowards(m, target, speed, dt) {
+    const dir  = new THREE.Vector3().subVectors(target, m.mesh.position).setY(0);
+    const dist = dir.length();
+    if (dist < 0.05) return;
+    dir.normalize();
+    m.mesh.position.addScaledVector(dir, Math.min(speed * dt, dist));
+    _faceTarget(m, target);
+}
+
+/** @param {Object} m @param {THREE.Vector3} target */
+function _faceTarget(m, target) {
+    const dx = target.x - m.mesh.position.x;
+    const dz = target.z - m.mesh.position.z;
+    if (Math.abs(dx) < 0.001 && Math.abs(dz) < 0.001) return;
+    m.mesh.rotation.y = Math.atan2(dx, dz);
+}
+
+// ─── Morte ────────────────────────────────────────────────────────────────────
+
+/** @param {{ entity:Object }} payload */
+function _onPetAttack({ targetId, damage } = {}) {
+    if (!targetId) return;
+
+    let monster = _monsters.get(targetId);
+
+    if (!monster) {
+        for (const [, boss] of _monsters) {
+            if (!Array.isArray(boss._clones)) continue;
+            const foundClone = boss._clones.find(clone => clone.id === targetId);
+            if (foundClone) {
+                monster = foundClone;
+                break;
+            }
+        }
+    }
+
+    if (!monster || monster.state === 'dead') return;
+
+    const rawDamage = Math.floor(Number(damage ?? 0));
+    if (!Number.isFinite(rawDamage) || rawDamage <= 0) return;
+
+    const finalDamage = monster.isClone ? 1 : rawDamage;
+    monster.hp = Math.max(0, monster.hp - finalDamage);
+
+    emit('damageDealt', {
+        attackerId: 'pet',
+        attackerType: 'pet',
+        targetId: monster.id,
+        targetType: 'monster',
+        amount: finalDamage
+    });
+
+    if (monster.hp <= 0) {
+        emit('entityDied', { entity: monster });
+    }
+}
+
+function _onEntityDied({ entity }) {
+    if (_monsters.has(entity.id)) {
+        const m = _monsters.get(entity.id);
+        if (m.state === 'dead') return;
+
+        m.state = 'dead';
+        const deadDef = _catalogue[m.monsterId];
+        const dieSfx = deadDef?.soundProfile?.die;
+        if (dieSfx) {
+            playSFX3D(`assets/audio/sfx/${dieSfx}.ogg`, m.mesh.position);
+        }
+        m.hp = 0;
+        m.mesh.visible = false;
+
+        if (m.isBoss) _cleanupBoss(m);
+
+        const def = _catalogue[m.monsterId];
+        _rollDrops(def, m.mesh.position);
+        _rollCardDrops(def);
+        unregisterTarget(m);
+
+        emit('monsterDied', {
+            id: m.id,
+            monsterId: m.monsterId,
+            xp: m.xp,
+            isBoss: m.isBoss,
+            linkedQuestId: m.linkedQuestId,
+        });
+
+        if (m.isBoss) {
+            emit('uiHintShow', {
+                msg: `Boss derrotado: ${def.name}! +${m.xp} XP`,
+                duration: 5000,
+            });
+        } else {
+            m._respawnTimeout = setTimeout(() => _respawn(m), 30_000);
+        }
+        return;
+    }
+
+    for (const [, boss] of _monsters) {
+        if (!Array.isArray(boss._clones)) continue;
+        const cloneIndex = boss._clones.findIndex(clone => clone.id === entity.id);
+        if (cloneIndex === -1) continue;
+
+        const cloneEntity = boss._clones[cloneIndex];
+        const meshIndex = boss._clonesMeshes.findIndex(mesh => mesh === cloneEntity.mesh);
+
+        unregisterTarget(cloneEntity);
+        cloneEntity.hp = 0;
+        cloneEntity.state = 'dead';
+        cloneEntity.mesh.visible = false;
+
+        if (meshIndex !== -1) {
+            const cloneMesh = boss._clonesMeshes[meshIndex];
+           cloneMesh.geometry?.dispose?.();
+            if (Array.isArray(cloneMesh.material)) { cloneMesh.material.forEach(mat => mat?.dispose?.()); } else { cloneMesh.material?.dispose?.(); }
+            sceneRemove(cloneMesh);
+            boss._clonesMeshes.splice(meshIndex, 1);
+        }
+
+        boss._clones.splice(cloneIndex, 1);
+
+        emit('bossAbilityUsed', {
+            bossId: boss.monsterId,
+            ability: 'spawnClones',
+            data: {
+                cloneDestroyedId: entity.id,
+                remainingClones: boss._clones.length,
+            },
+        });
+        return;
+    }
+}
+
+/** @param {Object} m */
+function _respawn(m) {
+    m.hp = m.maxHp;
+    m.mesh.position.copy(m._spawnPosition);
+    m.mesh.visible      = true;
+    m.state             = 'idle';
+    m._idleTimer        = 0;
+    m._idleTarget       = null;
+    m._lastAttackTime   = 0;
+    m._attackCounter    = 0;
+    m._phase50Done      = false;
+    m._phase25Done      = false;
+    m._telegraphing        = false;
+        m._pendingAoe          = false;
+        m._reflectShield       = false;
+        m._invisible           = false;
+        m._invisibilityUntil   = 0;
+        m._surpriseStrikeReady = false;
+        m._multishotPending    = 0;
+        m._stealthUsed         = false;
+        m._playerSawBoss       = false;
+        m._enraged             = false;
+        m._phaseAuraLocked     = false;
+        m._phaseMultishotAuto  = false;
+        m._phaseStealthLoop    = false;
+        m._phaseReflectLocked  = false;
+        m._phaseAbyssAura      = false;
+        m._phaseAbyssAuraNextTick = 0;
+        m._respawnTimeout      = null;
+        m.str                  = m.baseStats.str;
+    registerTarget(m);
+    emit('monsterSpawned', {
+        id:       m.id,
+        monsterId: m.monsterId,
+        position: { x: m._spawnPosition.x, y: m._spawnPosition.y, z: m._spawnPosition.z },
+    });
+}
+
+// ─── Drops ────────────────────────────────────────────────────────────────────
+
+/**
+ * Resolve a quantidade de um drop baseado no schema atual.
+ * @param {Object} drop
+ * @returns {number}
+ */
+function _rollDrops(def, position) {
+    if (!def || !Array.isArray(def.drops)) return;
+
+    for (const drop of def.drops) {
+        if (Math.random() >= drop.chance) continue;
+
+        const qty = _resolveDropQty(drop);
+        const meta = _buildDropItemMeta(drop.itemId);
+        const itemColor = _itemCatalogue[drop.itemId]?.modelPlaceholder ?? '#ffffff';
+
+        const mesh = new THREE.Mesh(
+            new THREE.BoxGeometry(0.3, 0.3, 0.3),
+            new THREE.MeshLambertMaterial({ color: itemColor }),
+        );
+
+        mesh.position.set(
+            position.x + (Math.random() - 0.5) * 0.6,
+            position.y + 0.3,
+            position.z + (Math.random() - 0.5) * 0.6,
+        );
+
+        mesh.castShadow = false;
+        sceneAdd(mesh);
+
+        const dropId = `drop_${_dropIdCounter++}`;
+        _drops.set(dropId, {
+            itemId: drop.itemId,
+            qty,
+            mesh,
+            spawnTime: performance.now(),
+            ...(meta?.refineLevel != null ? { refineLevel: meta.refineLevel } : {}),
+            ...(meta?.sockets?.length ? { sockets: [...meta.sockets] } : {})
+        });
+
+        emit('itemDropped', {
+            itemId: drop.itemId,
+            qty,
+            position: mesh.position,
+            dropId,
+            ...(meta?.refineLevel != null ? { refineLevel: meta.refineLevel } : {}),
+            ...(meta?.sockets?.length ? { sockets: [...meta.sockets] } : {})
+        });
+    }
+}
+
+function _resolveDropQty(drop) {
+    if (drop.qty && typeof drop.qty === 'object') {
+        return Math.floor(Math.random() * (drop.qty.max - drop.qty.min + 1)) + drop.qty.min;
+    }
+    if (typeof drop.qty === 'number') {
+        return drop.qty;
+    }
+    if (typeof drop.qtyMin === 'number' && typeof drop.qtyMax === 'number') {
+        return Math.floor(Math.random() * (drop.qtyMax - drop.qtyMin + 1)) + drop.qtyMin;
+    }
+    if (typeof drop.qtyMin === 'number') {
+        return drop.qtyMin;
+    }
+    return 1;
+}
+
+/**
+ * Monta metadata opcional para item dropado no mundo.
+ * Equipáveis recebem sockets aleatórios conforme o slot do item.
+ * @param {string} itemId
+ * @returns {{ refineLevel?: number, sockets?: (string|null)[] }|null}
+ */
+function _buildDropItemMeta(itemId) {
+    const itemDef = _itemCatalogue[itemId];
+    if (!itemDef?.slot) return null;
+
+    const sockets = generateSockets(itemDef.slot);
+    if (sockets.length <= 0) return null;
+
+    return { sockets };
+}
+
+function _rollCardDrops(def) {
+    if (!def) return;
+
+    const cardEntries = [];
+    if (Array.isArray(def.cardDrops)) {
+        cardEntries.push(...def.cardDrops);
+    } else if (def.cardDrop) {
+        cardEntries.push(def.cardDrop);
+    }
+
+    for (const cardDrop of cardEntries) {
+        if (!cardDrop?.cardId || typeof cardDrop.chance !== 'number') continue;
+        if (Math.random() >= cardDrop.chance) continue;
+
+        const added = Inventory.addItem(cardDrop.cardId, 1);
+        if (added === false) {
+            emit('inventoryFull', { itemId: cardDrop.cardId });
+        }
+    }
+}
+
+/** @param {string} dropId */
+function _removeDrop(dropId) {
+    const drop = _drops.get(dropId);
+    if (!drop) return;
+    drop.mesh.geometry?.dispose?.();
+    if (Array.isArray(drop.mesh.material)) { drop.mesh.material.forEach(mat => mat?.dispose?.()); } else { drop.mesh.material?.dispose?.(); }
+    sceneRemove(drop.mesh);
+    _drops.delete(dropId);
+}
+
+/** @param {number} dt @param {THREE.Vector3} playerPos */
+function _updateDrops(dt, playerPos) {
+    const now = performance.now();
+    for (const [dropId, drop] of _drops) {
+        drop.mesh.position.y  = 0.3 + Math.sin(now * 0.002 + drop.mesh.position.x) * 0.08;
+        drop.mesh.rotation.y += dt * 1.5;
+        if ((now - drop.spawnTime) < 500) continue;
+        const dx = drop.mesh.position.x - playerPos.x;
+        const dz = drop.mesh.position.z - playerPos.z;
+        if (Math.sqrt(dx * dx + dz * dz) < 1.5) {
+            emit('itemPicked', {
+                itemId: drop.itemId,
+                qty: drop.qty,
+                dropId,
+                ...(drop.refineLevel != null ? { refineLevel: drop.refineLevel } : {}),
+                ...(Array.isArray(drop.sockets) && drop.sockets.length > 0 ? { sockets: [...drop.sockets] } : {})
+            });
+            _removeDrop(dropId);
+        }
+    }
+}
+
+/** @param {{ position:{x,y,z} }} payload */
+function _onPickupRequest({ position }) {
+    let nearestId   = null;
+    let nearestDist = Infinity;
+    for (const [dropId, drop] of _drops) {
+        const dx   = drop.mesh.position.x - position.x;
+        const dz   = drop.mesh.position.z - position.z;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+        if (dist < 1.5 && dist < nearestDist) { nearestDist = dist; nearestId = dropId; }
+    }
+    if (nearestId) {
+        const drop = _drops.get(nearestId);
+        emit('itemPicked', {
+            itemId: drop.itemId,
+            qty: drop.qty,
+            dropId: nearestId,
+            ...(drop.refineLevel != null ? { refineLevel: drop.refineLevel } : {}),
+            ...(Array.isArray(drop.sockets) && drop.sockets.length > 0 ? { sockets: [...drop.sockets] } : {})
+        });
+        _removeDrop(nearestId);
+    }
+}
+
+// ─── Exports públicos ─────────────────────────────────────────────────────────
+
+/** @param {string} id @returns {THREE.Mesh|null} */
+function getMesh(id) { return _monsters?.get?.(id)?.mesh ?? null; }
+
+/** @param {string} id @returns {Object|null} */
+function getById(id) { return _monsters?.get?.(id) ?? null; }
+
+export {
+    init,
+    spawnMonster,
+    spawnGroup,
+    spawnQuestBoss,
+    despawnQuestBoss,
+    getCatalog,
+    updateAll,
+    getMesh,
+    getById,
+};
+// js/systems/combat.js
+import { emit, on }    from '../core/events.js';
+import { playSFX }     from '../core/audio.js';
+import * as Classes    from './classes.js';
+
+/** URLs dos SFX de combate */
+const SFX = {
+  swing:    'assets/audio/sfx/sfx_combat_swing.ogg',
+  hit:      'assets/audio/sfx/sfx_combat_hit.ogg',
+  critical: 'assets/audio/sfx/sfx_combat_critical.ogg',
+  miss:     'assets/audio/sfx/sfx_combat_miss.ogg',
+};
+
+/** Cooldown mínimo entre ataques de uma mesma entidade (ms) */
+const ATTACK_COOLDOWN_MS = 1000;
+
+/** Distância máxima de ataque (unidades XZ) */
+const ATTACK_RANGE = 3;
+
+/** Map interno: entidade → timestamp do último ataque */
+const _cooldowns = new Map();
+
+/** Lista de alvos registrados (monstros, NPCs hostis, etc.) */
+const _targets = new Set();
+
+// ─── Helpers internos ────────────────────────────────────────────────────────
+
+/**
+ * Retorna a defesa efetiva de uma entidade.
+ * @param {object} entity
+ * @returns {number}
+ */
+function _getDef(entity) {
+  if (typeof entity.def === 'number') return entity.def;
+  if (entity.baseStats?.vit !== undefined) return Math.floor(entity.baseStats.vit / 2);
+  return 0;
+}
+
+/**
+ * Distância euclidiana no plano XZ entre duas entidades.
+ * @param {object} a - entidade com .position {x,z}
+ * @param {object} b - entidade com .position {x,z}
+ * @returns {number}
+ */
+function _distXZ(a, b) {
+  const dx = (a.position?.x ?? 0) - (b.position?.x ?? 0);
+  const dz = (a.position?.z ?? 0) - (b.position?.z ?? 0);
+  return Math.sqrt(dx * dx + dz * dz);
+}
+function _applyDebuff(target, debuffData) {
+  if (!target) return;
+  if (!Array.isArray(target._activeDebuffs)) target._activeDebuffs = [];
+
+  const now = performance.now();
+  const existing = target._activeDebuffs.find(d => d.id === debuffData.id);
+
+  const nextDebuff = {
+    id: debuffData.id,
+    damagePerTick: debuffData.damagePerTick ?? 0,
+    tickRate: debuffData.tickRate ?? 2000,
+    duration: debuffData.duration ?? 0,
+    expiresAt: now + (debuffData.duration ?? 0),
+    lastTick: now,
+    sourceBossId: debuffData.sourceBossId ?? null,
+    isPercentMaxHp: !!debuffData.isPercentMaxHp,
+  };
+
+  if (existing) {
+    Object.assign(existing, nextDebuff);
+  } else {
+    target._activeDebuffs.push(nextDebuff);
+  }
+
+  emit('debuffApplied', {
+    target,
+    debuffId: nextDebuff.id,
+    icon: nextDebuff.id,
+    duration: nextDebuff.duration,
+    tickRate: nextDebuff.tickRate,
+    sourceBossId: nextDebuff.sourceBossId,
+  });
+}
+
+function _applyReflectDamage(attacker, target, dealtDamage) {
+  if (!attacker || !target) return;
+  if (attacker.type !== 'player') return;
+  if (!target.isBoss) return;
+  if (!target._reflectShield) return;
+  if (dealtDamage <= 0) return;
+
+  const reflected = Math.max(1, Math.floor(dealtDamage * 0.5));
+  attacker.hp = Math.max(0, attacker.hp - reflected);
+
+  emit('damageReflected', {
+    attacker,
+    target,
+    amount: reflected,
+    source: 'reflectShield',
+  });
+
+  emit('playerHpChanged', {
+    current: attacker.hp,
+    max: attacker.maxHp,
+  });
+
+  if (attacker.hp <= 0) {
+    emit('playerDied');
+  }
+}
+// ─── API pública ─────────────────────────────────────────────────────────────
+
+/**
+ * Registra uma entidade como alvo atacável (monstro, etc.).
+ * @param {object} entity - deve ter .position {x,y,z}, .hp, .def ou .baseStats.vit
+ */
+function registerTarget(entity) {
+  _ensureCombatEventHooks();
+  _targets.add(entity);
+}
+
+/**
+ * Remove uma entidade da lista de alvos.
+ * @param {object} entity
+ */
+function unregisterTarget(entity) {
+  _targets.delete(entity);
+  _cooldowns.delete(entity);
+}
+
+/**
+ * Retorna o alvo registrado mais próximo dentro do range, ou null.
+ * @param {{ x: number, z: number }} position - posição do atacante
+ * @param {number} [range=ATTACK_RANGE]
+ * @returns {object|null}
+ */
+function findNearestTarget(position, range = ATTACK_RANGE) {
+  let nearest = null;
+  let minDist = Infinity;
+  const fakeAttacker = { position };
+  for (const t of _targets) {
+    if (t.hp <= 0) continue;
+    if (t.type === 'player') continue;
+    const d = _distXZ(fakeAttacker, t);
+    if (d <= range && d < minDist) {
+      minDist = d;
+      nearest = t;
+    }
+  }
+  return nearest;
+}
+
+/**
+ * Verifica se o atacante pode atacar o alvo agora.
+ * Toca sfx_combat_miss e retorna false se falhar.
+ * @param {object} attacker
+ * @param {object} target
+ * @returns {boolean}
+ */
+function canAttack(attacker, target) {
+  const lastTime = _cooldowns.get(attacker) ?? 0;
+  if (performance.now() - lastTime < ATTACK_COOLDOWN_MS) return false;
+
+  if (_distXZ(attacker, target) > ATTACK_RANGE) {
+    playSFX(SFX.miss);
+    return false;
+  }
+
+  if (target.hp <= 0) {
+    playSFX(SFX.miss);
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Executa um ataque de attacker contra target.
+ * Emite "damageDealt" e, se o alvo morrer, "entityDied".
+ * @param {object} attacker - deve ter .baseStats.str e .position
+ * @param {object} target   - deve ter .hp e (.def ou .baseStats.vit) e .position
+ * @returns {{ amount: number, isCritical: boolean }|null} null se canAttack falhar
+ */
+function attack(attacker, target) {
+  if (!canAttack(attacker, target)) return null;
+
+  _cooldowns.set(attacker, performance.now());
+
+  playSFX(SFX.swing);
+
+  // ── Evasion: target com buff 'evasion' tem chance de esquivar ──
+  if (Array.isArray(target._activeBuffs)) {
+    const now = performance.now();
+    const evasionBuff = target._activeBuffs.find(b => b.id === 'evasion' && b.expiresAt > now);
+    if (evasionBuff && Math.random() < evasionBuff.modifier.evasionBonus) {
+      playSFX(SFX.miss);
+      emit('damageDealt', { attacker, target, amount: 0, isCritical: false, evaded: true });
+      return { amount: 0, isCritical: false, evaded: true };
+    }
+  }
+
+  const str        = attacker.baseStats?.str ?? attacker.str ?? 1;
+  const def        = _getDef(target);
+  const isCritical = Math.random() < 0.05;
+
+  let effectiveStr = str;
+  if (
+    attacker.monsterId === 'boss_shadow_assassin' &&
+    attacker._stealthUsed === false &&
+    (attacker._invisible || attacker._surpriseStrikeReady || attacker._playerSawBoss === false)
+  ) {
+    effectiveStr = Math.floor(effectiveStr * 2);
+    attacker._stealthUsed = true;
+    attacker._surpriseStrikeReady = false;
+
+    emit('bossAbilityUsed', {
+      bossId: attacker.monsterId,
+      ability: 'stealthStrikeFirst',
+      data: {
+        integratedByCombat: true,
+        damageMultiplier: 2,
+      },
+    });
+  }
+
+  let amount = Math.max(1, effectiveStr - def);
+  if (isCritical) amount = amount * 2;
+
+  // ── Endure: target com buff 'endure' reduz dano recebido ──
+  if (Array.isArray(target._activeBuffs)) {
+    const now = performance.now();
+    const endureBuff = target._activeBuffs.find(b => b.id === 'endure' && b.expiresAt > now);
+    if (endureBuff && typeof endureBuff.modifier.defenseMultiplier === 'number') {
+      amount = amount * endureBuff.modifier.defenseMultiplier;
+    }
+  }
+
+  amount = Math.floor(amount);
+
+  target.hp = Math.max(0, target.hp - amount);
+  if (target.type === 'player') {
+    emit('playerHpChanged', { current: target.hp, max: target.maxHp });
+    if (target.hp <= 0) emit('playerDied');
+  }
+
+  playSFX(isCritical ? SFX.critical : SFX.hit);
+
+  emit('damageDealt', { attacker, target, amount, isCritical });
+
+  _applyReflectDamage(attacker, target, amount);
+
+  if (target.hp <= 0) {
+    unregisterTarget(target);
+    emit('entityDied', { entity: target });
+  }
+
+  return { amount, isCritical };
+}
+// ─── Skills ────────────────────────────────────────────────────────────────
+
+/**
+ * Tenta lançar uma skill do player contra um alvo.
+ * Valida classe, aprendizado, MP, cooldown e range. Emite mpConsumeRequest
+ * para player.js consumir o MP via event bus (R8).
+ * @param {Object} playerState - retorno de Player.getState()
+ * @param {string} skillId
+ * @param {Object|null} target - instância de monstro ou null para self/aoe
+ * @returns {{ ok: boolean, reason?: string, message?: string }}
+ */
+function castSkill(playerState, skillId, target) {
+  const skillDef = Classes.getSkillDef(skillId);
+  if (!skillDef) return { ok: false, reason: 'skill_inexistente' };
+
+  if (skillDef.classId !== playerState.class) {
+    return { ok: false, reason: 'classe_incorreta' };
+  }
+
+  if (!Array.isArray(playerState.learnedSkills) || !playerState.learnedSkills.includes(skillId)) {
+    return { ok: false, reason: 'skill_nao_aprendida' };
+  }
+
+  if (playerState.mp < skillDef.mpCost) {
+    return { ok: false, reason: 'mp_insuficiente' };
+  }
+
+  const now = performance.now();
+  if (!playerState.cooldowns) playerState.cooldowns = {};
+  if (playerState.cooldowns[skillId] && now < playerState.cooldowns[skillId]) {
+    return { ok: false, reason: 'em_cooldown' };
+  }
+
+  if (skillDef.targetType === 'enemy') {
+    if (!target) return { ok: false, reason: 'sem_alvo' };
+    if (_distXZ({ position: playerState.position }, target) > skillDef.range) {
+      return { ok: false, reason: 'fora_de_alcance' };
+    }
+  }
+
+  // Consome MP via evento (R8 — sem import direto de Player)
+  emit('mpConsumeRequest', { amount: skillDef.mpCost });
+
+  // Registra cooldown (em ms a partir de agora)
+  playerState.cooldowns[skillId] = now + skillDef.cooldown * 1000;
+
+  // Monta ctx e executa effect
+  const ctx = {
+    now,
+    emit,
+    getEntities: () => Array.from(_targets),
+  };
+
+  const result = Classes.executeSkill(skillId, playerState, target, ctx);
+
+  emit('skillCast', {
+    skillId,
+    casterId: playerState.name,
+    targetId: target ? target.instanceId : null,
+    success: result.ok,
+  });
+
+  return result;
+}
+
+/**
+ * Tick de DoTs e expiração de debuffs em todos os _targets registrados.
+ * Chamado no game loop por main.js.
+ * @param {number} _delta - tempo em ms desde o último frame (não usado; tick por timestamp absoluto)
+ */
+function update(_delta) {
+  const now = performance.now();
+  for (const entity of _targets) {
+    if (!Array.isArray(entity._activeDebuffs)) continue;
+
+    entity._activeDebuffs = entity._activeDebuffs.filter(debuff => {
+      if (now >= debuff.expiresAt) return false;
+
+      // Tick de poison
+      if (debuff.id === 'poison' && debuff.damagePerTick && debuff.tickRate) {
+        if (now - debuff.lastTick >= debuff.tickRate) {
+          debuff.lastTick = now;
+          entity.hp = Math.max(0, entity.hp - debuff.damagePerTick);
+          emit('damageDealt', {
+            attacker: null,
+            target: entity,
+            amount: debuff.damagePerTick,
+            isCritical: false,
+            source: 'poison',
+          });
+          if (entity.hp <= 0) {
+            unregisterTarget(entity);
+            emit('entityDied', { entity });
+            return false;
+          }
+        }
+      }
+
+      // DoTs de boss (deadly_poison, abyss_poison)
+      if (
+        (debuff.id === 'deadly_poison' || debuff.id === 'abyss_poison') &&
+        debuff.damagePerTick && debuff.tickRate
+      ) {
+        if (now - debuff.lastTick >= debuff.tickRate) {
+          debuff.lastTick = now;
+
+          const dotAmount = debuff.isPercentMaxHp
+            ? Math.max(1, Math.floor((entity.maxHp ?? entity.hp ?? 1) * debuff.damagePerTick))
+            : debuff.damagePerTick;
+
+          entity.hp = Math.max(0, entity.hp - dotAmount);
+
+          if (entity.type === 'player') {
+            emit('playerHpChanged', { current: entity.hp, max: entity.maxHp });
+          }
+
+          emit('damageDealt', {
+            attacker: null,
+            target: entity,
+            amount: dotAmount,
+            isCritical: false,
+            source: debuff.id,
+          });
+
+          if (entity.hp <= 0) {
+            unregisterTarget(entity);
+            emit('entityDied', { entity });
+            return false;
+          }
+        }
+      }
+
+      return true;
+    });
+  }
+}
+// ─── Boss combat hooks ───────────────────────────────────────────────────────
+
+let _bossCombatHooksRegistered = false;
+
+function _onBossAbilityUsed({ bossId, ability, data } = {}) {
+  if (bossId !== 'boss_shadow_assassin') return;
+  if (ability !== 'abyssPoison') return;
+
+  const player = Array.from(_targets).find(t => t.type === 'player');
+  if (!player) return;
+
+  _applyDebuff(player, {
+    id: 'abyss_poison',
+    damagePerTick: data?.damagePerTickValue ?? 0.05,
+    tickRate: data?.tickRateMs ?? 2000,
+    duration: data?.durationMs ?? 10000,
+    sourceBossId: bossId,
+    isPercentMaxHp: true,
+  });
+}
+
+function _ensureCombatEventHooks() {
+  if (_bossCombatHooksRegistered) return;
+  _bossCombatHooksRegistered = true;
+  on('bossAbilityUsed', _onBossAbilityUsed);
+}
+
+// Balanceamento boss XP verificado: 4 bosses T2 com 500 XP cada (vs 8-72 XP monstros comuns).
+
+// ─── Exports ─────────────────────────────────────────────────────────────────
+
+export { registerTarget, unregisterTarget, findNearestTarget, canAttack, attack, castSkill, update };
+/**
  * @file ui.js
  * @description Renderiza e atualiza toda a interface: HUD HP/MP/XP,
  * notificações toast, mensagens centrais e FPS counter.
@@ -134,8 +3105,6 @@ let _elExitPrompt = null;
 /**
  * Cria o elemento DOM do HUD e injeta no body.
  */
-let _deathOverlayEl = null;
-let _deathOverlayVisible = false;
 function _buildDOM() {
     const hud = document.createElement('div');
     hud.id = 'hud';
@@ -253,58 +3222,13 @@ function _buildDOM() {
         }
     `;
     document.head.appendChild(style);
-    const deathOverlay = document.createElement('div');
-    deathOverlay.id = 'ui-death-overlay';
-    deathOverlay.style.position = 'fixed';
-    deathOverlay.style.inset = '0';
-    deathOverlay.style.background = 'rgba(0, 0, 0, 0.75)';
-    deathOverlay.style.display = 'none';
-    deathOverlay.style.zIndex = '9999';
-    deathOverlay.style.alignItems = 'center';
-    deathOverlay.style.justifyContent = 'center';
-    deathOverlay.style.flexDirection = 'column';
-    deathOverlay.style.pointerEvents = 'auto';
-
-    const deathMessage = document.createElement('div');
-    deathMessage.textContent = 'Você morreu';
-    deathMessage.style.color = '#ffffff';
-    deathMessage.style.fontFamily = 'sans-serif';
-    deathMessage.style.fontSize = '32px';
-    deathMessage.style.marginBottom = '24px';
-    deathMessage.style.textShadow = '0 0 8px rgba(0,0,0,0.8)';
-
-    const deathButton = document.createElement('button');
-    deathButton.textContent = 'Reviver na Cidade';
-    deathButton.style.padding = '10px 20px';
-    deathButton.style.fontSize = '18px';
-    deathButton.style.cursor = 'pointer';
-    deathButton.style.borderRadius = '4px';
-    deathButton.style.border = 'none';
-    deathButton.style.background = '#ff5252';
-    deathButton.style.color = '#ffffff';
-    deathButton.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
-
-    deathOverlay.appendChild(deathMessage);
-    deathOverlay.appendChild(deathButton);
-    document.body.appendChild(deathOverlay);
-}
-function _showDeathOverlay() {
-    if (!_deathOverlayEl) return;
-    _deathOverlayEl.style.display = 'flex';
-    _deathOverlayVisible = true;
 }
 
-function _hideDeathOverlay() {
-    if (!_deathOverlayEl) return;
-    _deathOverlayEl.style.display = 'none';
-    _deathOverlayVisible = false;
-}
 /**
  * Reconecta referências DOM após _buildDOM.
  */
 function _queryRefs() {
     _elHP        = document.getElementById('hud-hp');
-    _deathOverlayEl = document.getElementById('ui-death-overlay');
     _elMP        = document.getElementById('hud-mp');
     _elHPBar     = document.getElementById('hud-hp-bar');
     _elMPBar     = document.getElementById('hud-mp-bar');
@@ -353,20 +3277,6 @@ export function toggleEquipmentWindow() {
 export function init() {
     _buildDOM();
     _queryRefs();
-    if (_deathOverlayEl) {
-        const btn = _deathOverlayEl.querySelector('button');
-        if (btn) {
-            btn.addEventListener('click', () => {
-                import('../entities/player.js').then(mod => {
-                    if (typeof mod.respawn === 'function') {
-                        mod.respawn();
-                    }
-                }).catch(err => {
-                    console.error('[ui] Erro ao importar player.js para respawn:', err);
-                });
-            });
-        }
-    }
     _renderPlayerName();
     Events.on('exitPointNear', ({ label } = {}) => {
         if (_elExitPrompt) {
@@ -776,13 +3686,6 @@ if (code === 'Escape' && _dialogOpen) _closeDialog();
     Events.on('questBossSpawnRequest', _onQuestBossSpawnRequest);
     Events.on('damageDealt', _onDamageDealt);
     Events.on('monsterDied', _onMonsterDiedBoss);
-    Events.on('playerDied', () => {
-        _showDeathOverlay();
-    });
-
-    Events.on('playerRespawned', () => {
-        _hideDeathOverlay();
-    });
     _ensureBossHpBar();
 }
 

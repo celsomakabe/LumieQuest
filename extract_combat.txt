@@ -1,3 +1,4 @@
+﻿===== combat.js =====
 // js/systems/combat.js
 import { emit, on }    from '../core/events.js';
 import { playSFX }     from '../core/audio.js';
@@ -11,19 +12,19 @@ const SFX = {
   miss:     'assets/audio/sfx/sfx_combat_miss.ogg',
 };
 
-/** Cooldown mínimo entre ataques de uma mesma entidade (ms) */
+/** Cooldown mÃ­nimo entre ataques de uma mesma entidade (ms) */
 const ATTACK_COOLDOWN_MS = 1000;
 
-/** Distância máxima de ataque (unidades XZ) */
+/** DistÃ¢ncia mÃ¡xima de ataque (unidades XZ) */
 const ATTACK_RANGE = 3;
 
-/** Map interno: entidade → timestamp do último ataque */
+/** Map interno: entidade â†’ timestamp do Ãºltimo ataque */
 const _cooldowns = new Map();
 
 /** Lista de alvos registrados (monstros, NPCs hostis, etc.) */
 const _targets = new Set();
 
-// ─── Helpers internos ────────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers internos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Retorna a defesa efetiva de uma entidade.
@@ -37,7 +38,7 @@ function _getDef(entity) {
 }
 
 /**
- * Distância euclidiana no plano XZ entre duas entidades.
+ * DistÃ¢ncia euclidiana no plano XZ entre duas entidades.
  * @param {object} a - entidade com .position {x,z}
  * @param {object} b - entidade com .position {x,z}
  * @returns {number}
@@ -103,12 +104,14 @@ function _applyReflectDamage(attacker, target, dealtDamage) {
     max: attacker.maxHp,
   });
 
-  // playerDied centralizado em player.js
+  if (attacker.hp <= 0) {
+    emit('playerDied');
+  }
 }
-// ─── API pública ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ API pÃºblica â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * Registra uma entidade como alvo atacável (monstro, etc.).
+ * Registra uma entidade como alvo atacÃ¡vel (monstro, etc.).
  * @param {object} entity - deve ter .position {x,y,z}, .hp, .def ou .baseStats.vit
  */
 function registerTarget(entity) {
@@ -126,8 +129,8 @@ function unregisterTarget(entity) {
 }
 
 /**
- * Retorna o alvo registrado mais próximo dentro do range, ou null.
- * @param {{ x: number, z: number }} position - posição do atacante
+ * Retorna o alvo registrado mais prÃ³ximo dentro do range, ou null.
+ * @param {{ x: number, z: number }} position - posiÃ§Ã£o do atacante
  * @param {number} [range=ATTACK_RANGE]
  * @returns {object|null}
  */
@@ -155,7 +158,6 @@ function findNearestTarget(position, range = ATTACK_RANGE) {
  * @returns {boolean}
  */
 function canAttack(attacker, target) {
-  if (attacker?._isDead || target?._isDead) return false;
   const lastTime = _cooldowns.get(attacker) ?? 0;
   if (performance.now() - lastTime < ATTACK_COOLDOWN_MS) return false;
 
@@ -180,15 +182,13 @@ function canAttack(attacker, target) {
  * @returns {{ amount: number, isCritical: boolean }|null} null se canAttack falhar
  */
 function attack(attacker, target) {
-  if (!attacker || !target) return null;
-  if (attacker._isDead || target._isDead) return null;
   if (!canAttack(attacker, target)) return null;
 
   _cooldowns.set(attacker, performance.now());
 
   playSFX(SFX.swing);
 
-  // ── Evasion: target com buff 'evasion' tem chance de esquivar ──
+  // â”€â”€ Evasion: target com buff 'evasion' tem chance de esquivar â”€â”€
   if (Array.isArray(target._activeBuffs)) {
     const now = performance.now();
     const evasionBuff = target._activeBuffs.find(b => b.id === 'evasion' && b.expiresAt > now);
@@ -226,7 +226,7 @@ function attack(attacker, target) {
   let amount = Math.max(1, effectiveStr - def);
   if (isCritical) amount = amount * 2;
 
-  // ── Endure: target com buff 'endure' reduz dano recebido ──
+  // â”€â”€ Endure: target com buff 'endure' reduz dano recebido â”€â”€
   if (Array.isArray(target._activeBuffs)) {
     const now = performance.now();
     const endureBuff = target._activeBuffs.find(b => b.id === 'endure' && b.expiresAt > now);
@@ -240,7 +240,7 @@ function attack(attacker, target) {
   target.hp = Math.max(0, target.hp - amount);
   if (target.type === 'player') {
     emit('playerHpChanged', { current: target.hp, max: target.maxHp });
-    // playerDied emitido por player.js
+    if (target.hp <= 0) emit('playerDied');
   }
 
   playSFX(isCritical ? SFX.critical : SFX.hit);
@@ -256,15 +256,15 @@ function attack(attacker, target) {
 
   return { amount, isCritical };
 }
-// ─── Skills ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Skills â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * Tenta lançar uma skill do player contra um alvo.
+ * Tenta lanÃ§ar uma skill do player contra um alvo.
  * Valida classe, aprendizado, MP, cooldown e range. Emite mpConsumeRequest
  * para player.js consumir o MP via event bus (R8).
  * @param {Object} playerState - retorno de Player.getState()
  * @param {string} skillId
- * @param {Object|null} target - instância de monstro ou null para self/aoe
+ * @param {Object|null} target - instÃ¢ncia de monstro ou null para self/aoe
  * @returns {{ ok: boolean, reason?: string, message?: string }}
  */
 function castSkill(playerState, skillId, target) {
@@ -296,7 +296,7 @@ function castSkill(playerState, skillId, target) {
     }
   }
 
-  // Consome MP via evento (R8 — sem import direto de Player)
+  // Consome MP via evento (R8 â€” sem import direto de Player)
   emit('mpConsumeRequest', { amount: skillDef.mpCost });
 
   // Registra cooldown (em ms a partir de agora)
@@ -322,9 +322,9 @@ function castSkill(playerState, skillId, target) {
 }
 
 /**
- * Tick de DoTs e expiração de debuffs em todos os _targets registrados.
+ * Tick de DoTs e expiraÃ§Ã£o de debuffs em todos os _targets registrados.
  * Chamado no game loop por main.js.
- * @param {number} _delta - tempo em ms desde o último frame (não usado; tick por timestamp absoluto)
+ * @param {number} _delta - tempo em ms desde o Ãºltimo frame (nÃ£o usado; tick por timestamp absoluto)
  */
 function update(_delta) {
   const now = performance.now();
@@ -392,7 +392,7 @@ function update(_delta) {
     });
   }
 }
-// ─── Boss combat hooks ───────────────────────────────────────────────────────
+// â”€â”€â”€ Boss combat hooks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 let _bossCombatHooksRegistered = false;
 
@@ -421,6 +421,7 @@ function _ensureCombatEventHooks() {
 
 // Balanceamento boss XP verificado: 4 bosses T2 com 500 XP cada (vs 8-72 XP monstros comuns).
 
-// ─── Exports ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Exports â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export { registerTarget, unregisterTarget, findNearestTarget, canAttack, attack, castSkill, update };
+
