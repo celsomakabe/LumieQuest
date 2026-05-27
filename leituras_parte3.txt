@@ -1,0 +1,1160 @@
+﻿===== scene.js =====
+/**
+ * scene.js â€” Cena 3D principal do LumieQuest.
+ * ResponsÃ¡vel por: THREE.Scene, cÃ¢mera, luzes, chÃ£o e renderer.
+ * NÃ£o importa entities nem systems (R8 â€” acoplamento zero com camadas superiores).
+ */
+
+import * as THREE from 'three';
+import * as events from '../core/events.js';
+
+/** @type {THREE.Scene} */
+let _scene;
+
+/** @type {THREE.PerspectiveCamera} */
+let _camera;
+
+/** @type {THREE.WebGLRenderer} */
+let _renderer;
+
+/**
+ * Mesh do chÃ£o. Mantido em escopo de mÃ³dulo para permitir aplicaÃ§Ã£o de textura
+ * via setGroundTexture() apÃ³s o pipeline de assets ficar pronto (PROMPT 2).
+ * @type {THREE.Mesh|null}
+ */
+let _ground = null;
+let _sun = null;
+
+/**
+ * Inicializa cena, cÃ¢mera, luzes, chÃ£o e renderer.
+ * Deve ser chamado uma Ãºnica vez em main.js durante o boot.
+ * Emite 'sceneReady' ao concluir.
+ * @param {HTMLCanvasElement} canvas - Elemento canvas do DOM
+ */
+export function init(canvas) {
+  // --- Renderer ---
+  _renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  _renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // MÃ¡x 2x para poupar GPU (R6)
+  _renderer.setSize(window.innerWidth, window.innerHeight);
+  _renderer.shadowMap.enabled = true;
+  _renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Sombras suaves sem custo excessivo
+  _renderer.setClearColor(0x87CEEB); // Azul cÃ©u
+
+  // --- Cena ---
+  _scene = new THREE.Scene();
+  _scene.fog = new THREE.Fog(0x87CEEB, 60, 200); // NÃ©voa distante combina com cÃ©u
+
+  // --- CÃ¢mera perspectiva ---
+  _camera = new THREE.PerspectiveCamera(
+    38,                                     // FOV: 75Â°
+    window.innerWidth / window.innerHeight, // Aspect ratio
+    0.1,                                    // Near plane
+    1000                                    // Far plane
+  );
+    _camera.position.set(0, 14, 14);
+    _camera.lookAt(0, 0, 0);
+
+  // --- Luz ambiente (HemisphereLight) ---
+  // CÃ©u azul de cima, reflexo verde do chÃ£o de baixo â€” mais natural que AmbientLight puro
+  const hemiLight = new THREE.HemisphereLight(
+    0xb0d8ff, // skyColor: azul claro
+    0x4a7c3a, // groundColor: verde grama
+    0.4       // intensidade baixa â€” o sol faz o trabalho principal
+  );
+  _scene.add(hemiLight);
+
+  // --- Sol (DirectionalLight com shadow map limitado a 30m) ---
+  _sun = new THREE.DirectionalLight(0xfff4e0, 1.0);
+  _sun.position.set(10, 20, 10);
+  _sun.castShadow = true;
+
+  _sun.shadow.mapSize.width = 1024;
+  _sun.shadow.mapSize.height = 1024;
+
+  _sun.shadow.camera.left   = -30;
+  _sun.shadow.camera.right  =  30;
+  _sun.shadow.camera.top    =  30;
+  _sun.shadow.camera.bottom = -30;
+  _sun.shadow.camera.near   = 0.5;
+  _sun.shadow.camera.far    = 100;
+  _sun.shadow.bias = -0.001;
+
+  _scene.add(_sun);
+  _scene.add(_sun.target);
+
+  // --- ChÃ£o verde (PlaneGeometry 20Ã—20) ---
+  // AtribuÃ­do a _ground (escopo de mÃ³dulo) para permitir setGroundTexture() depois.
+  const groundGeo = new THREE.PlaneGeometry(20, 20);
+  const groundMat = new THREE.MeshStandardMaterial({
+    color: 0x4a7c3a, // Verde grama (serÃ¡ resetado para branco quando textura for aplicada)
+    roughness: 0.9,
+    metalness: 0.0,
+  });
+  _ground = new THREE.Mesh(groundGeo, groundMat);
+  _ground.rotation.x = -Math.PI / 2; // Rotaciona para horizontal (XZ)
+  _ground.receiveShadow = true;
+  _scene.add(_ground);
+
+  // --- Resize handler ---
+  window.addEventListener('resize', _onResize);
+
+  events.emit('sceneReady');
+}
+
+/**
+ * Atualiza cÃ¢mera e renderer quando a janela Ã© redimensionada.
+ * @private
+ */
+function _onResize() {
+  _camera.aspect = window.innerWidth / window.innerHeight;
+  _camera.updateProjectionMatrix();
+  _renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+/**
+ * Executa um frame de render. Chamado pelo game loop a cada requestAnimationFrame.
+ * @param {number} delta - Tempo desde o Ãºltimo frame em ms (nÃ£o usado aqui ainda)
+ */
+export function render(delta) {
+  _renderer.render(_scene, _camera);
+}
+
+/**
+ * Retorna a instÃ¢ncia da THREE.Scene.
+ * @returns {THREE.Scene}
+ */
+export function getScene() { return _scene; }
+
+/**
+ * Retorna a cÃ¢mera perspectiva ativa.
+ * @returns {THREE.PerspectiveCamera}
+ */
+export function getCamera() { return _camera; }
+
+/**
+ * Retorna o WebGLRenderer.
+ * @returns {THREE.WebGLRenderer}
+ */
+export function getRenderer() { return _renderer; }
+export function getSun() { return _sun; }
+/**
+ * Adiciona um Object3D Ã  cena.
+ * @param {THREE.Object3D} obj - Objeto a adicionar
+ */
+export function add(obj) { _scene.add(obj); }
+
+/**
+ * Remove um Object3D da cena.
+ * @param {THREE.Object3D} obj - Objeto a remover
+ */
+export function remove(obj) { _scene.remove(obj); }
+
+/**
+ * Retorna o mesh do chÃ£o para inspeÃ§Ã£o externa (usado por physics e debug).
+ * @returns {THREE.Mesh|null} Retorna null se init() ainda nÃ£o foi chamado.
+ */
+export function getGround() {
+  return _ground;
+}
+
+/**
+ * Aplica uma textura ao material do chÃ£o.
+ * Configura repeat e wrapping para tile correto em terrenos grandes.
+ * Chamado por main.js apÃ³s o pipeline de assets emitir 'assetsReady'.
+ * @param {THREE.Texture} texture - Textura carregada via assets.loadTexture()
+ * @returns {void}
+ */
+export function setGroundTexture(texture) {
+  if (!_ground) {
+    console.warn('[scene] setGroundTexture: mesh do chÃ£o nÃ£o encontrado (init() chamado?)');
+    return;
+  }
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(8, 8); // Tile 8x8 sobre o plano de 20Ã—20 unidades
+  _ground.material.map = texture;
+  _ground.material.color.set(0xffffff); // Reseta cor para branco para nÃ£o tingir a textura
+  _ground.material.needsUpdate = true;
+}
+===== world.js =====
+import * as THREE from 'three';
+import { getScene, getCamera, add, remove } from './scene.js';
+import { spawnMonster, spawnGroup } from '../entities/monsters.js';
+import { spawnFromConfig } from '../entities/npcs.js';
+import * as Models from '../core/models.js';
+import { playBGM, playSFX } from '../core/audio.js';
+import { getPosition, getState } from '../entities/player.js';
+import { on, off, emit } from '../core/events.js';
+
+let _maps = [];
+let _mapsById = new Map();
+let _currentMapId = null;
+let _currentMapConfig = null;
+let _terrainMesh = null;
+let _decorationGroup = null;
+let _mapObjects = [];
+let _exitNearTarget = null;
+let _npcsConfig = null;
+let _boundExitPointAction = null;
+let _cycleTime = 150;
+let _weatherTime = 0;
+let _currentWeather = 'clear';
+let _currentPhase = 'day';
+let _hemiLight = null;
+let _sunLight = null;
+let _lastEmittedPhase = null;
+
+const DAY_NIGHT_CYCLE_DURATION = 300;
+
+/**
+ * Inicializa o mÃ³dulo de mundo e carrega maps.json.
+ * @returns {Promise<void>}
+ */
+export async function init() {
+  const response = await fetch('assets/data/maps.json');
+  if (!response.ok) {
+    throw new Error(`[world] Falha ao carregar maps.json: ${response.status}`);
+  }
+
+  const data = await response.json();
+  _maps = data.maps;
+  _mapsById = new Map(_maps.map(map => [map.id, map]));
+
+  const npcsResponse = await fetch('assets/data/npcs.json');
+  if (!npcsResponse.ok) {
+    throw new Error(`[world] Falha ao carregar npcs.json: ${npcsResponse.status}`);
+  }
+  _npcsConfig = await npcsResponse.json();
+
+  _boundExitPointAction = ({ targetMap } = {}) => {
+    if (!targetMap) return;
+    loadMap(targetMap);
+  };
+
+  on('exitPointAction', _boundExitPointAction);
+}
+
+/**
+ * Carrega um mapa pelo id.
+ * @param {string} mapId
+ * @returns {Promise<void>}
+ */
+export async function loadMap(mapId) {
+  const nextMap = _mapsById.get(mapId);
+  if (!nextMap) {
+    console.warn(`[world] Mapa desconhecido: ${mapId}`);
+    return;
+  }
+
+  const previousMapId = _currentMapId;
+  emit('mapUnloading', previousMapId);
+
+  _clearCurrentMap();
+
+  _currentMapId = mapId;
+  _currentMapConfig = nextMap;
+  _exitNearTarget = null;
+
+  _terrainMesh = _createTerrain(nextMap);
+  add(_terrainMesh);
+  _mapObjects.push(_terrainMesh);
+
+  await _spawnMapDecoration(nextMap);
+  await _spawnMapMonsters(nextMap);
+  await _spawnMapNpcs(nextMap);
+  _applyMapAudio(nextMap);
+  _updatePlayerCurrentMap(mapId);
+  _cacheSceneLights();
+  _applyCurrentLighting();
+  emit('weatherChanged', { weather: 'clear' });
+
+  emit('mapLoaded', {
+    mapId,
+    mapName: nextMap.name ?? mapId
+  });
+}
+
+/**
+ * Retorna id do mapa atual.
+ * @returns {string|null}
+ */
+export function getCurrentMap() {
+  return _currentMapId;
+}
+
+/**
+ * Retorna config do mapa atual.
+ * @returns {Object|null}
+ */
+export function getMapConfig() {
+  return _currentMapConfig;
+}
+
+/**
+ * Retorna estado atual do ciclo dia/noite.
+ * @returns {{ phase: 'day'|'night'|'dawn'|'dusk', progress: number }}
+ */
+export function getDayNightCycle() {
+  return {
+    phase: _currentPhase,
+    progress: _getPhaseProgress(_cycleTime / DAY_NIGHT_CYCLE_DURATION)
+  };
+}
+
+/**
+ * Atualiza lÃ³gica do mundo.
+ * @param {number} delta
+ * @returns {void}
+ */
+export function update(delta) {
+  if (!_currentMapConfig) return;
+
+  _updateDayNightCycle(delta);
+  _updateWeather(delta);
+
+  const playerPos = getPosition();
+  const exitPoints = Array.isArray(_currentMapConfig.exitPoints) ? _currentMapConfig.exitPoints : [];
+
+  let nearestExit = null;
+  let nearestDistance = Infinity;
+
+  for (const exitPoint of exitPoints) {
+    const distance = _distanceToExit(playerPos, exitPoint.position);
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearestExit = exitPoint;
+    }
+  }
+
+  if (nearestExit && nearestDistance <= 3) {
+    if (_exitNearTarget !== nearestExit.targetMap) {
+      _exitNearTarget = nearestExit.targetMap;
+      emit('exitPointNear', {
+        targetMap: nearestExit.targetMap,
+        label: nearestExit.label
+      });
+    }
+    return;
+  }
+
+  if (_exitNearTarget && (!nearestExit || nearestDistance > 5)) {
+    _exitNearTarget = null;
+    emit('exitPointLeft');
+  }
+}
+
+// â”€â”€â”€ FunÃ§Ãµes privadas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function _clearCurrentMap() {
+  // TODO PARTE 4: stopAmbient()
+
+  for (const obj of _mapObjects) {
+    remove(obj);
+    _disposeObject(obj);
+  }
+
+  _mapObjects = [];
+  _decorationGroup = null;
+  _terrainMesh = null;
+  _cycleTime = 150;
+  _weatherTime = 0;
+  _currentWeather = 'clear';
+  _currentPhase = 'day';
+  _lastEmittedPhase = null;
+}
+
+function _createTerrain(mapConfig) {
+  const geometry = new THREE.PlaneGeometry(mapConfig.terrainSize, mapConfig.terrainSize);
+  const material = new THREE.MeshLambertMaterial({
+    color: mapConfig.terrainColor
+  });
+
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.receiveShadow = true;
+  mesh.name = `terrain_${mapConfig.id}`;
+  mesh.position.y = -0.01;
+
+  return mesh;
+}
+async function _spawnMapDecoration(mapConfig) {
+  const decorations = Array.isArray(mapConfig.decoration) ? mapConfig.decoration : [];
+  if (decorations.length === 0) return;
+
+  _decorationGroup = new THREE.Group();
+  _decorationGroup.name = 'decorationGroup';
+  add(_decorationGroup);
+  _mapObjects.push(_decorationGroup);
+
+  for (const entry of decorations) {
+    const count = Math.max(0, Number(entry.count || 0));
+    if (count <= 0) continue;
+
+    if (entry.procedural === true) {
+      _spawnProceduralDecoration(entry, count, _decorationGroup);
+      continue;
+    }
+
+    await _spawnModelDecoration(entry, count, _decorationGroup);
+  }
+}
+
+async function _spawnModelDecoration(entry, count, group) {
+  if (!entry?.path) return;
+
+  let gltf = null;
+  try {
+    gltf = await Models.loadModel(entry.path);
+  } catch (err) {
+    console.warn(`[world] Falha ao carregar decoraÃ§Ã£o: ${entry.model ?? entry.path}`, err);
+    return;
+  }
+
+  if (!gltf?.scene) return;
+
+  for (let i = 0; i < count; i++) {
+    const instance = Models.cloneModel(gltf);
+    if (!instance) continue;
+
+    _applyDecorationTransform(instance, entry);
+    instance.traverse?.((child) => {
+      if (child?.isMesh) {
+        child.castShadow = false;
+        child.receiveShadow = false;
+      }
+    });
+    group.add(instance);
+  }
+}
+
+function _spawnProceduralDecoration(entry, count, group) {
+  const geometry = _createProceduralGeometry(entry.model);
+  if (!geometry) return;
+
+  const material = new THREE.MeshStandardMaterial({
+    color: _getProceduralColor(entry.model),
+    roughness: 1,
+    metalness: 0
+  });
+
+  if (count > 5) {
+    const instanced = new THREE.InstancedMesh(geometry, material, count);
+    instanced.name = entry.model ?? 'procedural_decoration';
+
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < count; i++) {
+      _applyDecorationTransform(dummy, entry);
+      dummy.updateMatrix();
+      instanced.setMatrixAt(i, dummy.matrix);
+    }
+
+    instanced.instanceMatrix.needsUpdate = true;
+    instanced.castShadow = false;
+    instanced.receiveShadow = false;
+    group.add(instanced);
+    return;
+  }
+
+  for (let i = 0; i < count; i++) {
+    const mesh = new THREE.Mesh(geometry.clone(), material.clone());
+    mesh.name = entry.model ?? 'procedural_decoration';
+    _applyDecorationTransform(mesh, entry);
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
+    group.add(mesh);
+  }
+}
+
+function _applyDecorationTransform(object, entry) {
+  const area = entry.area ?? {};
+  const xMin = Number(area.xMin ?? -10);
+  const xMax = Number(area.xMax ?? 10);
+  const zMin = Number(area.zMin ?? -10);
+  const zMax = Number(area.zMax ?? 10);
+  const scaleRange = Array.isArray(entry.scaleRange) ? entry.scaleRange : [1, 1];
+  const minScale = Number(scaleRange[0] ?? 1);
+  const maxScale = Number(scaleRange[1] ?? minScale);
+  const x = THREE.MathUtils.lerp(xMin, xMax, Math.random());
+  const z = THREE.MathUtils.lerp(zMin, zMax, Math.random());
+  const y = _getGroundHeight(x, z);
+  const scale = THREE.MathUtils.lerp(minScale, maxScale, Math.random());
+
+  object.position.set(x, y, z);
+  object.scale.setScalar(scale);
+
+  if (entry.rotateY) {
+    object.rotation.y = Math.random() * Math.PI * 2;
+  }
+}
+
+function _createProceduralGeometry(kind) {
+  switch (kind) {
+    case 'pillar_cylinder':
+      return new THREE.CylinderGeometry(0.45, 0.6, 2.6, 8);
+    case 'broken_pillar':
+      return new THREE.CylinderGeometry(0.45, 0.7, 1.6, 8);
+    case 'torch_placeholder':
+      return new THREE.CylinderGeometry(0.08, 0.1, 1.4, 6);
+    case 'skull_placeholder':
+      return new THREE.SphereGeometry(0.35, 10, 8);
+    case 'rock_sphere':
+    default:
+      return new THREE.SphereGeometry(0.7, 10, 8);
+  }
+}
+
+function _getProceduralColor(kind) {
+  switch (kind) {
+    case 'pillar_cylinder':
+    case 'broken_pillar':
+      return '#7a6a56';
+    case 'torch_placeholder':
+      return '#8a5a2b';
+    case 'skull_placeholder':
+      return '#b7b0a3';
+    case 'rock_sphere':
+    default:
+      return '#7b7b82';
+  }
+}
+
+function _getGroundHeight(x, z) {
+  return 0;
+}
+
+
+async function _spawnMapMonsters(mapConfig) {
+  const pool = Array.isArray(mapConfig.monsterPool) ? mapConfig.monsterPool : [];
+  const maxMonsters = Number(mapConfig.maxMonsters || 0);
+
+  if (pool.length === 0 || maxMonsters <= 0) return;
+
+  for (let i = 0; i < maxMonsters; i++) {
+    const selected = _pickWeightedMonster(pool);
+    if (!selected) continue;
+
+    const position = _randomPointInMap(mapConfig.terrainSize);
+    await spawnMonster(selected.monsterId, position);
+  }
+}
+
+async function _spawnMapNpcs(mapConfig) {
+  if (!_npcsConfig || !Array.isArray(mapConfig.npcs) || mapConfig.npcs.length === 0) return;
+
+  const filtered = {
+    npcs: _npcsConfig.npcs.filter(npc => mapConfig.npcs.includes(npc.id))
+  };
+
+  if (filtered.npcs.length > 0) {
+    await spawnFromConfig(filtered);
+  }
+}
+
+function _applyMapAudio(mapConfig) {
+  const profile = mapConfig.audioProfile ?? {};
+  const bgmId = profile.bgm;
+
+  if (bgmId) {
+    playBGM(`assets/audio/bgm/${bgmId}.ogg`);
+  }
+  // TODO PARTE 4: startAmbient com ambient sounds
+}
+
+function _updatePlayerCurrentMap(mapId) {
+  emit('playerCurrentMapChanged', { mapId });
+}
+
+function _pickWeightedMonster(pool) {
+  let totalWeight = 0;
+
+  for (const entry of pool) {
+    totalWeight += Math.max(0, Number(entry.weight || 0));
+  }
+
+  if (totalWeight <= 0) return null;
+
+  const roll = Math.random() * totalWeight;
+  let accumulated = 0;
+
+  for (const entry of pool) {
+    accumulated += Math.max(0, Number(entry.weight || 0));
+    if (roll <= accumulated) {
+      return entry;
+    }
+  }
+
+  return pool[pool.length - 1] ?? null;
+}
+
+function _randomPointInMap(terrainSize) {
+  const half = terrainSize * 0.5;
+  return {
+    x: (Math.random() * terrainSize) - half,
+    y: 0.5,
+    z: (Math.random() * terrainSize) - half
+  };
+}
+
+function _distanceToExit(playerPos, exitPos) {
+  const dx = playerPos.x - exitPos.x;
+  const dy = (playerPos.y ?? 0) - (exitPos.y ?? 0);
+  const dz = playerPos.z - exitPos.z;
+  return Math.sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+function _disposeObject(object) {
+  if (!object) return;
+
+  object.traverse?.((child) => {
+    if (child.geometry?.dispose) {
+      child.geometry.dispose();
+    }
+
+    if (Array.isArray(child.material)) {
+      for (const material of child.material) {
+        material?.dispose?.();
+      }
+    } else if (child.material?.dispose) {
+      child.material.dispose();
+    }
+  });
+
+  if (object.geometry?.dispose) {
+    object.geometry.dispose();
+  }
+
+  if (Array.isArray(object.material)) {
+    for (const material of object.material) {
+      material?.dispose?.();
+    }
+  } else if (object.material?.dispose) {
+    object.material.dispose();
+  }
+}
+
+// â”€â”€â”€ Ciclo dia/noite â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function _cacheSceneLights() {
+  const scene = getScene();
+  if (!scene) return;
+
+  _hemiLight = null;
+  _sunLight = null;
+
+  for (const child of scene.children) {
+    if (!_hemiLight && child instanceof THREE.HemisphereLight) {
+      _hemiLight = child;
+      continue;
+    }
+
+    if (!_sunLight && child instanceof THREE.DirectionalLight) {
+      _sunLight = child;
+    }
+
+    if (_hemiLight && _sunLight) break;
+  }
+}
+
+function _updateDayNightCycle(delta) {
+  if (!_currentMapConfig) return;
+
+  const isOutdoor = _currentMapConfig.audioProfile?.reverb === 'outdoor';
+  if (!isOutdoor) {
+    _currentPhase = 'day';
+    _applyIndoorLighting();
+    _emitPhaseEventIfNeeded();
+    return;
+  }
+
+  _cycleTime = (_cycleTime + delta) % DAY_NIGHT_CYCLE_DURATION;
+  _applyOutdoorLighting();
+  _emitPhaseEventIfNeeded();
+}
+
+function _applyCurrentLighting() {
+  const isOutdoor = _currentMapConfig?.audioProfile?.reverb === 'outdoor';
+  if (isOutdoor) {
+    _applyOutdoorLighting();
+    return;
+  }
+  _applyIndoorLighting();
+}
+
+function _applyIndoorLighting() {
+  const dayLighting = _currentMapConfig?.lighting?.day;
+  if (!dayLighting) return;
+
+  _currentPhase = 'day';
+  _applyLightingValues(dayLighting);
+}
+
+function _applyOutdoorLighting() {
+  const dayLighting = _currentMapConfig?.lighting?.day;
+  const nightLighting = _currentMapConfig?.lighting?.night;
+  if (!dayLighting || !nightLighting) return;
+
+  const cycleProgress = _cycleTime / DAY_NIGHT_CYCLE_DURATION;
+  let lighting = dayLighting;
+
+  if (cycleProgress < 0.25) {
+    _currentPhase = 'dawn';
+    lighting = _interpolateLighting(nightLighting, dayLighting, cycleProgress / 0.25);
+  } else if (cycleProgress < 0.75) {
+    _currentPhase = 'day';
+    lighting = dayLighting;
+  } else if (cycleProgress < 0.85) {
+    _currentPhase = 'dusk';
+    lighting = _interpolateLighting(dayLighting, nightLighting, (cycleProgress - 0.75) / 0.10);
+  } else {
+    _currentPhase = 'night';
+    lighting = nightLighting;
+  }
+
+  _applyLightingValues(lighting);
+}
+
+function _applyLightingValues(lighting) {
+  if (!_hemiLight || !_sunLight || !lighting) return;
+
+  if (lighting.ambient) {
+    _hemiLight.color.set(lighting.ambient);
+  }
+  if (typeof lighting.intensity === 'number') {
+    _hemiLight.intensity = lighting.intensity;
+    _sunLight.intensity = lighting.intensity;
+  }
+  if (lighting.directional) {
+    _sunLight.color.set(lighting.directional);
+  }
+}
+
+function _interpolateLighting(fromLighting, toLighting, t) {
+  const clampedT = THREE.MathUtils.clamp(t, 0, 1);
+
+  return {
+    ambient: _lerpColor(fromLighting.ambient, toLighting.ambient, clampedT),
+    directional: _lerpColor(fromLighting.directional, toLighting.directional, clampedT),
+    intensity: THREE.MathUtils.lerp(fromLighting.intensity ?? 0, toLighting.intensity ?? 0, clampedT)
+  };
+}
+
+function _lerpColor(fromColor, toColor, t) {
+  const from = new THREE.Color(fromColor ?? '#ffffff');
+  const to = new THREE.Color(toColor ?? '#ffffff');
+  return `#${from.lerp(to, t).getHexString()}`;
+}
+
+// â”€â”€â”€ Clima â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function _updateWeather(delta) {
+  if (!_currentMapConfig) return;
+
+  const weatherProfile = _currentMapConfig.weatherProfile ?? {};
+  const options = Array.isArray(weatherProfile.options) ? weatherProfile.options : ['none'];
+  const validOptions = options.filter(option => option !== 'none');
+  const changeInterval = Number(weatherProfile.changeInterval || 0);
+
+  if (validOptions.length === 0 || changeInterval <= 0) {
+    if (_currentWeather !== 'clear') {
+      _currentWeather = 'clear';
+      emit('weatherChanged', { weather: 'clear' });
+    }
+    return;
+  }
+
+  _weatherTime += delta;
+  if (_weatherTime < changeInterval) return;
+
+  _weatherTime = 0;
+  const nextWeather = validOptions[Math.floor(Math.random() * validOptions.length)] ?? 'clear';
+
+  if (nextWeather === _currentWeather) return;
+
+  _currentWeather = nextWeather;
+  emit('weatherChanged', { weather: nextWeather });
+}
+
+// â”€â”€â”€ Eventos de fase â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function _emitPhaseEventIfNeeded() {
+  if (_lastEmittedPhase === _currentPhase) return;
+
+  const previousPhase = _lastEmittedPhase;
+  _lastEmittedPhase = _currentPhase;
+
+  if (_currentPhase === 'night' && previousPhase !== 'night') {
+    emit('nightStarted');
+  }
+
+  if ((_currentPhase === 'day' || _currentPhase === 'dawn') && previousPhase === 'night') {
+    emit('dayStarted');
+  }
+}
+
+function _getPhaseProgress(cycleProgress) {
+  if (_currentPhase === 'dawn') {
+    return THREE.MathUtils.clamp(cycleProgress / 0.25, 0, 1);
+  }
+  if (_currentPhase === 'day') {
+    return THREE.MathUtils.clamp((cycleProgress - 0.25) / 0.50, 0, 1);
+  }
+  if (_currentPhase === 'dusk') {
+    return THREE.MathUtils.clamp((cycleProgress - 0.75) / 0.10, 0, 1);
+  }
+  return THREE.MathUtils.clamp((cycleProgress - 0.85) / 0.15, 0, 1);
+}
+===== maps.json =====
+{
+  "maps": [
+    {
+      "id": "city_01",
+      "name": "Cidade de Prontera",
+      "terrainSize": 80,
+      "terrainColor": "#7caa5a",
+      "monsterPool": [],
+      "npcs": [
+        "mayor",
+        "blacksmith",
+        "guard",
+        "merchant",
+        "priest",
+        "sage",
+        "master_swordsman",
+        "master_mage",
+        "master_archer",
+        "master_assassin",
+        "grandmaster_lord_knight",
+        "grandmaster_high_wizard",
+        "grandmaster_sniper",
+        "grandmaster_shadow_assassin"
+      ],
+      "maxMonsters": 0,
+      "respawnTime": 0,
+      "exitPoints": [
+        {
+          "targetMap": "forest_01",
+          "position": { "x": 35, "y": 0, "z": 0 },
+          "label": "Floresta de Payon"
+        }
+      ],
+      "decoration": [
+        { "model": "Prop_Crate", "path": "assets/models/city/Prop_Crate.gltf", "count": 5, "area": { "xMin": -24, "xMax": 24, "zMin": -24, "zMax": 24 }, "scaleRange": [0.9, 1.1], "rotateY": true },
+        { "model": "Prop_WoodenFence", "path": "assets/models/city/Prop_WoodenFence.gltf", "count": 8, "area": { "xMin": -28, "xMax": 28, "zMin": -28, "zMax": 28 }, "scaleRange": [0.95, 1.05], "rotateY": true },
+        { "model": "Prop_Wagon", "path": "assets/models/city/Prop_Wagon.gltf", "count": 2, "area": { "xMin": -18, "xMax": 18, "zMin": -18, "zMax": 18 }, "scaleRange": [0.95, 1.1], "rotateY": true },
+        { "model": "BirchTree_1", "path": "assets/models/nature/BirchTree_1.gltf", "count": 3, "area": { "xMin": -12, "xMax": 12, "zMin": -12, "zMax": 12 }, "scaleRange": [0.9, 1.15], "rotateY": true },
+        { "model": "Bush_Flowers", "path": "assets/models/nature/Bush_Flowers.gltf", "count": 4, "area": { "xMin": -16, "xMax": 16, "zMin": -16, "zMax": 16 }, "scaleRange": [0.85, 1.1], "rotateY": true }
+      ],
+      "audioProfile": {
+        "bgm": "bgm_city",
+        "ambient": [
+          "sfx_ambient_wind",
+          "sfx_npc_blacksmith_hammer"
+        ],
+        "reverb": "outdoor"
+      },
+      "weatherProfile": {
+        "options": ["clear"],
+        "changeInterval": 300
+      },
+      "lighting": {
+        "day": {
+          "ambient": "#ffffff",
+          "directional": "#ffffcc",
+          "intensity": 1.0
+        },
+        "night": {
+          "ambient": "#1a1a3a",
+          "directional": "#4444aa",
+          "intensity": 0.6
+        }
+      }
+    },
+    {
+      "id": "forest_01",
+      "name": "Floresta de Payon",
+      "terrainSize": 120,
+      "terrainColor": "#4a7a3a",
+      "monsterPool": [
+        { "monsterId": "slime", "weight": 30 },
+        { "monsterId": "goblin", "weight": 25 },
+        { "monsterId": "lobo", "weight": 20 },
+        { "monsterId": "besouro", "weight": 15 },
+        { "monsterId": "fada-corrompida", "weight": 10 }
+      ],
+      "npcs": [],
+      "maxMonsters": 15,
+      "respawnTime": 30,
+      "exitPoints": [
+        {
+          "targetMap": "city_01",
+          "position": { "x": -55, "y": 0, "z": 0 },
+          "label": "Cidade de Prontera"
+        },
+        {
+          "targetMap": "caves_01",
+          "position": { "x": 55, "y": 0, "z": 0 },
+          "label": "Cavernas de Byalan"
+        }
+      ],
+      "decoration": [
+        { "model": "BirchTree_1", "path": "assets/models/nature/BirchTree_1.gltf", "count": 8, "area": { "xMin": -40, "xMax": 40, "zMin": -40, "zMax": 40 }, "scaleRange": [0.9, 1.2], "rotateY": true },
+        { "model": "BirchTree_2", "path": "assets/models/nature/BirchTree_2.gltf", "count": 8, "area": { "xMin": -42, "xMax": 42, "zMin": -42, "zMax": 42 }, "scaleRange": [0.9, 1.2], "rotateY": true },
+        { "model": "BirchTree_3", "path": "assets/models/nature/BirchTree_3.gltf", "count": 8, "area": { "xMin": -44, "xMax": 44, "zMin": -44, "zMax": 44 }, "scaleRange": [0.9, 1.25], "rotateY": true },
+        { "model": "MapleTree_1", "path": "assets/models/nature/MapleTree_1.gltf", "count": 5, "area": { "xMin": -38, "xMax": 38, "zMin": -38, "zMax": 38 }, "scaleRange": [0.85, 1.15], "rotateY": true },
+        { "model": "MapleTree_2", "path": "assets/models/nature/MapleTree_2.gltf", "count": 5, "area": { "xMin": -36, "xMax": 36, "zMin": -36, "zMax": 36 }, "scaleRange": [0.85, 1.15], "rotateY": true },
+        { "model": "Bush_Large", "path": "assets/models/nature/Bush_Large.gltf", "count": 10, "area": { "xMin": -46, "xMax": 46, "zMin": -46, "zMax": 46 }, "scaleRange": [0.85, 1.15], "rotateY": true },
+        { "model": "Bush_Small_Flowers", "path": "assets/models/nature/Bush_Small_Flowers.gltf", "count": 8, "area": { "xMin": -42, "xMax": 42, "zMin": -42, "zMax": 42 }, "scaleRange": [0.8, 1.1], "rotateY": true },
+        { "model": "Grass_Large", "path": "assets/models/nature/Grass_Large.gltf", "count": 15, "area": { "xMin": -48, "xMax": 48, "zMin": -48, "zMax": 48 }, "scaleRange": [0.8, 1.2], "rotateY": true },
+        { "model": "Flower_1_Clump", "path": "assets/models/nature/Flower_1_Clump.gltf", "count": 5, "area": { "xMin": -40, "xMax": 40, "zMin": -40, "zMax": 40 }, "scaleRange": [0.8, 1.1], "rotateY": true },
+        { "model": "Flower_2_Clump", "path": "assets/models/nature/Flower_2_Clump.gltf", "count": 5, "area": { "xMin": -40, "xMax": 40, "zMin": -40, "zMax": 40 }, "scaleRange": [0.8, 1.1], "rotateY": true },
+        { "model": "Flower_3_Clump", "path": "assets/models/nature/Flower_3_Clump.gltf", "count": 5, "area": { "xMin": -40, "xMax": 40, "zMin": -40, "zMax": 40 }, "scaleRange": [0.8, 1.1], "rotateY": true }
+      ],
+      "audioProfile": {
+        "bgm": "bgm_forest",
+        "ambient": [
+          "sfx_ambient_birds",
+          "sfx_ambient_wind"
+        ],
+        "reverb": "outdoor"
+      },
+      "weatherProfile": {
+        "options": ["clear", "rain"],
+        "changeInterval": 300
+      },
+      "lighting": {
+        "day": {
+          "ambient": "#ffffff",
+          "directional": "#ffffcc",
+          "intensity": 1.0
+        },
+        "night": {
+          "ambient": "#1a1a3a",
+          "directional": "#4444aa",
+          "intensity": 0.6
+        }
+      }
+    },
+    {
+      "id": "caves_01",
+      "name": "Cavernas de Byalan",
+      "terrainSize": 100,
+      "terrainColor": "#3a3a4a",
+      "monsterPool": [
+        { "monsterId": "esqueleto", "weight": 30 },
+        { "monsterId": "golem-pequeno", "weight": 25 },
+        { "monsterId": "zumbi", "weight": 25 },
+        { "monsterId": "esqueleto-arqueiro", "weight": 20 }
+      ],
+      "npcs": [],
+      "maxMonsters": 15,
+      "respawnTime": 30,
+      "exitPoints": [
+        {
+          "targetMap": "forest_01",
+          "position": { "x": -45, "y": 0, "z": 0 },
+          "label": "Floresta de Payon"
+        },
+        {
+          "targetMap": "ruins_01",
+          "position": { "x": 45, "y": 0, "z": 0 },
+          "label": "RuÃ­nas de Glast Heim"
+        }
+      ],
+      "decoration": [
+        { "model": "rock_sphere", "path": "", "procedural": true, "count": 10, "area": { "xMin": -35, "xMax": 35, "zMin": -35, "zMax": 35 }, "scaleRange": [0.8, 1.6], "rotateY": true },
+        { "model": "pillar_cylinder", "path": "", "procedural": true, "count": 6, "area": { "xMin": -30, "xMax": 30, "zMin": -30, "zMax": 30 }, "scaleRange": [0.9, 1.3], "rotateY": true }
+      ],
+      "audioProfile": {
+        "bgm": "bgm_caves",
+        "ambient": [
+          "sfx_ambient_cave_drip",
+          "sfx_ambient_water"
+        ],
+        "reverb": "indoor"
+      },
+      "weatherProfile": {
+        "options": ["none"],
+        "changeInterval": 0
+      },
+      "lighting": {
+        "day": {
+          "ambient": "#7a7a8a",
+          "directional": "#8a8ab0",
+          "intensity": 0.55
+        },
+        "night": {
+          "ambient": "#7a7a8a",
+          "directional": "#8a8ab0",
+          "intensity": 0.55
+        }
+      }
+    },
+    {
+      "id": "ruins_01",
+      "name": "RuÃ­nas de Glast Heim",
+      "terrainSize": 110,
+      "terrainColor": "#4a4a3a",
+      "monsterPool": [
+        { "monsterId": "lobisomem", "weight": 25 },
+        { "monsterId": "orc_warrior", "weight": 25 },
+        { "monsterId": "fantasma", "weight": 25 },
+        { "monsterId": "demonio-menor", "weight": 25 }
+      ],
+      "npcs": [],
+      "maxMonsters": 15,
+      "respawnTime": 35,
+      "exitPoints": [
+        {
+          "targetMap": "caves_01",
+          "position": { "x": -50, "y": 0, "z": 0 },
+          "label": "Cavernas de Byalan"
+        },
+        {
+          "targetMap": "castle_01",
+          "position": { "x": 50, "y": 0, "z": 0 },
+          "label": "Castelo de Geffen"
+        }
+      ],
+      "decoration": [
+        { "model": "DeadTree_1", "path": "assets/models/nature/DeadTree_1.gltf", "count": 5, "area": { "xMin": -40, "xMax": 40, "zMin": -40, "zMax": 40 }, "scaleRange": [0.9, 1.2], "rotateY": true },
+        { "model": "DeadTree_2", "path": "assets/models/nature/DeadTree_2.gltf", "count": 5, "area": { "xMin": -42, "xMax": 42, "zMin": -42, "zMax": 42 }, "scaleRange": [0.9, 1.2], "rotateY": true },
+        { "model": "DeadTree_3", "path": "assets/models/nature/DeadTree_3.gltf", "count": 5, "area": { "xMin": -44, "xMax": 44, "zMin": -44, "zMax": 44 }, "scaleRange": [0.9, 1.25], "rotateY": true },
+        { "model": "Bush", "path": "assets/models/nature/Bush.gltf", "count": 8, "area": { "xMin": -36, "xMax": 36, "zMin": -36, "zMax": 36 }, "scaleRange": [0.85, 1.1], "rotateY": true },
+        { "model": "rock_sphere", "path": "", "procedural": true, "count": 8, "area": { "xMin": -34, "xMax": 34, "zMin": -34, "zMax": 34 }, "scaleRange": [0.9, 1.5], "rotateY": true },
+        { "model": "broken_pillar", "path": "", "procedural": true, "count": 4, "area": { "xMin": -28, "xMax": 28, "zMin": -28, "zMax": 28 }, "scaleRange": [0.8, 1.15], "rotateY": true }
+      ],
+      "audioProfile": {
+        "bgm": "bgm_ruins",
+        "ambient": [
+          "sfx_ambient_wind",
+          "sfx_ambient_torches"
+        ],
+        "reverb": "outdoor"
+      },
+      "weatherProfile": {
+        "options": ["clear", "fog"],
+        "changeInterval": 300
+      },
+      "lighting": {
+        "day": {
+          "ambient": "#d8d2c0",
+          "directional": "#d6c9a0",
+          "intensity": 0.9
+        },
+        "night": {
+          "ambient": "#232330",
+          "directional": "#5b5f88",
+          "intensity": 0.5
+        }
+      }
+    },
+    {
+      "id": "castle_01",
+      "name": "Castelo de Geffen",
+      "terrainSize": 100,
+      "terrainColor": "#5a5a6a",
+      "monsterPool": [
+        { "monsterId": "assassin_shadow", "weight": 30 },
+        { "monsterId": "lobisomem-alfa", "weight": 20 },
+        { "monsterId": "golem-grande", "weight": 25 },
+        { "monsterId": "succubus", "weight": 25 }
+      ],
+      "npcs": [],
+      "maxMonsters": 15,
+      "respawnTime": 40,
+      "exitPoints": [
+        {
+          "targetMap": "ruins_01",
+          "position": { "x": -45, "y": 0, "z": 0 },
+          "label": "RuÃ­nas de Glast Heim"
+        },
+        {
+          "targetMap": "dungeon_secret",
+          "position": { "x": 45, "y": 0, "z": 0 },
+          "label": "Dungeon Secreta"
+        }
+      ],
+      "decoration": [
+        { "model": "pillar_cylinder", "path": "", "procedural": true, "count": 8, "area": { "xMin": -30, "xMax": 30, "zMin": -30, "zMax": 30 }, "scaleRange": [0.95, 1.35], "rotateY": true },
+        { "model": "torch_placeholder", "path": "", "procedural": true, "count": 6, "area": { "xMin": -26, "xMax": 26, "zMin": -26, "zMax": 26 }, "scaleRange": [0.8, 1.1], "rotateY": true },
+        { "model": "Prop_Crate", "path": "assets/models/city/Prop_Crate.gltf", "count": 4, "area": { "xMin": -20, "xMax": 20, "zMin": -20, "zMax": 20 }, "scaleRange": [0.9, 1.05], "rotateY": true }
+      ],
+      "audioProfile": {
+        "bgm": "bgm_castle",
+        "ambient": [
+          "sfx_ambient_wind",
+          "sfx_ambient_torches"
+        ],
+        "reverb": "outdoor"
+      },
+      "weatherProfile": {
+        "options": ["clear", "fog"],
+        "changeInterval": 300
+      },
+      "lighting": {
+        "day": {
+          "ambient": "#e0e0ea",
+          "directional": "#d8d8f0",
+          "intensity": 0.95
+        },
+        "night": {
+          "ambient": "#1d1d35",
+          "directional": "#5555aa",
+          "intensity": 0.5
+        }
+      }
+    },
+    {
+      "id": "dungeon_secret",
+      "name": "Dungeon Secreta",
+      "terrainSize": 80,
+      "terrainColor": "#2a2a2a",
+      "monsterPool": [
+        { "monsterId": "dragao-bebe", "weight": 55 },
+        { "monsterId": "boss_lord_knight", "weight": 12 },
+        { "monsterId": "boss_high_wizard", "weight": 11 },
+        { "monsterId": "boss_sniper", "weight": 11 },
+        { "monsterId": "boss_shadow_assassin", "weight": 11 }
+      ],
+      "npcs": [],
+      "maxMonsters": 8,
+      "respawnTime": 45,
+      "exitPoints": [
+        {
+          "targetMap": "castle_01",
+          "position": { "x": -30, "y": 0, "z": 0 },
+          "label": "Castelo de Geffen"
+        }
+      ],
+      "decoration": [
+        { "model": "rock_sphere", "path": "", "procedural": true, "count": 12, "area": { "xMin": -26, "xMax": 26, "zMin": -26, "zMax": 26 }, "scaleRange": [0.9, 1.6], "rotateY": true },
+        { "model": "pillar_cylinder", "path": "", "procedural": true, "count": 8, "area": { "xMin": -24, "xMax": 24, "zMin": -24, "zMax": 24 }, "scaleRange": [0.9, 1.3], "rotateY": true },
+        { "model": "skull_placeholder", "path": "", "procedural": true, "count": 4, "area": { "xMin": -18, "xMax": 18, "zMin": -18, "zMax": 18 }, "scaleRange": [0.75, 1.0], "rotateY": true }
+      ],
+      "audioProfile": {
+        "bgm": "bgm_dungeon",
+        "ambient": [
+          "sfx_ambient_cave_drip",
+          "sfx_ambient_torches"
+        ],
+        "reverb": "indoor"
+      },
+      "weatherProfile": {
+        "options": ["none"],
+        "changeInterval": 0
+      },
+      "lighting": {
+        "day": {
+          "ambient": "#4a4a5a",
+          "directional": "#7070aa",
+          "intensity": 0.45
+        },
+        "night": {
+          "ambient": "#4a4a5a",
+          "directional": "#7070aa",
+          "intensity": 0.45
+        }
+      }
+    }
+  ]
+}

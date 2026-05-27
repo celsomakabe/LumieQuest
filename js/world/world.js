@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { getScene, getCamera, add, remove } from './scene.js';
+import { getScene, getCamera, add, remove, updateLighting, setSkybox } from './scene.js';
 import { spawnMonster, spawnGroup } from '../entities/monsters.js';
 import { spawnFromConfig } from '../entities/npcs.js';
 import * as Models from '../core/models.js';
@@ -13,6 +13,7 @@ let _currentMapId = null;
 let _currentMapConfig = null;
 let _terrainMesh = null;
 let _decorationGroup = null;
+let _instancedMeshes = [];
 let _mapObjects = [];
 let _exitNearTarget = null;
 let _npcsConfig = null;
@@ -21,8 +22,6 @@ let _cycleTime = 150;
 let _weatherTime = 0;
 let _currentWeather = 'clear';
 let _currentPhase = 'day';
-let _hemiLight = null;
-let _sunLight = null;
 let _lastEmittedPhase = null;
 
 const DAY_NIGHT_CYCLE_DURATION = 300;
@@ -85,8 +84,9 @@ export async function loadMap(mapId) {
   await _spawnMapNpcs(nextMap);
   _applyMapAudio(nextMap);
   _updatePlayerCurrentMap(mapId);
-  _cacheSceneLights();
-  _applyCurrentLighting();
+  const skyboxUrls = nextMap.skybox ?? null;
+  setSkybox(skyboxUrls);
+  updateLighting('day', 1.0, nextMap.lighting ?? {});
   emit('weatherChanged', { weather: 'clear' });
 
   emit('mapLoaded', {
@@ -173,7 +173,16 @@ function _clearCurrentMap() {
     remove(obj);
     _disposeObject(obj);
   }
-
+for (const im of _instancedMeshes) {
+    remove(im);
+    im.geometry?.dispose?.();
+    if (Array.isArray(im.material)) {
+      im.material.forEach(m => m?.dispose?.());
+    } else {
+      im.material?.dispose?.();
+    }
+  }
+  _instancedMeshes = [];
   _mapObjects = [];
   _decorationGroup = null;
   _terrainMesh = null;
@@ -187,7 +196,7 @@ function _clearCurrentMap() {
 function _createTerrain(mapConfig) {
   const geometry = new THREE.PlaneGeometry(mapConfig.terrainSize, mapConfig.terrainSize);
   const material = new THREE.MeshLambertMaterial({
-    color: mapConfig.terrainColor
+    color: mapConfig.terrainColor ?? '#7caa5a'
   });
 
   const mesh = new THREE.Mesh(geometry, material);
@@ -195,6 +204,27 @@ function _createTerrain(mapConfig) {
   mesh.receiveShadow = true;
   mesh.name = `terrain_${mapConfig.id}`;
   mesh.position.y = -0.01;
+
+  if (mapConfig.terrainTexture) {
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      mapConfig.terrainTexture,
+      (texture) => {
+        if (!mesh.parent) return;
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        const tileCount = Math.round(mapConfig.terrainSize / 10);
+        texture.repeat.set(tileCount, tileCount);
+        material.map = texture;
+        material.color.set(0xffffff);
+        material.needsUpdate = true;
+      },
+      undefined,
+      (err) => {
+        console.warn(`[world] Falha ao carregar terrainTexture: ${mapConfig.terrainTexture}`, err);
+      }
+    );
+  }
 
   return mesh;
 }
@@ -207,15 +237,31 @@ async function _spawnMapDecoration(mapConfig) {
   add(_decorationGroup);
   _mapObjects.push(_decorationGroup);
 
+  const proceduralByModel = new Map();
+  const nonProcedural = [];
+
   for (const entry of decorations) {
     const count = Math.max(0, Number(entry.count || 0));
     if (count <= 0) continue;
 
     if (entry.procedural === true) {
-      _spawnProceduralDecoration(entry, count, _decorationGroup);
-      continue;
+      const key = entry.model ?? 'unknown';
+      if (!proceduralByModel.has(key)) {
+        proceduralByModel.set(key, { entry, totalCount: 0, entries: [] });
+      }
+      const bucket = proceduralByModel.get(key);
+      bucket.totalCount += count;
+      bucket.entries.push({ entry, count });
+    } else {
+      nonProcedural.push({ entry, count });
     }
+  }
 
+  for (const [model, bucket] of proceduralByModel) {
+    _spawnProceduralInstancedMesh(model, bucket);
+  }
+
+  for (const { entry, count } of nonProcedural) {
     await _spawnModelDecoration(entry, count, _decorationGroup);
   }
 }
@@ -248,42 +294,40 @@ async function _spawnModelDecoration(entry, count, group) {
   }
 }
 
-function _spawnProceduralDecoration(entry, count, group) {
-  const geometry = _createProceduralGeometry(entry.model);
+function _spawnProceduralInstancedMesh(modelKey, bucket) {
+  const { totalCount, entries } = bucket;
+  if (totalCount <= 0) return;
+
+  const geometry = _createProceduralGeometry(modelKey);
   if (!geometry) return;
 
   const material = new THREE.MeshStandardMaterial({
-    color: _getProceduralColor(entry.model),
+    color: _getProceduralColor(modelKey),
     roughness: 1,
     metalness: 0
   });
 
-  if (count > 5) {
-    const instanced = new THREE.InstancedMesh(geometry, material, count);
-    instanced.name = entry.model ?? 'procedural_decoration';
+  const instanced = new THREE.InstancedMesh(geometry, material, totalCount);
+  instanced.name = `instanced_${modelKey}`;
+  instanced.castShadow = false;
+  instanced.receiveShadow = false;
 
-    const dummy = new THREE.Object3D();
+  const dummy = new THREE.Object3D();
+  let idx = 0;
+
+  for (const { entry, count } of entries) {
     for (let i = 0; i < count; i++) {
       _applyDecorationTransform(dummy, entry);
       dummy.updateMatrix();
-      instanced.setMatrixAt(i, dummy.matrix);
+      instanced.setMatrixAt(idx, dummy.matrix);
+      idx++;
     }
-
-    instanced.instanceMatrix.needsUpdate = true;
-    instanced.castShadow = false;
-    instanced.receiveShadow = false;
-    group.add(instanced);
-    return;
   }
 
-  for (let i = 0; i < count; i++) {
-    const mesh = new THREE.Mesh(geometry.clone(), material.clone());
-    mesh.name = entry.model ?? 'procedural_decoration';
-    _applyDecorationTransform(mesh, entry);
-    mesh.castShadow = false;
-    mesh.receiveShadow = false;
-    group.add(mesh);
-  }
+  instanced.instanceMatrix.needsUpdate = true;
+
+  add(instanced);
+  _instancedMeshes.push(instanced);
 }
 
 function _applyDecorationTransform(object, entry) {
@@ -455,26 +499,7 @@ function _disposeObject(object) {
 
 // ─── Ciclo dia/noite ──────────────────────────────────────────────────────────
 
-function _cacheSceneLights() {
-  const scene = getScene();
-  if (!scene) return;
-
-  _hemiLight = null;
-  _sunLight = null;
-
-  for (const child of scene.children) {
-    if (!_hemiLight && child instanceof THREE.HemisphereLight) {
-      _hemiLight = child;
-      continue;
-    }
-
-    if (!_sunLight && child instanceof THREE.DirectionalLight) {
-      _sunLight = child;
-    }
-
-    if (_hemiLight && _sunLight) break;
-  }
-}
+// _cacheSceneLights removido: iluminação gerenciada por scene.js via updateLighting()
 
 function _updateDayNightCycle(delta) {
   if (!_currentMapConfig) return;
@@ -482,88 +507,37 @@ function _updateDayNightCycle(delta) {
   const isOutdoor = _currentMapConfig.audioProfile?.reverb === 'outdoor';
   if (!isOutdoor) {
     _currentPhase = 'day';
-    _applyIndoorLighting();
     _emitPhaseEventIfNeeded();
+    updateLighting('day', 1.0, _currentMapConfig.lighting ?? {});
     return;
   }
 
   _cycleTime = (_cycleTime + delta) % DAY_NIGHT_CYCLE_DURATION;
-  _applyOutdoorLighting();
-  _emitPhaseEventIfNeeded();
-}
-
-function _applyCurrentLighting() {
-  const isOutdoor = _currentMapConfig?.audioProfile?.reverb === 'outdoor';
-  if (isOutdoor) {
-    _applyOutdoorLighting();
-    return;
-  }
-  _applyIndoorLighting();
-}
-
-function _applyIndoorLighting() {
-  const dayLighting = _currentMapConfig?.lighting?.day;
-  if (!dayLighting) return;
-
-  _currentPhase = 'day';
-  _applyLightingValues(dayLighting);
-}
-
-function _applyOutdoorLighting() {
-  const dayLighting = _currentMapConfig?.lighting?.day;
-  const nightLighting = _currentMapConfig?.lighting?.night;
-  if (!dayLighting || !nightLighting) return;
-
   const cycleProgress = _cycleTime / DAY_NIGHT_CYCLE_DURATION;
-  let lighting = dayLighting;
+
+  let phase, phaseProgress;
 
   if (cycleProgress < 0.25) {
-    _currentPhase = 'dawn';
-    lighting = _interpolateLighting(nightLighting, dayLighting, cycleProgress / 0.25);
+    phase         = 'dawn';
+    phaseProgress = cycleProgress / 0.25;
   } else if (cycleProgress < 0.75) {
-    _currentPhase = 'day';
-    lighting = dayLighting;
+    phase         = 'day';
+    phaseProgress = (cycleProgress - 0.25) / 0.50;
   } else if (cycleProgress < 0.85) {
-    _currentPhase = 'dusk';
-    lighting = _interpolateLighting(dayLighting, nightLighting, (cycleProgress - 0.75) / 0.10);
+    phase         = 'dusk';
+    phaseProgress = (cycleProgress - 0.75) / 0.10;
   } else {
-    _currentPhase = 'night';
-    lighting = nightLighting;
+    phase         = 'night';
+    phaseProgress = (cycleProgress - 0.85) / 0.15;
   }
 
-  _applyLightingValues(lighting);
+  _currentPhase = phase;
+  _emitPhaseEventIfNeeded();
+  updateLighting(phase, phaseProgress, _currentMapConfig.lighting ?? {});
 }
 
-function _applyLightingValues(lighting) {
-  if (!_hemiLight || !_sunLight || !lighting) return;
 
-  if (lighting.ambient) {
-    _hemiLight.color.set(lighting.ambient);
-  }
-  if (typeof lighting.intensity === 'number') {
-    _hemiLight.intensity = lighting.intensity;
-    _sunLight.intensity = lighting.intensity;
-  }
-  if (lighting.directional) {
-    _sunLight.color.set(lighting.directional);
-  }
-}
 
-function _interpolateLighting(fromLighting, toLighting, t) {
-  const clampedT = THREE.MathUtils.clamp(t, 0, 1);
-
-  return {
-    ambient: _lerpColor(fromLighting.ambient, toLighting.ambient, clampedT),
-    directional: _lerpColor(fromLighting.directional, toLighting.directional, clampedT),
-    intensity: THREE.MathUtils.lerp(fromLighting.intensity ?? 0, toLighting.intensity ?? 0, clampedT)
-  };
-}
-
-function _lerpColor(fromColor, toColor, t) {
-  const from = new THREE.Color(fromColor ?? '#ffffff');
-  const to = new THREE.Color(toColor ?? '#ffffff');
-  return `#${from.lerp(to, t).getHexString()}`;
-}
 
 // ─── Clima ────────────────────────────────────────────────────────────────────
 

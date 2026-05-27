@@ -23,6 +23,7 @@ let _renderer;
  */
 let _ground = null;
 let _sun = null;
+let _hemiLight = null;
 
 /**
  * Inicializa cena, câmera, luzes, chão e renderer.
@@ -41,7 +42,7 @@ export function init(canvas) {
 
   // --- Cena ---
   _scene = new THREE.Scene();
-  _scene.fog = new THREE.Fog(0x87CEEB, 60, 200); // Névoa distante combina com céu
+  _scene.fog = new THREE.FogExp2(0x87CEEB, 0.012);
 
   // --- Câmera perspectiva ---
   _camera = new THREE.PerspectiveCamera(
@@ -53,14 +54,13 @@ export function init(canvas) {
     _camera.position.set(0, 14, 14);
     _camera.lookAt(0, 0, 0);
 
-  // --- Luz ambiente (HemisphereLight) ---
-  // Céu azul de cima, reflexo verde do chão de baixo — mais natural que AmbientLight puro
-  const hemiLight = new THREE.HemisphereLight(
-    0xb0d8ff, // skyColor: azul claro
-    0x4a7c3a, // groundColor: verde grama
-    0.4       // intensidade baixa — o sol faz o trabalho principal
+  // --- HemisphereLight (substitui AmbientLight puro) ---
+  _hemiLight = new THREE.HemisphereLight(
+    0xb0d8ff,
+    0x4a7c3a,
+    0.4
   );
-  _scene.add(hemiLight);
+  _scene.add(_hemiLight);
 
   // --- Sol (DirectionalLight com shadow map limitado a 30m) ---
   _sun = new THREE.DirectionalLight(0xfff4e0, 1.0);
@@ -136,6 +136,86 @@ export function getCamera() { return _camera; }
  */
 export function getRenderer() { return _renderer; }
 export function getSun() { return _sun; }
+export function getHemiLight() { return _hemiLight; }
+
+/**
+ * Atualiza cores e intensidades das luzes com base na fase do ciclo.
+ * @param {'day'|'dawn'|'dusk'|'night'} cyclePhase
+ * @param {number} cycleProgress
+ * @param {Object} lightingConfig
+ */
+export function updateLighting(cyclePhase, cycleProgress, lightingConfig) {
+  if (!_hemiLight || !_sun || !lightingConfig) return;
+
+  const { day, night } = lightingConfig;
+  if (!day || !night) return;
+
+  let ambient, directional, intensity;
+
+  if (cyclePhase === 'day') {
+    ambient     = day.ambient;
+    directional = day.directional;
+    intensity   = day.intensity ?? 1.0;
+  } else if (cyclePhase === 'night') {
+    ambient     = night.ambient;
+    directional = night.directional;
+    intensity   = night.intensity ?? 0.6;
+  } else if (cyclePhase === 'dawn') {
+    ambient     = _lerpColorHex(night.ambient, day.ambient, cycleProgress);
+    directional = _lerpColorHex(night.directional, day.directional, cycleProgress);
+    intensity   = THREE.MathUtils.lerp(night.intensity ?? 0.6, day.intensity ?? 1.0, cycleProgress);
+  } else {
+    ambient     = _lerpColorHex(day.ambient, night.ambient, cycleProgress);
+    directional = _lerpColorHex(day.directional, night.directional, cycleProgress);
+    intensity   = THREE.MathUtils.lerp(day.intensity ?? 1.0, night.intensity ?? 0.6, cycleProgress);
+  }
+
+  if (ambient)     _hemiLight.color.set(ambient);
+  if (directional) _sun.color.set(directional);
+  if (typeof intensity === 'number') {
+    _hemiLight.intensity = intensity * 0.4;
+    _sun.intensity       = intensity;
+  }
+
+  if (_scene?.fog) {
+    const fogColor = new THREE.Color(ambient ?? 0x87CEEB);
+    _scene.fog.color.copy(fogColor);
+    _renderer?.setClearColor(fogColor);
+  }
+}
+
+function _lerpColorHex(fromHex, toHex, t) {
+  const from = new THREE.Color(fromHex ?? '#ffffff');
+  const to   = new THREE.Color(toHex   ?? '#ffffff');
+  return '#' + from.lerp(to, THREE.MathUtils.clamp(t, 0, 1)).getHexString();
+}
+
+/**
+ * Carrega e aplica skybox cubemap.
+ * @param {string[]|null} urls - [px,nx,py,ny,pz,nz] ou null para resetar
+ */
+export function setSkybox(urls) {
+  if (!_scene) return;
+
+  if (!urls || urls.length < 6) {
+    _scene.background = null;
+    return;
+  }
+
+  const loader = new THREE.CubeTextureLoader();
+  loader.load(
+    urls,
+    (cubeTexture) => {
+      if (!_scene) return;
+      _scene.background = cubeTexture;
+      console.log('[scene] Skybox aplicado.');
+    },
+    undefined,
+    (err) => {
+      console.warn('[scene] Falha ao carregar skybox cubemap:', err);
+    }
+  );
+}
 /**
  * Adiciona um Object3D à cena.
  * @param {THREE.Object3D} obj - Objeto a adicionar
