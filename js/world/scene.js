@@ -48,7 +48,7 @@ export function init(canvas) {
 
   // --- Cena ---
   _scene = new THREE.Scene();
-  _scene.fog = new THREE.FogExp2(0x87CEEB, 0.012);
+  _scene.fog = new THREE.FogExp2(0x87CEEB, 0.006);
 
   // --- Câmera perspectiva ---
   _camera = new THREE.PerspectiveCamera(
@@ -64,7 +64,7 @@ export function init(canvas) {
   _renderPass = new RenderPass(_scene, _camera);
 
   const bloomResolution = new THREE.Vector2(window.innerWidth, window.innerHeight);
-  _bloomPass = new UnrealBloomPass(bloomResolution, 0.8, 0.4, 0.85);
+  _bloomPass = new UnrealBloomPass(bloomResolution, 0.2, 0.4, 0.95);
 
   const VignetteShader = {
     uniforms: {
@@ -138,6 +138,7 @@ export function init(canvas) {
   _ground.rotation.x = -Math.PI / 2; // Rotaciona para horizontal (XZ)
   _ground.receiveShadow = true;
   _scene.add(_ground);
+  _ground.visible = false; // world.js cria terreno próprio
 
   // --- Resize handler ---
   window.addEventListener('resize', _onResize);
@@ -226,7 +227,7 @@ export function updateLighting(cyclePhase, cycleProgress, lightingConfig) {
   if (ambient)     _hemiLight.color.set(ambient);
   if (directional) _sun.color.set(directional);
   if (typeof intensity === 'number') {
-    _hemiLight.intensity = intensity * 0.4;
+    _hemiLight.intensity = intensity * 0.7;
     _sun.intensity       = intensity;
   }
 

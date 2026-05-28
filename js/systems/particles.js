@@ -70,7 +70,7 @@ export function init(scene) {
 
   const vertexShader = /* glsl */`
     attribute float size;
-    attribute vec3 color;
+    
     varying vec3 vColor;
     void main() {
       vColor = color;

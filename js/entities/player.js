@@ -41,10 +41,12 @@ on('bossAbyssPoison', ({ damagePerTick, duration }) => {
 
 const MOVE_SPEED         = 5;
 const MOUSE_SENSITIVITY  = 0.003;
-const CAM_OFFSET         = new THREE.Vector3(0, 5, 8);
+const CAM_OFFSET         = new THREE.Vector3(0, 8, 8);
 const CAM_ZOOM_MIN       = 3;
 const CAM_ZOOM_MAX       = 20;
 const CAM_ZOOM_STEP      = 0.5;
+const CAM_PITCH_MIN      = 0.2;
+const CAM_PITCH_MAX      = 1.4;
 const ANIM_FADE_DURATION = 0.2;
 
 const CLASS_MODELS = {
@@ -103,7 +105,9 @@ let _petBonusCache = {
 };
 
 let _rotationY   = 0;
+let _cameraPitch = 0.78;
 let _lastMouseX  = null;
+let _lastMouseY  = null;
 let _cameraDistance = 5;
 let _hasMoved    = false;
 
@@ -648,17 +652,23 @@ function _updateMovement(delta, inputState) {
     if (_isDead) return;
     const { keys, mouse } = inputState;
 
-    if (mouse.buttons?.right) {
-        if (_lastMouseX !== null) {
+     if (mouse.buttons?.right) {
+        if (_lastMouseX !== null && _lastMouseY !== null) {
             const dx = mouse.x - _lastMouseX;
+            const dy = mouse.y - _lastMouseY;
             if (dx !== 0) {
                 _rotationY -= dx * MOUSE_SENSITIVITY;
                 _mesh.rotation.y = _rotationY;
             }
+            if (dy !== 0) {
+                _cameraPitch = Math.max(CAM_PITCH_MIN, Math.min(CAM_PITCH_MAX, _cameraPitch + dy * MOUSE_SENSITIVITY));
+            }
         }
         _lastMouseX = mouse.x;
+        _lastMouseY = mouse.y;
     } else {
         _lastMouseX = null;
+        _lastMouseY = null;
     }
 
     let moveX = 0;
@@ -684,6 +694,9 @@ function _updateMovement(delta, inputState) {
         _mesh.position.x += worldX * MOVE_SPEED * delta;
         _mesh.position.z += worldZ * MOVE_SPEED * delta;
         _mesh.position.y  = getGroundHeight(_mesh.position.x, _mesh.position.z);
+        const HALF_TERRAIN = 95;
+        _mesh.position.x = Math.max(-HALF_TERRAIN, Math.min(HALF_TERRAIN, _mesh.position.x));
+        _mesh.position.z = Math.max(-HALF_TERRAIN, Math.min(HALF_TERRAIN, _mesh.position.z));
         _mesh.rotation.y = Math.atan2(worldX, worldZ);
         _hasMoved = true;
     }
@@ -699,16 +712,16 @@ function _updateCamera() {
     const camera = getCamera();
     if (!camera || !_mesh) return;
 
-    const cos = Math.cos(_rotationY);
-    const sin = Math.sin(_rotationY);
-
     const zoomScale = _cameraDistance / 8;
-    const offsetX = (CAM_OFFSET.x * cos - CAM_OFFSET.z * sin) * zoomScale;
-    const offsetZ = (CAM_OFFSET.x * sin + CAM_OFFSET.z * cos) * zoomScale;
+    const totalDist = Math.sqrt(CAM_OFFSET.y ** 2 + CAM_OFFSET.z ** 2) * zoomScale;
+    const offsetY = totalDist * Math.sin(_cameraPitch);
+    const horizDist = totalDist * Math.cos(_cameraPitch);
+    const offsetX = -horizDist * Math.sin(_rotationY);
+    const offsetZ = horizDist * Math.cos(_rotationY);
 
     const targetPos = new THREE.Vector3(
         _mesh.position.x + offsetX,
-        _mesh.position.y + CAM_OFFSET.y * zoomScale,
+        _mesh.position.y + offsetY,
         _mesh.position.z + offsetZ,
     );
 

@@ -1,10 +1,12 @@
-{
+﻿{
   "maps": [
     {
       "id": "city_01",
       "name": "Cidade de Prontera",
-      "terrainSize": 80,
+      "terrainSize": 800,
       "terrainColor": "#7caa5a",
+      "terrainTexture": "assets/textures/terrain/city_cobblestone.jpg",
+      "skybox": ["assets/textures/skybox/px.png","assets/textures/skybox/nx.png","assets/textures/skybox/py.png","assets/textures/skybox/ny.png","assets/textures/skybox/pz.png","assets/textures/skybox/nz.png"],
       "monsterPool": [],
       "npcs": [
         "mayor",
@@ -59,15 +61,17 @@
         "night": {
           "ambient": "#1a1a3a",
           "directional": "#4444aa",
-          "intensity": 0.6
+          "intensity": 0.8
         }
       }
     },
     {
       "id": "forest_01",
       "name": "Floresta de Payon",
-      "terrainSize": 120,
+      "terrainSize": 800,
       "terrainColor": "#4a7a3a",
+      "terrainTexture": "assets/textures/terrain/forest_grass.jpg",
+      "skybox": ["assets/textures/skybox/px.png","assets/textures/skybox/nx.png","assets/textures/skybox/py.png","assets/textures/skybox/ny.png","assets/textures/skybox/pz.png","assets/textures/skybox/nz.png"],
       "monsterPool": [
         { "monsterId": "slime", "weight": 30 },
         { "monsterId": "goblin", "weight": 25 },
@@ -124,15 +128,17 @@
         "night": {
           "ambient": "#1a1a3a",
           "directional": "#4444aa",
-          "intensity": 0.6
+          "intensity": 0.8
         }
       }
     },
     {
       "id": "caves_01",
       "name": "Cavernas de Byalan",
-      "terrainSize": 100,
+      "terrainSize": 800,
       "terrainColor": "#3a3a4a",
+      "terrainTexture": "assets/textures/terrain/cave_rock.jpg",
+      "skybox": ["assets/textures/skybox/px.png","assets/textures/skybox/nx.png","assets/textures/skybox/py.png","assets/textures/skybox/ny.png","assets/textures/skybox/pz.png","assets/textures/skybox/nz.png"],
       "monsterPool": [
         { "monsterId": "esqueleto", "weight": 30 },
         { "monsterId": "golem-pequeno", "weight": 25 },
@@ -151,7 +157,7 @@
         {
           "targetMap": "ruins_01",
           "position": { "x": 45, "y": 0, "z": 0 },
-          "label": "Ruínas de Glast Heim"
+          "label": "RuÃ­nas de Glast Heim"
         }
       ],
       "decoration": [
@@ -185,9 +191,11 @@
     },
     {
       "id": "ruins_01",
-      "name": "Ruínas de Glast Heim",
-      "terrainSize": 110,
+      "name": "RuÃ­nas de Glast Heim",
+      "terrainSize": 8000,
       "terrainColor": "#4a4a3a",
+      "terrainTexture": "assets/textures/terrain/ruins_dirt.jpg",
+      "skybox": ["assets/textures/skybox/px.png","assets/textures/skybox/nx.png","assets/textures/skybox/py.png","assets/textures/skybox/ny.png","assets/textures/skybox/pz.png","assets/textures/skybox/nz.png"],
       "monsterPool": [
         { "monsterId": "lobisomem", "weight": 25 },
         { "monsterId": "orc_warrior", "weight": 25 },
@@ -238,15 +246,17 @@
         "night": {
           "ambient": "#232330",
           "directional": "#5b5f88",
-          "intensity": 0.5
+          "intensity": 0.8
         }
       }
     },
     {
       "id": "castle_01",
       "name": "Castelo de Geffen",
-      "terrainSize": 100,
+      "terrainSize": 800,
       "terrainColor": "#5a5a6a",
+      "terrainTexture": "assets/textures/terrain/castle_cobblestone.jpg",
+      "skybox": ["assets/textures/skybox/px.png","assets/textures/skybox/nx.png","assets/textures/skybox/py.png","assets/textures/skybox/ny.png","assets/textures/skybox/pz.png","assets/textures/skybox/nz.png"],
       "monsterPool": [
         { "monsterId": "assassin_shadow", "weight": 30 },
         { "monsterId": "lobisomem-alfa", "weight": 20 },
@@ -260,7 +270,7 @@
         {
           "targetMap": "ruins_01",
           "position": { "x": -45, "y": 0, "z": 0 },
-          "label": "Ruínas de Glast Heim"
+          "label": "RuÃ­nas de Glast Heim"
         },
         {
           "targetMap": "dungeon_secret",
@@ -294,15 +304,17 @@
         "night": {
           "ambient": "#1d1d35",
           "directional": "#5555aa",
-          "intensity": 0.5
+          "intensity": 0.8
         }
       }
     },
     {
       "id": "dungeon_secret",
       "name": "Dungeon Secreta",
-      "terrainSize": 80,
+      "terrainSize": 800,
       "terrainColor": "#2a2a2a",
+      "terrainTexture": "assets/textures/terrain/dungeon_stone_tile.jpg",
+      "skybox": ["assets/textures/skybox/px.png","assets/textures/skybox/nx.png","assets/textures/skybox/py.png","assets/textures/skybox/ny.png","assets/textures/skybox/pz.png","assets/textures/skybox/nz.png"],
       "monsterPool": [
         { "monsterId": "dragao-bebe", "weight": 55 },
         { "monsterId": "boss_lord_knight", "weight": 12 },

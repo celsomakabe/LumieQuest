@@ -1492,6 +1492,19 @@ export function updateNpcQuestIndicator(npcId, mesh, camera, renderer) {
         return;
     }
 
+    const playerPos3D = Player.getPosition();
+    playerPos3D.y += 1.0;
+    playerPos3D.project(camera);
+    const playerScreenX = (playerPos3D.x * 0.5 + 0.5) * canvas.clientWidth;
+    const playerScreenY = (playerPos3D.y * -0.5 + 0.5) * canvas.clientHeight;
+    const dx = screenX - playerScreenX;
+    const dy = screenY - playerScreenY;
+    const screenDist = Math.sqrt(dx * dx + dy * dy);
+    if (pos3D.z > playerPos3D.z && screenDist < 80) {
+        el.style.display = 'none';
+        return;
+    }
+
     el.style.display = 'block';
     el.style.left = `${screenX}px`;
     el.style.top = `${screenY}px`;
