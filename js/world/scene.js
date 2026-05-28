@@ -6,7 +6,10 @@
 
 import * as THREE from 'three';
 import * as events from '../core/events.js';
-
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 /** @type {THREE.Scene} */
 let _scene;
 
@@ -15,7 +18,10 @@ let _camera;
 
 /** @type {THREE.WebGLRenderer} */
 let _renderer;
-
+let _composer = null;
+let _renderPass = null;
+let _bloomPass = null;
+let _vignettePass = null;
 /**
  * Mesh do chão. Mantido em escopo de módulo para permitir aplicação de textura
  * via setGroundTexture() após o pipeline de assets ficar pronto (PROMPT 2).
@@ -53,7 +59,46 @@ export function init(canvas) {
   );
     _camera.position.set(0, 14, 14);
     _camera.lookAt(0, 0, 0);
+// --- EffectComposer + passes ---
+  _composer = new EffectComposer(_renderer);
+  _renderPass = new RenderPass(_scene, _camera);
 
+  const bloomResolution = new THREE.Vector2(window.innerWidth, window.innerHeight);
+  _bloomPass = new UnrealBloomPass(bloomResolution, 0.8, 0.4, 0.85);
+
+  const VignetteShader = {
+    uniforms: {
+      tDiffuse: { value: null },
+      offset:   { value: 1.0 },
+      darkness: { value: 1.2 },
+    },
+    vertexShader: /* glsl */`
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: /* glsl */`
+      uniform float offset;
+      uniform float darkness;
+      uniform sampler2D tDiffuse;
+      varying vec2 vUv;
+      void main() {
+        vec4 texel = texture2D( tDiffuse, vUv );
+        vec2 uv = vUv - 0.5;
+        float vignette = smoothstep(0.8, offset * 0.799, length(uv));
+        vignette = mix(1.0, vignette, darkness);
+        gl_FragColor = vec4(texel.rgb * vignette, texel.a);
+      }
+    `,
+  };
+
+  _vignettePass = new ShaderPass(VignetteShader);
+
+  _composer.addPass(_renderPass);
+  _composer.addPass(_bloomPass);
+  _composer.addPass(_vignettePass);
   // --- HemisphereLight (substitui AmbientLight puro) ---
   _hemiLight = new THREE.HemisphereLight(
     0xb0d8ff,
@@ -108,6 +153,9 @@ function _onResize() {
   _camera.aspect = window.innerWidth / window.innerHeight;
   _camera.updateProjectionMatrix();
   _renderer.setSize(window.innerWidth, window.innerHeight);
+  if (_composer) {
+    _composer.setSize(window.innerWidth, window.innerHeight);
+  }
 }
 
 /**
@@ -115,7 +163,11 @@ function _onResize() {
  * @param {number} delta - Tempo desde o último frame em ms (não usado aqui ainda)
  */
 export function render(delta) {
-  _renderer.render(_scene, _camera);
+  if (_composer) {
+    _composer.render(delta);
+  } else {
+    _renderer.render(_scene, _camera);
+  }
 }
 
 /**
@@ -135,6 +187,7 @@ export function getCamera() { return _camera; }
  * @returns {THREE.WebGLRenderer}
  */
 export function getRenderer() { return _renderer; }
+export function getComposer() { return _composer; }
 export function getSun() { return _sun; }
 export function getHemiLight() { return _hemiLight; }
 

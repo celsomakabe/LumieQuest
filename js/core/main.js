@@ -24,6 +24,7 @@ import * as Refine    from '../systems/refine.js';
 import * as Cards     from '../systems/cards.js';
 import * as Pets      from '../systems/pets.js';
 import * as World     from '../world/world.js';
+import * as Particles from '../systems/particles.js';
 let _dialogOpen = false;
 
 Events.on('dialogStarted', () => { _dialogOpen = true; });
@@ -135,6 +136,8 @@ function _loop(timestamp) {
     Monsters.updateAll(delta, Player.getPosition());
     NPCs.updateAll(delta, Player.getPosition());  
     World.update(delta);
+    // Partículas
+    Particles.update(delta);
     // Render
     Scene.render(delta);
 
@@ -333,7 +336,7 @@ export async function init() {
     Input.init();
     Assets.init();
     Scene.init(canvas);
-
+    Particles.init(Scene.getScene());
     // Áudio após cena (precisa da câmera)
     await Audio.init(Scene.getCamera());    
 

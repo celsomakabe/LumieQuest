@@ -1,17 +1,723 @@
+﻿===== scene.js =====
+/**
+ * scene.js â€” Cena 3D principal do LumieQuest.
+ * ResponsÃ¡vel por: THREE.Scene, cÃ¢mera, luzes, chÃ£o e renderer.
+ * NÃ£o importa entities nem systems (R8 â€” acoplamento zero com camadas superiores).
+ */
+
+import * as THREE from 'three';
+import * as events from '../core/events.js';
+
+/** @type {THREE.Scene} */
+let _scene;
+
+/** @type {THREE.PerspectiveCamera} */
+let _camera;
+
+/** @type {THREE.WebGLRenderer} */
+let _renderer;
+
+/**
+ * Mesh do chÃ£o. Mantido em escopo de mÃ³dulo para permitir aplicaÃ§Ã£o de textura
+ * via setGroundTexture() apÃ³s o pipeline de assets ficar pronto (PROMPT 2).
+ * @type {THREE.Mesh|null}
+ */
+let _ground = null;
+let _sun = null;
+let _hemiLight = null;
+
+/**
+ * Inicializa cena, cÃ¢mera, luzes, chÃ£o e renderer.
+ * Deve ser chamado uma Ãºnica vez em main.js durante o boot.
+ * Emite 'sceneReady' ao concluir.
+ * @param {HTMLCanvasElement} canvas - Elemento canvas do DOM
+ */
+export function init(canvas) {
+  // --- Renderer ---
+  _renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  _renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // MÃ¡x 2x para poupar GPU (R6)
+  _renderer.setSize(window.innerWidth, window.innerHeight);
+  _renderer.shadowMap.enabled = true;
+  _renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Sombras suaves sem custo excessivo
+  _renderer.setClearColor(0x87CEEB); // Azul cÃ©u
+
+  // --- Cena ---
+  _scene = new THREE.Scene();
+  _scene.fog = new THREE.FogExp2(0x87CEEB, 0.012);
+
+  // --- CÃ¢mera perspectiva ---
+  _camera = new THREE.PerspectiveCamera(
+    38,                                     // FOV: 75Â°
+    window.innerWidth / window.innerHeight, // Aspect ratio
+    0.1,                                    // Near plane
+    1000                                    // Far plane
+  );
+    _camera.position.set(0, 14, 14);
+    _camera.lookAt(0, 0, 0);
+
+  // --- HemisphereLight (substitui AmbientLight puro) ---
+  _hemiLight = new THREE.HemisphereLight(
+    0xb0d8ff,
+    0x4a7c3a,
+    0.4
+  );
+  _scene.add(_hemiLight);
+
+  // --- Sol (DirectionalLight com shadow map limitado a 30m) ---
+  _sun = new THREE.DirectionalLight(0xfff4e0, 1.0);
+  _sun.position.set(10, 20, 10);
+  _sun.castShadow = true;
+
+  _sun.shadow.mapSize.width = 1024;
+  _sun.shadow.mapSize.height = 1024;
+
+  _sun.shadow.camera.left   = -30;
+  _sun.shadow.camera.right  =  30;
+  _sun.shadow.camera.top    =  30;
+  _sun.shadow.camera.bottom = -30;
+  _sun.shadow.camera.near   = 0.5;
+  _sun.shadow.camera.far    = 100;
+  _sun.shadow.bias = -0.001;
+
+  _scene.add(_sun);
+  _scene.add(_sun.target);
+
+  // --- ChÃ£o verde (PlaneGeometry 20Ã—20) ---
+  // AtribuÃ­do a _ground (escopo de mÃ³dulo) para permitir setGroundTexture() depois.
+  const groundGeo = new THREE.PlaneGeometry(20, 20);
+  const groundMat = new THREE.MeshStandardMaterial({
+    color: 0x4a7c3a, // Verde grama (serÃ¡ resetado para branco quando textura for aplicada)
+    roughness: 0.9,
+    metalness: 0.0,
+  });
+  _ground = new THREE.Mesh(groundGeo, groundMat);
+  _ground.rotation.x = -Math.PI / 2; // Rotaciona para horizontal (XZ)
+  _ground.receiveShadow = true;
+  _scene.add(_ground);
+
+  // --- Resize handler ---
+  window.addEventListener('resize', _onResize);
+
+  events.emit('sceneReady');
+}
+
+/**
+ * Atualiza cÃ¢mera e renderer quando a janela Ã© redimensionada.
+ * @private
+ */
+function _onResize() {
+  _camera.aspect = window.innerWidth / window.innerHeight;
+  _camera.updateProjectionMatrix();
+  _renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+/**
+ * Executa um frame de render. Chamado pelo game loop a cada requestAnimationFrame.
+ * @param {number} delta - Tempo desde o Ãºltimo frame em ms (nÃ£o usado aqui ainda)
+ */
+export function render(delta) {
+  _renderer.render(_scene, _camera);
+}
+
+/**
+ * Retorna a instÃ¢ncia da THREE.Scene.
+ * @returns {THREE.Scene}
+ */
+export function getScene() { return _scene; }
+
+/**
+ * Retorna a cÃ¢mera perspectiva ativa.
+ * @returns {THREE.PerspectiveCamera}
+ */
+export function getCamera() { return _camera; }
+
+/**
+ * Retorna o WebGLRenderer.
+ * @returns {THREE.WebGLRenderer}
+ */
+export function getRenderer() { return _renderer; }
+export function getSun() { return _sun; }
+export function getHemiLight() { return _hemiLight; }
+
+/**
+ * Atualiza cores e intensidades das luzes com base na fase do ciclo.
+ * @param {'day'|'dawn'|'dusk'|'night'} cyclePhase
+ * @param {number} cycleProgress
+ * @param {Object} lightingConfig
+ */
+export function updateLighting(cyclePhase, cycleProgress, lightingConfig) {
+  if (!_hemiLight || !_sun || !lightingConfig) return;
+
+  const { day, night } = lightingConfig;
+  if (!day || !night) return;
+
+  let ambient, directional, intensity;
+
+  if (cyclePhase === 'day') {
+    ambient     = day.ambient;
+    directional = day.directional;
+    intensity   = day.intensity ?? 1.0;
+  } else if (cyclePhase === 'night') {
+    ambient     = night.ambient;
+    directional = night.directional;
+    intensity   = night.intensity ?? 0.6;
+  } else if (cyclePhase === 'dawn') {
+    ambient     = _lerpColorHex(night.ambient, day.ambient, cycleProgress);
+    directional = _lerpColorHex(night.directional, day.directional, cycleProgress);
+    intensity   = THREE.MathUtils.lerp(night.intensity ?? 0.6, day.intensity ?? 1.0, cycleProgress);
+  } else {
+    ambient     = _lerpColorHex(day.ambient, night.ambient, cycleProgress);
+    directional = _lerpColorHex(day.directional, night.directional, cycleProgress);
+    intensity   = THREE.MathUtils.lerp(day.intensity ?? 1.0, night.intensity ?? 0.6, cycleProgress);
+  }
+
+  if (ambient)     _hemiLight.color.set(ambient);
+  if (directional) _sun.color.set(directional);
+  if (typeof intensity === 'number') {
+    _hemiLight.intensity = intensity * 0.4;
+    _sun.intensity       = intensity;
+  }
+
+  if (_scene?.fog) {
+    const fogColor = new THREE.Color(ambient ?? 0x87CEEB);
+    _scene.fog.color.copy(fogColor);
+    _renderer?.setClearColor(fogColor);
+  }
+}
+
+function _lerpColorHex(fromHex, toHex, t) {
+  const from = new THREE.Color(fromHex ?? '#ffffff');
+  const to   = new THREE.Color(toHex   ?? '#ffffff');
+  return '#' + from.lerp(to, THREE.MathUtils.clamp(t, 0, 1)).getHexString();
+}
+
+/**
+ * Carrega e aplica skybox cubemap.
+ * @param {string[]|null} urls - [px,nx,py,ny,pz,nz] ou null para resetar
+ */
+export function setSkybox(urls) {
+  if (!_scene) return;
+
+  if (!urls || urls.length < 6) {
+    _scene.background = null;
+    return;
+  }
+
+  const loader = new THREE.CubeTextureLoader();
+  loader.load(
+    urls,
+    (cubeTexture) => {
+      if (!_scene) return;
+      _scene.background = cubeTexture;
+      console.log('[scene] Skybox aplicado.');
+    },
+    undefined,
+    (err) => {
+      console.warn('[scene] Falha ao carregar skybox cubemap:', err);
+    }
+  );
+}
+/**
+ * Adiciona um Object3D Ã  cena.
+ * @param {THREE.Object3D} obj - Objeto a adicionar
+ */
+export function add(obj) { _scene.add(obj); }
+
+/**
+ * Remove um Object3D da cena.
+ * @param {THREE.Object3D} obj - Objeto a remover
+ */
+export function remove(obj) { _scene.remove(obj); }
+
+/**
+ * Retorna o mesh do chÃ£o para inspeÃ§Ã£o externa (usado por physics e debug).
+ * @returns {THREE.Mesh|null} Retorna null se init() ainda nÃ£o foi chamado.
+ */
+export function getGround() {
+  return _ground;
+}
+
+/**
+ * Aplica uma textura ao material do chÃ£o.
+ * Configura repeat e wrapping para tile correto em terrenos grandes.
+ * Chamado por main.js apÃ³s o pipeline de assets emitir 'assetsReady'.
+ * @param {THREE.Texture} texture - Textura carregada via assets.loadTexture()
+ * @returns {void}
+ */
+export function setGroundTexture(texture) {
+  if (!_ground) {
+    console.warn('[scene] setGroundTexture: mesh do chÃ£o nÃ£o encontrado (init() chamado?)');
+    return;
+  }
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(8, 8); // Tile 8x8 sobre o plano de 20Ã—20 unidades
+  _ground.material.map = texture;
+  _ground.material.color.set(0xffffff); // Reseta cor para branco para nÃ£o tingir a textura
+  _ground.material.needsUpdate = true;
+}
+===== main.js =====
+/**
+ * @file main.js
+ * @description Bootstrap do jogo. Inicializa mÃ³dulos na ordem correta e
+ * gerencia o game loop via requestAnimationFrame.
+ */
+
+import * as Events  from './events.js';
+import * as Input   from './input.js';
+import * as Assets  from './assets.js';
+import * as Audio   from './audio.js';
+import * as Save    from './save.js';
+import * as Scene   from '../world/scene.js';
+import * as Player  from '../entities/player.js';
+import * as Classes from '../systems/classes.js';
+import * as Equipment from '../systems/equipment.js';
+import * as UI      from '../ui/ui.js';
+import * as THREE  from 'three';
+import * as Combat from '../systems/combat.js';
+import * as Monsters from '../entities/monsters.js';
+import * as NPCs     from '../entities/npcs.js';
+import * as Inventory from '../systems/inventory.js';
+import * as Quests    from '../systems/quests.js';
+import * as Refine    from '../systems/refine.js';
+import * as Cards     from '../systems/cards.js';
+import * as Pets      from '../systems/pets.js';
+import * as World     from '../world/world.js';
+let _dialogOpen = false;
+
+Events.on('dialogStarted', () => { _dialogOpen = true; });
+Events.on('dialogEnded',   () => { _dialogOpen = false; });
+let _nearExitPointTargetMap = null;
+
+Events.on('exitPointNear', ({ targetMap } = {}) => {
+    _nearExitPointTargetMap = targetMap ?? null;
+});
+
+Events.on('exitPointLeft', () => {
+    _nearExitPointTargetMap = null;
+});
+
+Events.on('mapLoaded', () => {
+    _nearExitPointTargetMap = null;
+});
+
+
+// â”€â”€â”€ Estado interno â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+let _gameState     = 'loading';
+let _lastTime      = 0;
+let _rafId         = null;
+let _saveData      = null;
+let _autoSaveTimer = 0;
+const AUTO_SAVE_INTERVAL = 30000; // 30s
+
+// â”€â”€â”€ FPS â€” mÃ©dia mÃ³vel de 30 frames â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+const FPS_SAMPLES   = 30;
+const _fpsBuf       = new Float32Array(FPS_SAMPLES);
+let   _fpsBufIdx    = 0;
+let   _fpsSum       = 0;
+
+/**
+ * Atualiza buffer circular de FPS e retorna mÃ©dia arredondada.
+ * @param {number} delta  segundos
+ * @returns {number}
+ */
+function _calcFPS(delta) {
+    const sample = delta > 0 ? 1 / delta : 0;
+    _fpsSum -= _fpsBuf[_fpsBufIdx];
+    _fpsBuf[_fpsBufIdx] = sample;
+    _fpsSum += sample;
+    _fpsBufIdx = (_fpsBufIdx + 1) % FPS_SAMPLES;
+    return Math.round(_fpsSum / FPS_SAMPLES);
+}
+
+// â”€â”€â”€ Textura procedural de grama â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+/**
+ * Gera um Data URI de textura de grama 64Ã—64 via Canvas 2D.
+ * Evita dependÃªncia de arquivo externo.
+ * @returns {string} Data URI PNG
+ */
+function _makeProceduralGrassDataURI() {
+    const size   = 64;
+    const canvas = document.createElement('canvas');
+    canvas.width  = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    // Base verde
+    ctx.fillStyle = '#4a7c3f';
+    ctx.fillRect(0, 0, size, size);
+
+    // VariaÃ§Ã£o de tons para simular grama
+    const shades = ['#3d6b35', '#52883f', '#436e38', '#5a9147', '#3a6030'];
+    for (let i = 0; i < 200; i++) {
+        ctx.fillStyle = shades[Math.floor(Math.random() * shades.length)];
+        const x = Math.random() * size;
+        const y = Math.random() * size;
+        const w = 1 + Math.random() * 3;
+        const h = 1 + Math.random() * 3;
+        ctx.fillRect(x, y, w, h);
+    }
+
+    return canvas.toDataURL('image/png');
+}
+
+// â”€â”€â”€ Game Loop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+/**
+ * Loop principal via requestAnimationFrame.
+ * @param {number} timestamp
+ */
+function _loop(timestamp) {
+    _rafId = requestAnimationFrame(_loop);
+
+    let delta = (timestamp - _lastTime) / 1000;
+    _lastTime = timestamp;
+    if (delta > 0.1) delta = 0.1; // cap 100ms â€” evita spiral of death
+
+    if (_gameState !== 'playing') return;
+
+    // Auto-save a cada 30s
+    _autoSaveTimer += delta * 1000;
+    if (_autoSaveTimer >= AUTO_SAVE_INTERVAL) {
+        _autoSaveTimer = 0;
+        _doAutoSave();
+    }
+
+    const inputState = Input.getState();
+
+    // Entities
+    Player.update(delta, inputState);
+    Pets.update(delta);
+    Monsters.updateAll(delta, Player.getPosition());
+    NPCs.updateAll(delta, Player.getPosition());  
+    World.update(delta);
+    // Render
+    Scene.render(delta);
+
+    // UI
+    UI.update(delta);
+UI.setFPS(_calcFPS(delta));
+
+    // â”€â”€ PROMPT 10: tick de DoTs/buffs e overlays de cooldown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    Combat.update(delta);
+    UI.updateCooldownVisuals(delta);
+    UI.updateMonsterHpBars();
+}
+
+// â”€â”€â”€ Auto-save â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function _doAutoSave() {
+    const playerData = Player.getState();
+    const current    = Save.load() ?? {};
+Save.save({ ...current, player: { ...playerData, inventory: Inventory.serialize(), quests: Quests.getState(), pets: Pets.serialize() } });
+}
+
+// â”€â”€â”€ Assets Ready â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+async function _onAssetsReady() {
+    // Textura procedural â€” sem dependÃªncia de arquivo externo
+    const dataURI = _makeProceduralGrassDataURI();
+    Assets.loadTexture(dataURI).then(tex => {
+        tex.wrapS = tex.wrapT = 1000; // THREE.RepeatWrapping
+        tex.repeat.set(4, 4);
+        Scene.setGroundTexture(tex);
+    }).catch(() => {
+        // graceful â€” chÃ£o fica sem textura
+    });
+
+    // Inicia BGM da cidade com fade in
+    Audio.playBGM('assets/audio/bgm/bgm_city.ogg', 0.6);
+
+// â”€â”€ PROMPT 10: carregar skills.json e injetar em Classes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    try {
+        const skillsRes  = await fetch('./assets/data/skills.json');
+        const skillsData = await skillsRes.json();
+        Classes.setSkillDefs(skillsData.skills || []);
+ 
+    } catch (err) {
+        console.error('[main] Falha ao carregar skills.json:', err);
+        Classes.setSkillDefs([]);
+    }
+
+    // â”€â”€ PROMPT 16: carregar pet_defs de items.json â”€â”€â”€â”€â”€â”€
+    try {
+        const itemsRes = await fetch('./assets/data/items.json');
+        const itemsData = await itemsRes.json();
+        const petDefs = (itemsData.items ?? []).filter(i => i?.type === 'pet_def');
+        Pets.init(petDefs);
+    } catch (err) {
+        console.error('[main] Falha ao carregar petDefs de items.json:', err);
+        Pets.init([]);
+    }
+
+    // â”€â”€ PROMPT 10: modal de classe se save novo (player.class vazio) â”€â”€â”€â”€â”€â”€
+    if (!_saveData) _saveData = { player: {} };
+    if (!_saveData.player) _saveData.player = {};
+
+    if (!_saveData.player.class) {
+        await new Promise(resolve => {
+            UI.showClassSelectionModal((classId) => {
+                const CLASS_SKILLS = {
+                    swordman: ['bash', 'endure', 'provoke'],
+                    mage:     ['fireball', 'iceBolt', 'lightning'],
+                    archer:   ['doubleStrike', 'explosiveShot', 'slowShot'],
+                    assassin: ['stealthStrike', 'poison', 'evasion'],
+                };
+                const skillIds = CLASS_SKILLS[classId] || [];
+                const baseStats = Classes.getBaseStats(classId, 1);
+
+                _saveData.player.class          = classId;
+                _saveData.player.level          = _saveData.player.level ?? 1;
+                _saveData.player.baseStats      = baseStats;
+                _saveData.player.learnedSkills  = skillIds.slice();
+                _saveData.player.equippedSkills = [skillIds[0] ?? null, skillIds[1] ?? null, skillIds[2] ?? null, null];
+                _saveData.player.cooldowns      = {};
+
+                resolve();
+            });
+        });
+    }
+
+    // Spawna player com dados do save (capturado via Events.once abaixo)
+    if (!_saveData.player.pets || typeof _saveData.player.pets !== 'object') {
+        _saveData.player.pets = { collection: [], summonedIndex: null };
+    }
+    await Player.init(_saveData.player);
+    if (typeof window !== 'undefined') window.Player = Player; // debug console (PROMPT 10)
+    await Inventory.init(_saveData.player.inventory ?? null);
+    await Quests.init(_saveData.player.quests ?? null);
+    Pets.hydrate(_saveData.player.pets ?? null);
+    Combat.registerTarget(Player.getInstance());
+
+    // Atualiza hotbar com skills equipadas (apÃ³s Player.init populou _data)
+    UI.updateHotbar();
+
+    Events.on('monsterAttackRequest', ({ attacker, ability, damage }) => {
+      const player = Player.getInstance();
+      if (!player || player.hp <= 0) return;
+
+      if (ability === 'abyssPoison') {
+          Events.emit('bossAbyssPoison', { damagePerTick: 50, duration: 10000 });
+          return;
+      }
+
+      if (damage != null) {
+          Player.takeDamage(damage, `boss_${attacker.monsterId ?? attacker.id}_${ability}`);
+          return;
+      }
+
+      Combat.attack(attacker, player);
+  });
+ // â”€â”€ InventÃ¡rio â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    Events.on('itemPicked', ({ itemId, qty, dropId, refineLevel, sockets }) => {
+        Inventory.addItem(itemId, qty, {
+            ...(refineLevel != null ? { refineLevel } : {}),
+            ...(Array.isArray(sockets) && sockets.length > 0 ? { sockets } : {})
+        });
+    });
+
+    Events.on('inventoryHealRequest', ({ amount }) => {
+        Player.heal(amount);
+    });
+
+    Events.on('inventoryRestoreMpRequest', ({ amount }) => {
+        Player.restoreMp(amount);
+    });
+    Events.on('jobChangeUnlocked', ({ questId }) => {
+        Player.unlockJobChangeQuest(questId);
+    });
+    Events.on('questCompleted', ({ rewards }) => {
+        if (!rewards) return;
+        if (rewards.exp != null) Player.addExp(rewards.exp);
+        if (rewards.gold) Inventory.addItem('gold', rewards.gold);
+        if (rewards.items?.length) {
+            for (const { itemId, qty } of rewards.items) {
+                Inventory.addItem(itemId, qty);
+            }
+        }
+    });
+    Events.on('monsterDied', ({ xp }) => {
+        if (xp) Player.addExp(xp);
+    });
+    Events.on('keyPressed', ({ code }) => {
+    if (_dialogOpen) return;
+
+        if (code === 'KeyE') {
+            if (_nearExitPointTargetMap) {
+                Events.emit('exitPointAction', { targetMap: _nearExitPointTargetMap });
+            } else {
+                Events.emit('pickupRequest', { position: Player.getPosition() });
+            }
+        }
+        
+        if (code === 'KeyI') {
+            Events.emit('uiWindowToggle', { id: 'inventory' });
+        }
+ });
+
+    // â”€â”€ PROMPT 10: consumo de MP por skills (combat.js emite via R8) â”€â”€â”€â”€â”€â”€
+    Events.on('mpConsumeRequest', ({ amount }) => {
+        Player.consumeMp(amount);
+    });
+    _gameState = 'playing';
+    _lastTime  = performance.now();
+    Events.emit('gameReady');
+}
+async function _loadSetDefs() {
+    try {
+        const setsRes = await fetch('./assets/data/sets.json');
+        const setsData = await setsRes.json();
+        Equipment.setCatalogue(setsData);
+    } catch (err) {
+        console.error('[Main] Falha ao carregar sets.json:', err);
+        Equipment.setCatalogue([]);
+    }
+}
+// â”€â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+/**
+ * Inicializa todos os mÃ³dulos na ordem correta e inicia o game loop.
+ */
+export async function init() {
+    const canvas = document.getElementById('game-canvas');
+    if (!canvas) {
+        console.error('[Main] #game-canvas nÃ£o encontrado.');
+        return;
+    }
+
+    // Infraestrutura
+    Input.init();
+    Assets.init();
+    Scene.init(canvas);
+
+    // Ãudio apÃ³s cena (precisa da cÃ¢mera)
+    await Audio.init(Scene.getCamera());    
+
+    // Sistemas e UI
+    Classes.init();
+    Equipment.init();
+    await _loadSetDefs();
+    Refine.init();
+    await Cards.init();
+    UI.init();
+
+    await Monsters.init();
+    NPCs.init(Scene.getScene());
+    await World.init();
+    await World.loadMap('city_01');
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Captura save antes de tudo (one-shot)
+    Events.once('saveLoaded', (data) => {
+        _saveData = data;
+    });
+    Events.once('saveFailed', () => {
+        _saveData = null;
+    });
+
+    // Tenta carregar save existente
+    Save.init();
+
+    // Quando assets prontos, inicializa jogo
+    Events.on('assetsReady', _onAssetsReady);
+
+    Events.on('gamePaused', () => {
+        _gameState = 'paused';
+    });
+
+    Events.on('gameResumed', () => {
+        _gameState = 'playing';
+        _lastTime  = performance.now();
+    });
+
+    // Preload â€” texturas procedurais nÃ£o precisam de entry aqui;
+    // Ã¡udios sÃ£o prÃ©-carregados para cache imediato
+   Assets.preloadAll([
+        // Player models (SessÃ£o 25A)
+        { type: 'model', url: 'assets/models/player/swordman.glb' },
+        { type: 'model', url: 'assets/models/player/mage.glb' },
+        { type: 'model', url: 'assets/models/player/archer.glb' },
+        { type: 'model', url: 'assets/models/player/assassin.glb' },
+        { type: 'model', url: 'assets/models/player/knight.glb' },
+        { type: 'model', url: 'assets/models/player/shadow_assassin.glb' },
+
+        // Shared animations (KayKit)
+        { type: 'model', url: 'assets/models/animations/general.glb' },
+        { type: 'model', url: 'assets/models/animations/movement.glb' },
+
+        // Audio
+        { type: 'audio', url: 'assets/audio/bgm/bgm_city.ogg'     },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_ui_click.ogg' },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_ui_hover.ogg' },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_levelup.ogg'  },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_footstep_grass1.ogg' },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_footstep_grass2.ogg' },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_combat_swing.ogg'    },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_combat_hit.ogg'      },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_combat_critical.ogg' },
+        { type: 'audio', url: 'assets/audio/sfx/sfx_combat_miss.ogg'     },
+    ]);
+
+    // Inicia loop (roda em 'loading' para exibir progresso na UI)
+    _lastTime = performance.now();
+    _rafId    = requestAnimationFrame(_loop);
+
+    console.log('[Main] LumieQuest booted.');
+}
+
+// â”€â”€â”€ Controles de estado â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+/**
+ * Retorna o estado atual do jogo.
+ * @returns {'loading'|'playing'|'paused'}
+ */
+export function getGameState() {
+    return _gameState;
+}
+
+/**
+ * Pausa o game loop.
+ */
+export function pause() {
+    if (_gameState !== 'playing') return;
+    _gameState = 'paused';
+    Events.emit('gamePaused');
+}
+
+/**
+ * Retoma o game loop.
+ */
+export function resume() {
+    if (_gameState !== 'paused') return;
+    _gameState = 'playing';
+    _lastTime  = performance.now();
+    Events.emit('gameResumed');
+}
+
+// â”€â”€â”€ Auto-bootstrap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
+===== monsters.js (updateAll + _updateMonster) =====
 /**
  * @module monsters
- * @description Gerencia catálogo, spawn, IA e respawn de monstros.
- * Sessão 17 — PROMPT 12 Parte 2:
- *   - 4 bosses gated: só spawnam via questBossSpawnRequest (quests.js Parte 3)
- *   - spawnQuestBoss(bossId, questId) e despawnQuestBoss(bossId): exports públicos
+ * @description Gerencia catÃ¡logo, spawn, IA e respawn de monstros.
+ * SessÃ£o 17 â€” PROMPT 12 Parte 2:
+ *   - 4 bosses gated: sÃ³ spawnam via questBossSpawnRequest (quests.js Parte 3)
+ *   - spawnQuestBoss(bossId, questId) e despawnQuestBoss(bossId): exports pÃºblicos
  *   - Geometria diferenciada por boss + anel dourado
- *   - Fases de boss: 100%/50%/25% HP com gatilhos específicos por tipo
+ *   - Fases de boss: 100%/50%/25% HP com gatilhos especÃ­ficos por tipo
  *   - Telegrafia visual AoE: scale 1.3x + cor vermelha por 2s antes do dano
  *   - _stateAttack: _attackCounter % 2 alterna normal/ability
  *   - combat.js update() precisa de patch para deadly_poison/abyss_poison (ver R10)
  * Cross-layer imports justificados:
- *   entities→systems/combat (BUG-02 deferido),
- *   entities→world/scene: named imports { add, remove }.
+ *   entitiesâ†’systems/combat (BUG-02 deferido),
+ *   entitiesâ†’world/scene: named imports { add, remove }.
  */
 
 import * as THREE from 'three';
@@ -26,7 +732,7 @@ import { generateSockets } from '../systems/cards.js';
 import { playSFX3D } from '../core/audio.js';
 import * as Models from '../core/models.js';
 
-// ─── Estado interno ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Estado interno â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // --- helpers de material para glTF/Group ---
 function _getMeshMaterial(mesh) {
     if (!mesh) return null;
@@ -45,10 +751,10 @@ function _getMeshMaterial(mesh) {
 function _getMeshColor(mesh) { const m = _getMeshMaterial(mesh); return m?.color ?? null; }
 function _getMeshEmissive(mesh) { const m = _getMeshMaterial(mesh); return m?.emissive ?? null; }
 
-/** @type {Map<string, Object>} instanceId → instância */
+/** @type {Map<string, Object>} instanceId â†’ instÃ¢ncia */
 const _monsters = new Map();
 
-/** @type {Object.<string, Object>} monsterId → def do catálogo */
+/** @type {Object.<string, Object>} monsterId â†’ def do catÃ¡logo */
 let _catalogue = {};
 
 /** @type {number} */
@@ -57,7 +763,7 @@ let _uidCounter = 0;
 /** @type {boolean} */
 let _initialized = false;
 
-/** @type {Object.<string, Object>} itemId → def para cor de drops */
+/** @type {Object.<string, Object>} itemId â†’ def para cor de drops */
 let _itemCatalogue = {};
 
 /** @type {Map<string, {itemId:string, qty:number, mesh:THREE.Mesh, spawnTime:number, refineLevel?:number, sockets?:(string|null)[]}>} */
@@ -66,11 +772,11 @@ const _drops = new Map();
 /** @type {number} */
 let _dropIdCounter = 0;
 
-/** @type {{x,y,z}} posição do player — atualizada em updateAll */
+/** @type {{x,y,z}} posiÃ§Ã£o do player â€” atualizada em updateAll */
 let _playerPos = { x: 0, y: 0, z: 0 };
 let _isPlayerDead = false;
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Carrega monsters.json + items.json e registra listeners.
@@ -97,14 +803,14 @@ async function init() {
     on('playerDied',              _onPlayerDied);
     on('playerRespawned',         _onPlayerRespawned);
     _initialized = true;
-    console.log(`[monsters] Catálogo: ${Object.keys(_catalogue).length} tipos.`);
+    console.log(`[monsters] CatÃ¡logo: ${Object.keys(_catalogue).length} tipos.`);
 }
 
-// ─── Geometria por tipo de boss ───────────────────────────────────────────────
+// â”€â”€â”€ Geometria por tipo de boss â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Cria geometry + material correto para o bossId dado.
- * Monstros normais usam BoxGeometry padrão.
+ * Monstros normais usam BoxGeometry padrÃ£o.
  * @param {Object} def
  * @returns {{ geometry: THREE.BufferGeometry, material: THREE.Material }}
  */
@@ -134,10 +840,10 @@ function _createBossMesh(def) {
     return { geometry, material };
 }
 
-// ─── Factory ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Factory â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * Cria e registra uma instância de monstro na cena e no combat.
+ * Cria e registra uma instÃ¢ncia de monstro na cena e no combat.
  * @param {string} monsterId
  * @param {{x,y,z}} position
  * @param {string|null} [linkedQuestId=null]
@@ -259,7 +965,7 @@ async function spawnMonster(monsterId, position, linkedQuestId = null) {
         _phaseStealthLoop:   false,
         _phaseReflectLocked: false,
         _phaseAbyssAura:     false,
-        // Debuffs ativos (DoT de boss sobre o player são emitidos via evento)
+        // Debuffs ativos (DoT de boss sobre o player sÃ£o emitidos via evento)
         _activeDebuffs: [],
 
         get position() { return this.mesh.position; },
@@ -273,7 +979,7 @@ async function spawnMonster(monsterId, position, linkedQuestId = null) {
 }
 
 /**
- * Spawna count monstros do mesmo tipo em área circular.
+ * Spawna count monstros do mesmo tipo em Ã¡rea circular.
  * @param {string} monsterId
  * @param {number} count
  * @param {{ center:{x,z}, radius:number }} area
@@ -301,7 +1007,7 @@ function spawnQuestBoss(bossId, questId, position) {
     // Evitar spawn duplicado do mesmo boss para a mesma quest
     for (const [, m] of _monsters) {
         if (m.monsterId === bossId && m.linkedQuestId === questId && m.state !== 'dead') {
-            console.warn(`[monsters] Boss ${bossId} já ativo para quest ${questId}.`);
+            console.warn(`[monsters] Boss ${bossId} jÃ¡ ativo para quest ${questId}.`);
             return null;
         }
     }
@@ -333,14 +1039,14 @@ function despawnQuestBoss(bossId) {
 }
 
 /**
- * Retorna cópia readonly do catálogo.
+ * Retorna cÃ³pia readonly do catÃ¡logo.
  * @returns {Object.<string, Object>}
  */
 function getCatalog() {
     return { ..._catalogue };
 }
 
-// ─── Listeners de eventos de boss ─────────────────────────────────────────────
+// â”€â”€â”€ Listeners de eventos de boss â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /** @param {{ bossId:string, questId:string, position:{x,y,z} }} payload */
 function _onQuestBossSpawnRequest({ bossId, questId, position }) {
@@ -352,7 +1058,7 @@ function _onQuestBossDespawnRequest({ bossId }) {
     despawnQuestBoss(bossId);
 }
 
-// ─── Loop de IA ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Loop de IA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Atualiza todos os monstros vivos. Chamado no game loop.
@@ -363,15 +1069,6 @@ function updateAll(dt, playerPosition) {
     _playerPos = playerPosition;
     for (const [, m] of _monsters) {
         if (m.state === 'dead') continue;
-
-        const dist = m.mesh.position.distanceTo(playerPosition);
-        if (dist > 40) {
-            if (m.mesh.visible) m.mesh.visible = false;
-            continue;
-        } else if (!m.mesh.visible) {
-            m.mesh.visible = true;
-        }
-
         _updateMonster(m, dt, playerPosition);
     }
     _updateDrops(dt, playerPosition);
@@ -452,7 +1149,7 @@ function _updateMonster(m, dt, playerPos) {
     }
 }
 
-// ─── Fases de boss ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Fases de boss â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /** @param {Object} m */
 function _checkBossPhases(m) {
@@ -501,7 +1198,7 @@ function _triggerPhase50(m) {
     switch (m.monsterId) {
         case 'boss_lord_knight':
             emit('uiHintShow', {
-                msg: `${_catalogue[m.monsterId].name}: reforços avançam para a arena!`,
+                msg: `${_catalogue[m.monsterId].name}: reforÃ§os avanÃ§am para a arena!`,
                 duration: 3500,
             });
 
@@ -574,7 +1271,7 @@ function _triggerPhase50(m) {
 
         case 'boss_shadow_assassin':
             emit('uiHintShow', {
-                msg: `${_catalogue[m.monsterId].name}: a arena foi tomada por sombras ilusórias!`,
+                msg: `${_catalogue[m.monsterId].name}: a arena foi tomada por sombras ilusÃ³rias!`,
                 duration: 3500,
             });
 
@@ -582,7 +1279,7 @@ function _triggerPhase50(m) {
                 _spawnShadowClones(m);
             }
 
-            // terceira cópia adicional para fase 50
+            // terceira cÃ³pia adicional para fase 50
             {
                 const cloneGeo = new THREE.DodecahedronGeometry(0.8);
                 const cloneMat = new THREE.MeshLambertMaterial({
@@ -639,7 +1336,7 @@ function _triggerPhase25(m) {
     switch (m.monsterId) {
         case 'boss_lord_knight':
             emit('uiHintShow', {
-                msg: `${_catalogue[m.monsterId].name}: entrou em fúria total!`,
+                msg: `${_catalogue[m.monsterId].name}: entrou em fÃºria total!`,
                 duration: 3500,
             });
 
@@ -683,7 +1380,7 @@ function _triggerPhase25(m) {
 
         case 'boss_sniper':
             emit('uiHintShow', {
-                msg: `${_catalogue[m.monsterId].name}: cada ataque agora se divide em múltiplos tiros!`,
+                msg: `${_catalogue[m.monsterId].name}: cada ataque agora se divide em mÃºltiplos tiros!`,
                 duration: 3500,
             });
 
@@ -729,7 +1426,7 @@ function _triggerPhase25(m) {
     }
 }
 
-// ─── Habilidades específicas de boss ──────────────────────────────────────────
+// â”€â”€â”€ Habilidades especÃ­ficas de boss â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Inicia telegrafia visual 2s antes do AoE do boss_lord_knight.
@@ -742,11 +1439,11 @@ function _startTelegraph(m) {
     m._pendingAoe     = true;
     m.mesh.scale.set(1.3, 1.3, 1.3);
    { const __mc = _getMeshColor(m.mesh); if (__mc) { if (!m._originalColor) m._originalColor = __mc.clone(); __mc.set(0xff2200); } }
-    emit('uiHintShow', { msg: '⚠ AoE se aproxima! Saia do raio!', duration: 2000 });
+    emit('uiHintShow', { msg: 'âš  AoE se aproxima! Saia do raio!', duration: 2000 });
 }
 
 /**
- * Executa o dano AoE do boss_lord_knight após telegrafia.
+ * Executa o dano AoE do boss_lord_knight apÃ³s telegrafia.
  * @param {Object} m @param {THREE.Vector3} playerPos
  */
 function _executeBossAoe(m, playerPos) {
@@ -889,7 +1586,7 @@ function _cleanupBoss(m) {
     m._clones = [];
 }
 
-// ─── Estados de IA ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Estados de IA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function _stateIdle(m, dt, distToPlayer) {
     if (distToPlayer < m.aggroRange) { m.state = 'aggro'; return; }
@@ -911,7 +1608,7 @@ function _stateChase(m, dt, playerPos, dist) {
     if (dist < m.attackRange) { m.state = 'attack'; return; }
     if (dist > m.aggroRange * 1.5) { m.state = 'idle'; m._idleTimer = 0; m._aggroSfxPlayed = false; return; }
 
-    // boss_sniper fica parado atirando à distância se dentro do attackRange estendido
+    // boss_sniper fica parado atirando Ã  distÃ¢ncia se dentro do attackRange estendido
     if (m.monsterId === 'boss_sniper' && dist <= m.attackRange) {
         m.state = 'attack';
         return;
@@ -955,7 +1652,7 @@ function _stateAttack(m, dt, playerPos, dist) {
 }
 
 /**
- * Despacha lógica de ability específica do boss.
+ * Despacha lÃ³gica de ability especÃ­fica do boss.
  * @param {Object} m @param {string} ability @param {THREE.Vector3} playerPos
  */
 function _executeBossAbility(m, ability, playerPos) {
@@ -1163,7 +1860,7 @@ function _executeBossAbility(m, ability, playerPos) {
     }
 }
 
-// ─── Helpers de movimento ─────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers de movimento â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /** @param {Object} m @param {THREE.Vector3} target @param {number} speed @param {number} dt */
 function _moveTowards(m, target, speed, dt) {
@@ -1183,7 +1880,7 @@ function _faceTarget(m, target) {
     m.mesh.rotation.y = Math.atan2(dx, dz);
 }
 
-// ─── Morte ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Morte â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /** @param {{ entity:Object }} payload */
 function _onPetAttack({ targetId, damage } = {}) {
@@ -1336,7 +2033,7 @@ function _respawn(m) {
     });
 }
 
-// ─── Drops ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Drops â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Resolve a quantidade de um drop baseado no schema atual.
@@ -1406,7 +2103,7 @@ function _resolveDropQty(drop) {
 
 /**
  * Monta metadata opcional para item dropado no mundo.
- * Equipáveis recebem sockets aleatórios conforme o slot do item.
+ * EquipÃ¡veis recebem sockets aleatÃ³rios conforme o slot do item.
  * @param {string} itemId
  * @returns {{ refineLevel?: number, sockets?: (string|null)[] }|null}
  */
@@ -1496,7 +2193,7 @@ function _onPickupRequest({ position }) {
     }
 }
 
-// ─── Exports públicos ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Exports pÃºblicos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /** @param {string} id @returns {THREE.Mesh|null} */
 function getMesh(id) { return _monsters?.get?.(id)?.mesh ?? null; }
@@ -1515,3 +2212,35 @@ export {
     getMesh,
     getById,
 };
+===== index.html =====
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LumieQuest</title>
+  <link rel="stylesheet" href="style.css">
+
+  <!--
+    CDN: jsdelivr.net â€” escolhido pelos seguintes motivos:
+    1. Suporte nativo a CORS: necessÃ¡rio para ES modules via importmap (sem CORS o browser rejeita)
+    2. URL estÃ¡vel por versÃ£o semÃ¢ntica (three@0.169.0): sem risco de breaking change silencioso
+    3. Cache global com edge nodes na AmÃ©rica do Sul (menor latÃªncia no Brasil)
+    4. Zero build step: importmap resolve "three" e "three/addons/" diretamente no browser
+    5. three@0.169.0: Ãºltima minor com API WebGL estÃ¡vel e PCFSoftShadowMap sem bugs conhecidos
+  -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <canvas id="game-canvas"></canvas>
+  <!-- main.js importado como mÃ³dulo ES6 â€” auto-executa init() ao carregar -->
+  <script type="module" src="js/core/main.js"></script>
+</body>
+</html>
