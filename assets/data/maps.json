@@ -2569,16 +2569,16 @@
                                             "changeInterval":  300
                                         },
                      "lighting":  {
-                                      "day":  {
-                                                  "ambient":  "#ffffff",
-                                                  "directional":  "#ffffcc",
-                                                  "intensity":  1.0
-                                              },
                                       "night":  {
                                                     "ambient":  "#1a1a3a",
-                                                    "directional":  "#4444aa",
-                                                    "intensity":  0.8
-                                                }
+                                                    "intensity":  0.8,
+                                                    "directional":  "#4444aa"
+                                                },
+                                      "day":  {
+                                                  "ambient":  "#ffffff",
+                                                  "intensity":  1,
+                                                  "directional":  "#ffffcc"
+                                              }
                                   }
                  },
                  {
