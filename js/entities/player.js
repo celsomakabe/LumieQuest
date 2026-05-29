@@ -694,7 +694,7 @@ function _updateMovement(delta, inputState) {
         _mesh.position.x += worldX * MOVE_SPEED * delta;
         _mesh.position.z += worldZ * MOVE_SPEED * delta;
         _mesh.position.y  = getGroundHeight(_mesh.position.x, _mesh.position.z);
-        const HALF_TERRAIN = 95;
+        const HALF_TERRAIN = 75;
         _mesh.position.x = Math.max(-HALF_TERRAIN, Math.min(HALF_TERRAIN, _mesh.position.x));
         _mesh.position.z = Math.max(-HALF_TERRAIN, Math.min(HALF_TERRAIN, _mesh.position.z));
         _mesh.rotation.y = Math.atan2(worldX, worldZ);

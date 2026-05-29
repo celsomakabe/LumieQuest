@@ -242,7 +242,7 @@ async function _spawnMapDecoration(mapConfig) {
 
   for (const entry of decorations) {
     const count = Math.max(0, Number(entry.count || 0));
-    if (count <= 0) continue;
+    if (count <= 0 && !Array.isArray(entry.positions)) continue;
 
     if (entry.procedural === true) {
       const key = entry.model ?? 'unknown';
@@ -278,7 +278,24 @@ async function _spawnModelDecoration(entry, count, group) {
   }
 
   if (!gltf?.scene) return;
-
+// Posição fixa: entry.positions sobrepõe area/count
+  if (Array.isArray(entry.positions) && entry.positions.length > 0) {
+    for (const pos of entry.positions) {
+      const instance = Models.cloneModel(gltf);
+      if (!instance) continue;
+      instance.position.set(Number(pos.x ?? 0), Number(pos.y ?? 0), Number(pos.z ?? 0));
+      instance.rotation.y = Number(pos.rotY ?? 0);
+      instance.scale.setScalar(Number(pos.scale ?? 1));
+      instance.traverse?.((child) => {
+        if (child?.isMesh) {
+          child.castShadow = false;
+          child.receiveShadow = true;
+        }
+      });
+      group.add(instance);
+    }
+    return;
+  }
   for (let i = 0; i < count; i++) {
     const instance = Models.cloneModel(gltf);
     if (!instance) continue;
