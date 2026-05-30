@@ -1,13 +1,14 @@
-/**
+﻿/**
  * @module player
- * @description Personagem do jogador: spawn, movimento, câmera e atributos.
- * Dependências: events.js, input.js, scene.js, physics.js, classes.js
+ * @description Personagem do jogador: spawn, movimento, cÃ¢mera e atributos.
+ * DependÃªncias: events.js, input.js, scene.js, physics.js, classes.js
  */
 
 import * as THREE        from 'three';
 import { emit, on }      from '../core/events.js';
 import { getState as getInput } from '../core/input.js';
 import { getCamera, getSun, add, remove } from '../world/scene.js';
+import { getCollisionBoxes } from '../world/world.js';
 import { getGroundHeight }          from '../world/physics.js';
 import { getBaseStats, getJobMeta } from '../systems/classes.js';
 import * as Audio from '../core/audio.js';
@@ -21,7 +22,7 @@ let _dialogOpen = false;
 on('dialogStarted', () => { _dialogOpen = true; });
 on('dialogEnded',   () => { _dialogOpen = false; });
 
-// Combat.castSkill emite mpConsumeRequest — player deduz o MP localmente.
+// Combat.castSkill emite mpConsumeRequest â€” player deduz o MP localmente.
 on('mpConsumeRequest', ({ amount }) => {
     if (typeof amount === 'number' && amount > 0 && _data) {
         _data.mp = Math.max(0, _data.mp - amount);
@@ -37,16 +38,17 @@ on('bossAbyssPoison', ({ damagePerTick, duration }) => {
         ticksDone++;
     }, 1000);
 });
-// ─── Constantes ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Constantes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const MOVE_SPEED         = 5;
 const MOUSE_SENSITIVITY  = 0.003;
 const CAM_OFFSET         = new THREE.Vector3(0, 8, 8);
 const CAM_ZOOM_MIN       = 3;
-const CAM_ZOOM_MAX       = 20;
+const CAM_ZOOM_MAX       = 40;
 const CAM_ZOOM_STEP      = 0.5;
-const CAM_PITCH_MIN      = 0.2;
+const CAM_PITCH_MIN      = 0.05;
 const CAM_PITCH_MAX      = 1.4;
+const PLAYER_RADIUS      = 0.5;
 const ANIM_FADE_DURATION = 0.2;
 
 const CLASS_MODELS = {
@@ -62,7 +64,7 @@ const CLASS_MODELS = {
     high_wizard:     'assets/models/player/mage.glb',
     sniper:          'assets/models/player/archer.glb',
     shadow_assassin: 'assets/models/player/shadow_assassin.glb'
-};// ─── Estado interno ──────────────────────────────────────────────────────────
+};// â”€â”€â”€ Estado interno â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /** @type {THREE.Object3D|null} */
 let _mesh = null;
@@ -113,7 +115,7 @@ let _hasMoved    = false;
 
 const _prevPosition = new THREE.Vector3();
 
-// ─── BUG-05: Footsteps ───────────────────────────────────────────────────────
+// â”€â”€â”€ BUG-05: Footsteps â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let _footstepIndex    = 0;
 let _lastFootstepTime = 0;
 
@@ -121,7 +123,7 @@ const FOOTSTEP_COOLDOWN_MS = 350;
 const FOOTSTEP_VOLUME      = 0.4;
 const FOOTSTEP_THRESHOLD   = 0.01;
 
-// ─── Regen passivo (Ragnarok-style) ─────────────────────────────────────────
+// â”€â”€â”€ Regen passivo (Ragnarok-style) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const REGEN_TICK_S = 6;
 let _regenTimer    = 0;
 
@@ -129,7 +131,7 @@ const FOOTSTEP_SFXS = [
     'assets/audio/sfx/sfx_footstep_grass1.ogg',
     'assets/audio/sfx/sfx_footstep_grass2.ogg'
 ];
-// ─── API pública ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ API pÃºblica â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Inicializa o player com dados do save ou defaults.
@@ -210,11 +212,11 @@ export async function init(saveData = null) {
 }
 
 /**
- * Retorna estado completo serializável para o save.
+ * Retorna estado completo serializÃ¡vel para o save.
  * @returns {Object|null}
  */
 /**
- * Retorna estado completo serializável para o save.
+ * Retorna estado completo serializÃ¡vel para o save.
  * @returns {Object|null}
  */
 export function getState() {
@@ -226,7 +228,7 @@ export function getState() {
 }
 
 /**
- * Retorna posição atual do player.
+ * Retorna posiÃ§Ã£o atual do player.
  * @returns {THREE.Vector3}
  */
 export function getPosition() {
@@ -270,7 +272,7 @@ export function respawn() {
 export function takeDamage(amount, source) {
     if (_isDead) return;
     if (!_data) return;
-    // ── redução de dano por buff 'endure' ─────────────────────────────────
+    // â”€â”€ reduÃ§Ã£o de dano por buff 'endure' â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     let dmg = typeof amount === 'number' ? Math.max(0, amount) : 0;
     if (Array.isArray(_data._activeBuffs)) {
         const endureBuff = _data._activeBuffs.find(
@@ -321,12 +323,12 @@ export function restoreMp(amount) {
     emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
 }
 /**
- * Adiciona XP e verifica level up. Fórmula: 100 * level².
+ * Adiciona XP e verifica level up. FÃ³rmula: 100 * levelÂ².
  * @param {number} amount
  * @returns {void}
  */
 /**
- * Deduz MP do player, respeitando mínimo 0. Emite playerMpChanged.
+ * Deduz MP do player, respeitando mÃ­nimo 0. Emite playerMpChanged.
  * @param {number} amount - quantidade a deduzir (positivo). Math.abs aplicado.
  */
 export function consumeMp(amount) {
@@ -364,18 +366,18 @@ export function addExp(amount) {
         emit('levelUp', { newLevel: _data.level });
         emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
         emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
-        console.log(`[player] Level up! Nível ${_data.level}`);
+        console.log(`[player] Level up! NÃ­vel ${_data.level}`);
     }
 }
 /**
  * Marca quest de job-change como completada no estado do player.
- * Idempotente: ignora se já estava na lista.
+ * Idempotente: ignora se jÃ¡ estava na lista.
  * @param {string} questId
  * @returns {void}
  */
 /**
  * Marca quest de job-change como completada no estado do player.
- * Idempotente: ignora se já estava na lista.
+ * Idempotente: ignora se jÃ¡ estava na lista.
  * @param {string} questId
  * @returns {void}
  */
@@ -392,7 +394,7 @@ export function unlockJobChangeQuest(questId) {
 
 
  /**
- * Aplica mudança de job ao estado real do player.
+ * Aplica mudanÃ§a de job ao estado real do player.
  * @param {string} newJobId
  * @returns {Promise<boolean>}
  */
@@ -407,7 +409,7 @@ export async function applyJobChange(newJobId) {
 
     const meta = Classes.getJobMeta(newJobId);
     if (!meta) {
-        console.warn('[player] JOBS_META não encontrado para', newJobId);
+        console.warn('[player] JOBS_META nÃ£o encontrado para', newJobId);
         return false;
     }
 
@@ -452,12 +454,12 @@ export async function applyJobChange(newJobId) {
 
     emit('jobChanged', { oldClass, newClass: newJobId, player: _data });
     emit('levelUp', { newLevel: _data.level });
-    console.log(`[player] Job change: ${oldClass} → ${newJobId}`);
+    console.log(`[player] Job change: ${oldClass} â†’ ${newJobId}`);
     return true;
 }
 
 /**
- * Atualiza movimento, rotação e câmera. Chamado pelo game loop.
+ * Atualiza movimento, rotaÃ§Ã£o e cÃ¢mera. Chamado pelo game loop.
  * @param {number} delta
  * @param {Object} inputState
  * @returns {void}
@@ -632,19 +634,19 @@ function _onAttackFinished(event) {
     if (event.action !== _actions.attack) return;
     _playAction(_hasMoved ? 'walk' : 'idle', 0.1);
 }
-// ─── Helpers privados ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers privados â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * Processa WASD e rotação por mouse.
- * Usa _lastMouseX para calcular dx real — evita rotação contínua quando
- * mouse.dx de input.js persiste o último delta entre frames sem movimento.
+ * Processa WASD e rotaÃ§Ã£o por mouse.
+ * Usa _lastMouseX para calcular dx real â€” evita rotaÃ§Ã£o contÃ­nua quando
+ * mouse.dx de input.js persiste o Ãºltimo delta entre frames sem movimento.
  * @param {number} delta
  * @param {Object} inputState
  */
 /**
- * Processa WASD e rotação por mouse.
- * Usa _lastMouseX para calcular dx real — evita rotação contínua quando
- * mouse.dx de input.js persiste o último delta entre frames sem movimento.
+ * Processa WASD e rotaÃ§Ã£o por mouse.
+ * Usa _lastMouseX para calcular dx real â€” evita rotaÃ§Ã£o contÃ­nua quando
+ * mouse.dx de input.js persiste o Ãºltimo delta entre frames sem movimento.
  * @param {number} delta
  * @param {Object} inputState
  */
@@ -693,6 +695,24 @@ function _updateMovement(delta, inputState) {
 
         _mesh.position.x += worldX * MOVE_SPEED * delta;
         _mesh.position.z += worldZ * MOVE_SPEED * delta;
+        // --- Colisao com construcoes ---
+        const _oldPx = _mesh.position.x - worldX * MOVE_SPEED * delta;
+        const _oldPz = _mesh.position.z - worldZ * MOVE_SPEED * delta;
+        const _cboxes = getCollisionBoxes();
+        for (const b of _cboxes) {
+          if (_mesh.position.x + PLAYER_RADIUS > b.minX && _mesh.position.x - PLAYER_RADIUS < b.maxX &&
+              _mesh.position.z + PLAYER_RADIUS > b.minZ && _mesh.position.z - PLAYER_RADIUS < b.maxZ) {
+            _mesh.position.x = _oldPx;
+            break;
+          }
+        }
+        for (const b of _cboxes) {
+          if (_mesh.position.x + PLAYER_RADIUS > b.minX && _mesh.position.x - PLAYER_RADIUS < b.maxX &&
+              _mesh.position.z + PLAYER_RADIUS > b.minZ && _mesh.position.z - PLAYER_RADIUS < b.maxZ) {
+            _mesh.position.z = _oldPz;
+            break;
+          }
+        }
         _mesh.position.y  = getGroundHeight(_mesh.position.x, _mesh.position.z);
         const HALF_TERRAIN = 75;
         _mesh.position.x = Math.max(-HALF_TERRAIN, Math.min(HALF_TERRAIN, _mesh.position.x));
@@ -751,7 +771,7 @@ function _updateCamera() {
 }
 
 /**
- * Monta PlayerData a partir do save ou com valores padrão.
+ * Monta PlayerData a partir do save ou com valores padrÃ£o.
  * @param {Object|null} saveData
  * @returns {Object}
  */
@@ -824,22 +844,22 @@ function _buildData(saveData) {
             : [null, null, null, null],
         jobHistory: Array.isArray(saveData?.jobHistory) ? saveData.jobHistory : [],
         jobChangeQuestsCompleted: Array.isArray(saveData?.jobChangeQuestsCompleted) ? saveData.jobChangeQuestsCompleted : [],
-        cooldowns:     {}, // sempre zerado no boot — performance.now() reinicia em 0
+        cooldowns:     {}, // sempre zerado no boot â€” performance.now() reinicia em 0
         _activeBuffs:  [],
     };
     
 }
 
 /**
- * Recebe bônus de equipamento via bus (R8 — sem import de equipment.js).
+ * Recebe bÃ´nus de equipamento via bus (R8 â€” sem import de equipment.js).
  * @param {Object} _payload
  */
 function _onItemEquipped(_payload) {
-    // PROMPT 11: aplicar bônus de stats ao player
-    console.log('[player] itemEquipped recebido — bônus aplicado no PROMPT 11');
+    // PROMPT 11: aplicar bÃ´nus de stats ao player
+    console.log('[player] itemEquipped recebido â€” bÃ´nus aplicado no PROMPT 11');
 }
 /**
- * Atualiza cache de bônus percentuais e stats de set, depois recalcula HP/MP máximos.
+ * Atualiza cache de bÃ´nus percentuais e stats de set, depois recalcula HP/MP mÃ¡ximos.
  * @param {{ totalStats?: Object, hpPctBonus?: number, mpPctBonus?: number }} payload
  */
 function _onSetBonusChanged(payload) {

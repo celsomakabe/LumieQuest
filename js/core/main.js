@@ -1,6 +1,6 @@
-/**
+﻿/**
  * @file main.js
- * @description Bootstrap do jogo. Inicializa módulos na ordem correta e
+ * @description Bootstrap do jogo. Inicializa mÃ³dulos na ordem correta e
  * gerencia o game loop via requestAnimationFrame.
  */
 
@@ -44,7 +44,7 @@ Events.on('mapLoaded', () => {
 });
 
 
-// ─── Estado interno ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Estado interno â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 let _gameState     = 'loading';
 let _lastTime      = 0;
@@ -53,7 +53,7 @@ let _saveData      = null;
 let _autoSaveTimer = 0;
 const AUTO_SAVE_INTERVAL = 30000; // 30s
 
-// ─── FPS — média móvel de 30 frames ──────────────────────────────────────────
+// â”€â”€â”€ FPS â€” mÃ©dia mÃ³vel de 30 frames â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const FPS_SAMPLES   = 30;
 const _fpsBuf       = new Float32Array(FPS_SAMPLES);
@@ -61,7 +61,7 @@ let   _fpsBufIdx    = 0;
 let   _fpsSum       = 0;
 
 /**
- * Atualiza buffer circular de FPS e retorna média arredondada.
+ * Atualiza buffer circular de FPS e retorna mÃ©dia arredondada.
  * @param {number} delta  segundos
  * @returns {number}
  */
@@ -74,11 +74,11 @@ function _calcFPS(delta) {
     return Math.round(_fpsSum / FPS_SAMPLES);
 }
 
-// ─── Textura procedural de grama ─────────────────────────────────────────────
+// â”€â”€â”€ Textura procedural de grama â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * Gera um Data URI de textura de grama 64×64 via Canvas 2D.
- * Evita dependência de arquivo externo.
+ * Gera um Data URI de textura de grama 64Ã—64 via Canvas 2D.
+ * Evita dependÃªncia de arquivo externo.
  * @returns {string} Data URI PNG
  */
 function _makeProceduralGrassDataURI() {
@@ -92,7 +92,7 @@ function _makeProceduralGrassDataURI() {
     ctx.fillStyle = '#4a7c3f';
     ctx.fillRect(0, 0, size, size);
 
-    // Variação de tons para simular grama
+    // VariaÃ§Ã£o de tons para simular grama
     const shades = ['#3d6b35', '#52883f', '#436e38', '#5a9147', '#3a6030'];
     for (let i = 0; i < 200; i++) {
         ctx.fillStyle = shades[Math.floor(Math.random() * shades.length)];
@@ -106,7 +106,7 @@ function _makeProceduralGrassDataURI() {
     return canvas.toDataURL('image/png');
 }
 
-// ─── Game Loop ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Game Loop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Loop principal via requestAnimationFrame.
@@ -117,7 +117,7 @@ function _loop(timestamp) {
 
     let delta = (timestamp - _lastTime) / 1000;
     _lastTime = timestamp;
-    if (delta > 0.1) delta = 0.1; // cap 100ms — evita spiral of death
+    if (delta > 0.1) delta = 0.1; // cap 100ms â€” evita spiral of death
 
     if (_gameState !== 'playing') return;
 
@@ -136,7 +136,7 @@ function _loop(timestamp) {
     Monsters.updateAll(delta, Player.getPosition());
     NPCs.updateAll(delta, Player.getPosition());  
     World.update(delta);
-    // Partículas
+    // PartÃ­culas
     Particles.update(delta);
     // Render
     Scene.render(delta);
@@ -145,13 +145,13 @@ function _loop(timestamp) {
     UI.update(delta);
 UI.setFPS(_calcFPS(delta));
 
-    // ── PROMPT 10: tick de DoTs/buffs e overlays de cooldown ──────────────
+    // â”€â”€ PROMPT 10: tick de DoTs/buffs e overlays de cooldown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Combat.update(delta);
     UI.updateCooldownVisuals(delta);
     UI.updateMonsterHpBars();
 }
 
-// ─── Auto-save ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Auto-save â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function _doAutoSave() {
     const playerData = Player.getState();
@@ -159,23 +159,23 @@ function _doAutoSave() {
 Save.save({ ...current, player: { ...playerData, inventory: Inventory.serialize(), quests: Quests.getState(), pets: Pets.serialize() } });
 }
 
-// ─── Assets Ready ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Assets Ready â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function _onAssetsReady() {
-    // Textura procedural — sem dependência de arquivo externo
+    // Textura procedural â€” sem dependÃªncia de arquivo externo
     const dataURI = _makeProceduralGrassDataURI();
     Assets.loadTexture(dataURI).then(tex => {
         tex.wrapS = tex.wrapT = 1000; // THREE.RepeatWrapping
         tex.repeat.set(4, 4);
         Scene.setGroundTexture(tex);
     }).catch(() => {
-        // graceful — chão fica sem textura
+        // graceful â€” chÃ£o fica sem textura
     });
 
     // Inicia BGM da cidade com fade in
     Audio.playBGM('assets/audio/bgm/bgm_city.ogg', 0.6);
 
-// ── PROMPT 10: carregar skills.json e injetar em Classes ──────────────
+// â”€â”€ PROMPT 10: carregar skills.json e injetar em Classes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     try {
         const skillsRes  = await fetch('./assets/data/skills.json');
         const skillsData = await skillsRes.json();
@@ -186,7 +186,7 @@ async function _onAssetsReady() {
         Classes.setSkillDefs([]);
     }
 
-    // ── PROMPT 16: carregar pet_defs de items.json ──────
+    // â”€â”€ PROMPT 16: carregar pet_defs de items.json â”€â”€â”€â”€â”€â”€
     try {
         const itemsRes = await fetch('./assets/data/items.json');
         const itemsData = await itemsRes.json();
@@ -197,7 +197,7 @@ async function _onAssetsReady() {
         Pets.init([]);
     }
 
-    // ── PROMPT 10: modal de classe se save novo (player.class vazio) ──────
+    // â”€â”€ PROMPT 10: modal de classe se save novo (player.class vazio) â”€â”€â”€â”€â”€â”€
     if (!_saveData) _saveData = { player: {} };
     if (!_saveData.player) _saveData.player = {};
 
@@ -236,7 +236,7 @@ async function _onAssetsReady() {
     Pets.hydrate(_saveData.player.pets ?? null);
     Combat.registerTarget(Player.getInstance());
 
-    // Atualiza hotbar com skills equipadas (após Player.init populou _data)
+    // Atualiza hotbar com skills equipadas (apÃ³s Player.init populou _data)
     UI.updateHotbar();
 
     Events.on('monsterAttackRequest', ({ attacker, ability, damage }) => {
@@ -255,7 +255,7 @@ async function _onAssetsReady() {
 
       Combat.attack(attacker, player);
   });
- // ── Inventário ────────────────────────────────────────────────────────
+ // â”€â”€ InventÃ¡rio â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Events.on('itemPicked', ({ itemId, qty, dropId, refineLevel, sockets }) => {
         Inventory.addItem(itemId, qty, {
             ...(refineLevel != null ? { refineLevel } : {}),
@@ -302,7 +302,7 @@ async function _onAssetsReady() {
         }
  });
 
-    // ── PROMPT 10: consumo de MP por skills (combat.js emite via R8) ──────
+    // â”€â”€ PROMPT 10: consumo de MP por skills (combat.js emite via R8) â”€â”€â”€â”€â”€â”€
     Events.on('mpConsumeRequest', ({ amount }) => {
         Player.consumeMp(amount);
     });
@@ -320,15 +320,15 @@ async function _loadSetDefs() {
         Equipment.setCatalogue([]);
     }
 }
-// ─── Init ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * Inicializa todos os módulos na ordem correta e inicia o game loop.
+ * Inicializa todos os mÃ³dulos na ordem correta e inicia o game loop.
  */
 export async function init() {
     const canvas = document.getElementById('game-canvas');
     if (!canvas) {
-        console.error('[Main] #game-canvas não encontrado.');
+        console.error('[Main] #game-canvas nÃ£o encontrado.');
         return;
     }
 
@@ -337,7 +337,7 @@ export async function init() {
     Assets.init();
     Scene.init(canvas);
     Particles.init(Scene.getScene());
-    // Áudio após cena (precisa da câmera)
+    // Ãudio apÃ³s cena (precisa da cÃ¢mera)
     await Audio.init(Scene.getCamera());    
 
     // Sistemas e UI
@@ -352,7 +352,7 @@ export async function init() {
     NPCs.init(Scene.getScene());
     await World.init();
     await World.loadMap('city_01');
-    // ──────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Captura save antes de tudo (one-shot)
     Events.once('saveLoaded', (data) => {
         _saveData = data;
@@ -376,10 +376,10 @@ export async function init() {
         _lastTime  = performance.now();
     });
 
-    // Preload — texturas procedurais não precisam de entry aqui;
-    // áudios são pré-carregados para cache imediato
+    // Preload â€” texturas procedurais nÃ£o precisam de entry aqui;
+    // Ã¡udios sÃ£o prÃ©-carregados para cache imediato
    Assets.preloadAll([
-        // Player models (Sessão 25A)
+        // Player models (SessÃ£o 25A)
         { type: 'model', url: 'assets/models/player/swordman.glb' },
         { type: 'model', url: 'assets/models/player/mage.glb' },
         { type: 'model', url: 'assets/models/player/archer.glb' },
@@ -411,7 +411,7 @@ export async function init() {
     console.log('[Main] LumieQuest booted.');
 }
 
-// ─── Controles de estado ──────────────────────────────────────────────────────
+// â”€â”€â”€ Controles de estado â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Retorna o estado atual do jogo.
@@ -440,10 +440,12 @@ export function resume() {
     Events.emit('gameResumed');
 }
 
-// ─── Auto-bootstrap ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Auto-bootstrap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {
     init();
 }
+
+

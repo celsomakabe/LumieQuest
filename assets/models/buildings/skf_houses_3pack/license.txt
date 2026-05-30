@@ -1,0 +1,11 @@
+Model Information:
+* title:	Medieval Houses (3 Pack)
+* source:	https://sketchfab.com/3d-models/medieval-houses-3-pack-38443304774c481e9498b3e810389e91
+* author:	Ajay Gawde (https://sketchfab.com/aagawde)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Medieval Houses (3 Pack)" (https://sketchfab.com/3d-models/medieval-houses-3-pack-38443304774c481e9498b3e810389e91) by Ajay Gawde (https://sketchfab.com/aagawde) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

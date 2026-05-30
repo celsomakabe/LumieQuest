@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+﻿import * as THREE from 'three';
 import { getScene, getCamera, add, remove, updateLighting, setSkybox } from './scene.js';
 import { spawnMonster, spawnGroup } from '../entities/monsters.js';
 import { spawnFromConfig } from '../entities/npcs.js';
@@ -10,6 +10,7 @@ import { on, off, emit } from '../core/events.js';
 let _maps = [];
 let _mapsById = new Map();
 let _currentMapId = null;
+let _collisionBoxes = [];
 let _currentMapConfig = null;
 let _terrainMesh = null;
 let _decorationGroup = null;
@@ -27,7 +28,7 @@ let _lastEmittedPhase = null;
 const DAY_NIGHT_CYCLE_DURATION = 300;
 
 /**
- * Inicializa o módulo de mundo e carrega maps.json.
+ * Inicializa o mÃ³dulo de mundo e carrega maps.json.
  * @returns {Promise<void>}
  */
 export async function init() {
@@ -68,6 +69,7 @@ export async function loadMap(mapId) {
 
   const previousMapId = _currentMapId;
   emit('mapUnloading', previousMapId);
+  _collisionBoxes.length = 0;
 
   _clearCurrentMap();
 
@@ -123,7 +125,7 @@ export function getDayNightCycle() {
 }
 
 /**
- * Atualiza lógica do mundo.
+ * Atualiza lÃ³gica do mundo.
  * @param {number} delta
  * @returns {void}
  */
@@ -146,7 +148,6 @@ export function update(delta) {
       nearestExit = exitPoint;
     }
   }
-
   if (nearestExit && nearestDistance <= 3) {
     if (_exitNearTarget !== nearestExit.targetMap) {
       _exitNearTarget = nearestExit.targetMap;
@@ -164,7 +165,7 @@ export function update(delta) {
   }
 }
 
-// ─── Funções privadas ─────────────────────────────────────────────────────────
+// â”€â”€â”€ FunÃ§Ãµes privadas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function _clearCurrentMap() {
   // TODO PARTE 4: stopAmbient()
@@ -241,8 +242,8 @@ async function _spawnMapDecoration(mapConfig) {
   const nonProcedural = [];
 
   for (const entry of decorations) {
-    const count = Math.max(0, Number(entry.count || 0));
-    if (count <= 0 && !Array.isArray(entry.positions)) continue;
+       const count = Math.max(0, Number(entry.count || 0));
+    if (count <= 0 && !Array.isArray(entry.positions) && !entry.type) continue;
 
     if (entry.procedural === true) {
       const key = entry.model ?? 'unknown';
@@ -267,18 +268,46 @@ async function _spawnMapDecoration(mapConfig) {
 }
 
 async function _spawnModelDecoration(entry, count, group) {
+  if (entry?.type === 'ground_plane') {
+    const width = Number(entry.width ?? 160);
+    const height = Number(entry.height ?? 160);
+    const y = Number(entry.y ?? 0.02);
+    const texturePath = entry.texture ?? 'assets/textures/terrain/cobblestone.jpg';
+    const loader = new THREE.TextureLoader();
+    const texture = await new Promise(resolve => {
+      loader.load(texturePath, resolve, undefined, () => resolve(null));
+    });
+    if (!texture) return;
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(Math.max(1, width / 8), Math.max(1, height / 8));
+    texture.anisotropy = 16;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.generateMipmaps = true;
+    const mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(width, height),
+      new THREE.MeshStandardMaterial({ map: texture, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 })
+    );
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.set(entry.x ?? 0, y, entry.z ?? 0);
+    mesh.receiveShadow = true;
+    group.add(mesh);
+    return;
+  }
+
   if (!entry?.path) return;
 
   let gltf = null;
   try {
     gltf = await Models.loadModel(entry.path);
   } catch (err) {
-    console.warn(`[world] Falha ao carregar decoração: ${entry.model ?? entry.path}`, err);
+    console.warn(`[world] Falha ao carregar decoraÃ§Ã£o: ${entry.model ?? entry.path}`, err);
     return;
   }
 
   if (!gltf?.scene) return;
-// Posição fixa: entry.positions sobrepõe area/count
+  // PosiÃ§Ã£o fixa: entry.positions sobrepÃµe area/count
   if (Array.isArray(entry.positions) && entry.positions.length > 0) {
     for (const pos of entry.positions) {
       const instance = Models.cloneModel(gltf);
@@ -293,6 +322,12 @@ async function _spawnModelDecoration(entry, count, group) {
         }
       });
       group.add(instance);
+      // Colisao com construcoes (ignora objetos pequenos)
+      instance.updateWorldMatrix(true, true);
+      const _cbox = new THREE.Box3().setFromObject(instance);
+      if (_cbox.max.x - _cbox.min.x > 1.5 && _cbox.max.z - _cbox.min.z > 1.5 && !entry.path?.includes('wall_')) {
+        _collisionBoxes.push({ minX: _cbox.min.x, maxX: _cbox.max.x, minZ: _cbox.min.z, maxZ: _cbox.max.z });
+      }
     }
     return;
   }
@@ -514,9 +549,9 @@ function _disposeObject(object) {
   }
 }
 
-// ─── Ciclo dia/noite ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Ciclo dia/noite â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-// _cacheSceneLights removido: iluminação gerenciada por scene.js via updateLighting()
+// _cacheSceneLights removido: iluminaÃ§Ã£o gerenciada por scene.js via updateLighting()
 
 function _updateDayNightCycle(delta) {
   if (!_currentMapConfig) return;
@@ -556,7 +591,7 @@ function _updateDayNightCycle(delta) {
 
 
 
-// ─── Clima ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Clima â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function _updateWeather(delta) {
   if (!_currentMapConfig) return;
@@ -586,7 +621,7 @@ function _updateWeather(delta) {
   emit('weatherChanged', { weather: nextWeather });
 }
 
-// ─── Eventos de fase ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Eventos de fase â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function _emitPhaseEventIfNeeded() {
   if (_lastEmittedPhase === _currentPhase) return;
@@ -615,3 +650,7 @@ function _getPhaseProgress(cycleProgress) {
   }
   return THREE.MathUtils.clamp((cycleProgress - 0.85) / 0.15, 0, 1);
 }
+
+
+export function getCollisionBoxes() { return _collisionBoxes; }
+

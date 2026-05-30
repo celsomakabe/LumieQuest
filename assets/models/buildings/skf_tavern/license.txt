@@ -1,0 +1,11 @@
+Model Information:
+* title:	Medieval Tavern
+* source:	https://sketchfab.com/3d-models/medieval-tavern-03f758757c3e448d81f50831b8533c98
+* author:	Moonlightlll (https://sketchfab.com/Moonlightlll)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Medieval Tavern" (https://sketchfab.com/3d-models/medieval-tavern-03f758757c3e448d81f50831b8533c98) by Moonlightlll (https://sketchfab.com/Moonlightlll) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

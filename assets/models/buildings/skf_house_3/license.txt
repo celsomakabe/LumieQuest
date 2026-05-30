@@ -1,0 +1,11 @@
+Model Information:
+* title:	Medieval House 3
+* source:	https://sketchfab.com/3d-models/medieval-house-3-cf179aa6dc0944f1974ce3f7812031a6
+* author:	Olosta (https://sketchfab.com/Olosta)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Medieval House 3" (https://sketchfab.com/3d-models/medieval-house-3-cf179aa6dc0944f1974ce3f7812031a6) by Olosta (https://sketchfab.com/Olosta) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

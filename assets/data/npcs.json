@@ -1,12 +1,12 @@
-{
+﻿{
   "npcs": [
     {
       "id": "mayor",
       "name": "Prefeito Aldric",
       "position": {
-        "x": -3,
+        "x": 0,
         "y": 0,
-        "z": -4
+        "z": -40
       },
       "modelPlaceholder": {
         "type": "capsule",
@@ -120,9 +120,9 @@
       "id": "blacksmith",
       "name": "Ferreiro Bram",
       "position": {
-        "x": 4,
+        "x": 20,
         "y": 0,
-        "z": -3
+        "z": 5
       },
       "modelPlaceholder": {
         "type": "capsule",
@@ -177,9 +177,9 @@
       "name": "SÃ¡bio AnciÃ£o",
       "type": "quest",
       "position": {
-        "x": 15,
+        "x": -10,
         "y": 0,
-        "z": -10
+        "z": -20
       },
       "dialogues": {
         "default": {
@@ -203,9 +203,9 @@
       "id": "merchant",
       "name": "Comerciante Lyra",
       "position": {
-        "x": 0,
+        "x": -20,
         "y": 0,
-        "z": -6
+        "z": 0
       },
       "modelPlaceholder": {
         "type": "capsule",
@@ -274,9 +274,9 @@
       "id": "priest",
       "name": "Padre Silas",
       "position": {
-        "x": -5,
+        "x": 10,
         "y": 0,
-        "z": 2
+        "z": -40
       },
       "modelPlaceholder": {
         "type": "capsule",
@@ -345,9 +345,9 @@
       "id": "guard",
       "name": "Guarda Torren",
       "position": {
-        "x": 3,
+        "x": 0,
         "y": 0,
-        "z": 3
+        "z": 70
       },
       "modelPlaceholder": {
         "type": "capsule",
@@ -415,9 +415,9 @@
       "id": "mestre_knight",
       "name": "Mestre Cavaleiro",
       "position": {
-        "x": 10,
+        "x": -30,
         "y": 0,
-        "z": 5
+        "z": 20
       },
       "modelPlaceholder": {
         "type": "capsule",
@@ -540,9 +540,9 @@
       "id": "mestre_wizard",
       "name": "Mestre Arcano",
       "position": {
-        "x": -10,
+        "x": 30,
         "y": 0,
-        "z": 5
+        "z": 20
       },
       "modelPlaceholder": {
         "type": "capsule",
@@ -665,9 +665,9 @@
       "id": "mestre_hunter",
       "name": "Mestre CaÃ§ador",
       "position": {
-        "x": 10,
+        "x": -30,
         "y": 0,
-        "z": -5
+        "z": -20
       },
       "modelPlaceholder": {
         "type": "capsule",
@@ -790,9 +790,9 @@
       "id": "mestre_assassin",
       "name": "Mestre das Sombras",
       "position": {
-        "x": -10,
+        "x": 30,
         "y": 0,
-        "z": -5
+        "z": -20
       },
       "modelPlaceholder": {
         "type": "capsule",
@@ -915,9 +915,9 @@
       "id": "mestre_lord_knight",
       "name": "GrÃ£o-Mestre do Lorde Cavaleiro",
       "position": {
-        "x": 15,
+        "x": -15,
         "y": 0,
-        "z": 8
+        "z": 35
       },
       "modelPlaceholder": {
         "type": "capsule",
@@ -1040,9 +1040,9 @@
       "id": "mestre_high_wizard",
       "name": "GrÃ£o-Mestre do Grande Bruxo",
       "position": {
-        "x": -15,
+        "x": 15,
         "y": 0,
-        "z": 8
+        "z": 35
       },
       "modelPlaceholder": {
         "type": "capsule",
@@ -1165,9 +1165,9 @@
       "id": "mestre_sniper",
       "name": "GrÃ£o-Mestre do Atirador de Elite",
       "position": {
-        "x": 15,
+        "x": -15,
         "y": 0,
-        "z": -8
+        "z": -35
       },
       "modelPlaceholder": {
         "type": "capsule",
@@ -1290,9 +1290,9 @@
       "id": "mestre_shadow_assassin",
       "name": "GrÃ£o-Mestre do Assassino das Sombras",
       "position": {
-        "x": -15,
+        "x": 15,
         "y": 0,
-        "z": -8
+        "z": -35
       },
       "modelPlaceholder": {
         "type": "capsule",
@@ -1565,6 +1565,24 @@
         }
       ],
       "modelFile": "assets/models/npcs/rogue_hooded.glb"
+    },
+    {
+      "id": "guard_north",
+      "name": "Guarda Marcos",
+      "type": "guard",
+      "position": { "x": 0, "y": 0, "z": -70 },
+      "modelFile": "assets/models/npcs/guard.glb",
+      "dialogTree": {
+        "start": "root",
+        "nodes": {
+          "root": {
+            "text": "As cavernas ao norte são perigosas. Prepare-se bem.",
+            "options": [
+              { "text": "Entendido.", "next": null }
+            ]
+          }
+        }
+      }
     }
   ]
 }

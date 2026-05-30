@@ -1,0 +1,1436 @@
+﻿
+===== NPCS MODELS =====
+
+barbarian.glb
+blacksmith.glb
+guard.glb
+merchant.glb
+priest.glb
+rogue.glb
+rogue_hooded.glb
+sage.glb
+
+===== ENVIRONMENT MODELS =====
+
+BirchTree_1.bin
+BirchTree_1.gltf
+BirchTree_Bark.jpg
+BirchTree_Bark_Normal.png
+BirchTree_Leaves.png
+Bush.bin
+Bush.gltf
+Bush_Flowers.bin
+Bush_Flowers.gltf
+Bush_Leaves.png
+Flowers.png
+Grass.png
+Leaves_BW.png
+MapleTree_Bark.jpg
+MapleTree_Bark_Normal.png
+MapleTree_Leaves.png
+MapleTree_Leaves_BW.png
+NormalTree_Bark.jpg
+NormalTree_Bark_Normal.png
+NormalTree_Leaves.png
+PalmTree_Leaves.png
+PalmTree_Trunk.jpg
+PalmTree_Trunk_Normal.png
+PineTree_Bark.jpg
+PineTree_Bark_Normal.png
+PineTree_Leaves.png
+Rocks.jpg
+
+===== BUILDINGS MODELS =====
+
+barrel.bin
+barrel.gltf
+building_church_blue.bin
+building_church_blue.gltf
+building_market_blue.bin
+building_market_blue.gltf
+building_tower_A_blue.bin
+building_tower_A_blue.gltf
+building_tower_B_blue.bin
+building_tower_B_blue.gltf
+building_tower_base_blue.bin
+building_tower_base_blue.gltf
+building_well_blue.bin
+building_well_blue.gltf
+crate_A_big.bin
+crate_A_big.gltf
+crate_A_small.bin
+crate_A_small.gltf
+crate_B_small.bin
+crate_B_small.gltf
+fence_stone_straight.bin
+fence_stone_straight.gltf
+fence_wood_straight.bin
+fence_wood_straight.gltf
+hexagons_medieval.png
+wall_corner_A_outside.bin
+wall_corner_A_outside.gltf
+wall_straight.bin
+wall_straight.gltf
+wall_straight_gate.bin
+wall_straight_gate.gltf
+
+===== MAPS JSON CITY_01 =====
+
+
+> assets\data\maps.json:4:                     "id":  "city_01",
+  assets\data\maps.json:5:                     "name":  "Cidade de Prontera",
+  assets\data\maps.json:6:                     "terrainSize":  800,
+  assets\data\maps.json:7:                     "terrainColor":  "#7caa5a",
+  assets\data\maps.json:8:                     "terrainTexture":  "assets/textures/terrain/city_cobblestone.jpg",
+  assets\data\maps.json:9:                     "skybox":  [
+  assets\data\maps.json:10:                                    "assets/textures/skybox/px.png",
+  assets\data\maps.json:11:                                    "assets/textures/skybox/nx.png",
+  assets\data\maps.json:12:                                    "assets/textures/skybox/py.png",
+  assets\data\maps.json:13:                                    "assets/textures/skybox/ny.png",
+  assets\data\maps.json:14:                                    "assets/textures/skybox/pz.png",
+  assets\data\maps.json:15:                                    "assets/textures/skybox/nz.png"
+  assets\data\maps.json:16:                                ],
+  assets\data\maps.json:17:                     "monsterPool":  [
+  assets\data\maps.json:18:
+  assets\data\maps.json:19:                                     ],
+  assets\data\maps.json:20:                     "npcs":  [
+  assets\data\maps.json:21:                                  "mayor",
+  assets\data\maps.json:22:                                  "blacksmith",
+  assets\data\maps.json:23:                                  "guard",
+  assets\data\maps.json:24:                                  "merchant",
+  assets\data\maps.json:25:                                  "priest",
+  assets\data\maps.json:26:                                  "sage",
+  assets\data\maps.json:27:                                  "master_swordsman",
+  assets\data\maps.json:28:                                  "master_mage",
+  assets\data\maps.json:29:                                  "master_archer",
+  assets\data\maps.json:30:                                  "master_assassin",
+  assets\data\maps.json:31:                                  "grandmaster_lord_knight",
+  assets\data\maps.json:32:                                  "grandmaster_high_wizard",
+  assets\data\maps.json:33:                                  "grandmaster_sniper",
+  assets\data\maps.json:34:                                  "grandmaster_shadow_assassin"
+  assets\data\maps.json:35:                              ],
+  assets\data\maps.json:36:                     "maxMonsters":  0,
+  assets\data\maps.json:37:                     "respawnTime":  0,
+  assets\data\maps.json:38:                     "exitPoints":  [
+  assets\data\maps.json:39:                                        {
+  assets\data\maps.json:40:                                            "id":  "exit_south",
+  assets\data\maps.json:41:                                            "position":  {
+  assets\data\maps.json:42:                                                             "x":  0,
+  assets\data\maps.json:43:                                                             "y":  0,
+  assets\data\maps.json:44:                                                             "z":  78
+  assets\data\maps.json:45:                                                         },
+  assets\data\maps.json:46:                                            "radius":  3,
+  assets\data\maps.json:47:                                            "targetMap":  "forest_01",
+  assets\data\maps.json:48:                                            "targetPosition":  {
+  assets\data\maps.json:49:                                                                   "x":  0,
+  assets\data\maps.json:50:                                                                   "y":  0,
+  assets\data\maps.json:51:                                                                   "z":  -50
+  assets\data\maps.json:52:                                                               }
+  assets\data\maps.json:53:                                        },
+  assets\data\maps.json:54:                                        {
+  assets\data\maps.json:55:                                            "id":  "exit_north",
+  assets\data\maps.json:56:                                            "position":  {
+  assets\data\maps.json:57:                                                             "x":  0,
+  assets\data\maps.json:58:                                                             "y":  0,
+  assets\data\maps.json:59:                                                             "z":  -78
+  assets\data\maps.json:60:                                                         },
+  assets\data\maps.json:61:                                            "radius":  3,
+  assets\data\maps.json:62:                                            "targetMap":  "caves_01",
+  assets\data\maps.json:63:                                            "targetPosition":  {
+  assets\data\maps.json:64:                                                                   "x":  0,
+  assets\data\maps.json:65:                                                                   "y":  0,
+  assets\data\maps.json:66:                                                                   "z":  50
+  assets\data\maps.json:67:                                                               }
+  assets\data\maps.json:68:                                        }
+  assets\data\maps.json:69:                                    ],
+  assets\data\maps.json:70:                     "decoration":  [
+  assets\data\maps.json:71:                                        {
+  assets\data\maps.json:72:                                            "path":  "assets/models/buildings/wall_corner_A_outside.gltf",
+  assets\data\maps.json:73:                                            "positions":  [
+  assets\data\maps.json:74:                                                              {
+  assets\data\maps.json:75:                                                                  "x":  -80,
+  assets\data\maps.json:76:                                                                  "y":  0,
+  assets\data\maps.json:77:                                                                  "z":  -80,
+  assets\data\maps.json:78:                                                                  "rotY":  0,
+  assets\data\maps.json:79:                                                                  "scale":  5
+  assets\data\maps.json:80:                                                              },
+  assets\data\maps.json:81:                                                              {
+  assets\data\maps.json:82:                                                                  "x":  80,
+  assets\data\maps.json:83:                                                                  "y":  0,
+  assets\data\maps.json:84:                                                                  "z":  -80,
+  assets\data\maps.json:85:                                                                  "rotY":  1.5707963267948966,
+  assets\data\maps.json:86:                                                                  "scale":  5
+  assets\data\maps.json:87:                                                              },
+  assets\data\maps.json:88:                                                              {
+  assets\data\maps.json:89:                                                                  "x":  80,
+  assets\data\maps.json:90:                                                                  "y":  0,
+  assets\data\maps.json:91:                                                                  "z":  80,
+  assets\data\maps.json:92:                                                                  "rotY":  3.141592653589793,
+  assets\data\maps.json:93:                                                                  "scale":  5
+  assets\data\maps.json:94:                                                              },
+  assets\data\maps.json:95:                                                              {
+  assets\data\maps.json:96:                                                                  "x":  -80,
+  assets\data\maps.json:97:                                                                  "y":  0,
+  assets\data\maps.json:98:                                                                  "z":  80,
+  assets\data\maps.json:99:                                                                  "rotY":  4.71238898038469,
+  assets\data\maps.json:100:                                                                  "scale":  5
+  assets\data\maps.json:101:                                                              }
+  assets\data\maps.json:102:                                                          ]
+  assets\data\maps.json:103:                                        },
+  assets\data\maps.json:104:                                        {
+  assets\data\maps.json:105:                                            "path":  "assets/models/buildings/wall_straight_gate.gltf",
+  assets\data\maps.json:106:                                            "positions":  [
+  assets\data\maps.json:107:                                                              {
+  assets\data\maps.json:108:                                                                  "x":  0,
+  assets\data\maps.json:109:                                                                  "y":  0,
+  assets\data\maps.json:110:                                                                  "z":  -80,
+  assets\data\maps.json:111:                                                                  "rotY":  0,
+  assets\data\maps.json:112:                                                                  "scale":  5
+  assets\data\maps.json:113:                                                              },
+  assets\data\maps.json:114:                                                              {
+  assets\data\maps.json:115:                                                                  "x":  0,
+  assets\data\maps.json:116:                                                                  "y":  0,
+  assets\data\maps.json:117:                                                                  "z":  80,
+  assets\data\maps.json:118:                                                                  "rotY":  3.141592653589793,
+  assets\data\maps.json:119:                                                                  "scale":  5
+  assets\data\maps.json:120:                                                              }
+  assets\data\maps.json:121:                                                          ]
+  assets\data\maps.json:122:                                        },
+  assets\data\maps.json:123:                                        {
+  assets\data\maps.json:124:                                            "path":  "assets/models/buildings/wall_straight.gltf",
+  assets\data\maps.json:125:                                            "positions":  [
+  assets\data\maps.json:126:                                                              {
+  assets\data\maps.json:127:                                                                  "x":  -76,
+  assets\data\maps.json:128:                                                                  "y":  0,
+  assets\data\maps.json:129:                                                                  "z":  -80,
+  assets\data\maps.json:130:                                                                  "rotY":  0,
+  assets\data\maps.json:131:                                                                  "scale":  5
+  assets\data\maps.json:132:                                                              },
+  assets\data\maps.json:133:                                                              {
+  assets\data\maps.json:134:                                                                  "x":  -74,
+  assets\data\maps.json:135:                                                                  "y":  0,
+  assets\data\maps.json:136:                                                                  "z":  -80,
+  assets\data\maps.json:137:                                                                  "rotY":  0,
+  assets\data\maps.json:138:                                                                  "scale":  5
+  assets\data\maps.json:139:                                                              },
+  assets\data\maps.json:140:                                                              {
+  assets\data\maps.json:141:                                                                  "x":  -72,
+  assets\data\maps.json:142:                                                                  "y":  0,
+  assets\data\maps.json:143:                                                                  "z":  -80,
+  assets\data\maps.json:144:                                                                  "rotY":  0,
+  assets\data\maps.json:145:                                                                  "scale":  5
+  assets\data\maps.json:146:                                                              },
+  assets\data\maps.json:147:                                                              {
+  assets\data\maps.json:148:                                                                  "x":  -70,
+  assets\data\maps.json:149:                                                                  "y":  0,
+  assets\data\maps.json:150:                                                                  "z":  -80,
+  assets\data\maps.json:151:                                                                  "rotY":  0,
+  assets\data\maps.json:152:                                                                  "scale":  5
+  assets\data\maps.json:153:                                                              },
+  assets\data\maps.json:154:                                                              {
+  assets\data\maps.json:155:                                                                  "x":  -68,
+  assets\data\maps.json:156:                                                                  "y":  0,
+  assets\data\maps.json:157:                                                                  "z":  -80,
+  assets\data\maps.json:158:                                                                  "rotY":  0,
+  assets\data\maps.json:159:                                                                  "scale":  5
+  assets\data\maps.json:160:                                                              },
+  assets\data\maps.json:161:                                                              {
+  assets\data\maps.json:162:                                                                  "x":  -66,
+  assets\data\maps.json:163:                                                                  "y":  0,
+  assets\data\maps.json:164:                                                                  "z":  -80,
+  assets\data\maps.json:165:                                                                  "rotY":  0,
+  assets\data\maps.json:166:                                                                  "scale":  5
+  assets\data\maps.json:167:                                                              },
+  assets\data\maps.json:168:                                                              {
+  assets\data\maps.json:169:                                                                  "x":  -64,
+  assets\data\maps.json:170:                                                                  "y":  0,
+  assets\data\maps.json:171:                                                                  "z":  -80,
+  assets\data\maps.json:172:                                                                  "rotY":  0,
+  assets\data\maps.json:173:                                                                  "scale":  5
+  assets\data\maps.json:174:                                                              },
+  assets\data\maps.json:175:                                                              {
+  assets\data\maps.json:176:                                                                  "x":  -62,
+  assets\data\maps.json:177:                                                                  "y":  0,
+  assets\data\maps.json:178:                                                                  "z":  -80,
+  assets\data\maps.json:179:                                                                  "rotY":  0,
+  assets\data\maps.json:180:                                                                  "scale":  5
+  assets\data\maps.json:181:                                                              },
+  assets\data\maps.json:182:                                                              {
+  assets\data\maps.json:183:                                                                  "x":  -60,
+  assets\data\maps.json:184:                                                                  "y":  0,
+  assets\data\maps.json:185:                                                                  "z":  -80,
+  assets\data\maps.json:186:                                                                  "rotY":  0,
+  assets\data\maps.json:187:                                                                  "scale":  5
+  assets\data\maps.json:188:                                                              },
+  assets\data\maps.json:189:                                                              {
+  assets\data\maps.json:190:                                                                  "x":  -58,
+  assets\data\maps.json:191:                                                                  "y":  0,
+  assets\data\maps.json:192:                                                                  "z":  -80,
+  assets\data\maps.json:193:                                                                  "rotY":  0,
+  assets\data\maps.json:194:                                                                  "scale":  5
+  assets\data\maps.json:195:                                                              },
+  assets\data\maps.json:196:                                                              {
+  assets\data\maps.json:197:                                                                  "x":  -56,
+  assets\data\maps.json:198:                                                                  "y":  0,
+  assets\data\maps.json:199:                                                                  "z":  -80,
+  assets\data\maps.json:200:                                                                  "rotY":  0,
+  assets\data\maps.json:201:                                                                  "scale":  5
+  assets\data\maps.json:202:                                                              },
+  assets\data\maps.json:203:                                                              {
+  assets\data\maps.json:204:                                                                  "x":  -54,
+  assets\data\maps.json:205:                                                                  "y":  0,
+  assets\data\maps.json:206:                                                                  "z":  -80,
+  assets\data\maps.json:207:                                                                  "rotY":  0,
+  assets\data\maps.json:208:                                                                  "scale":  5
+  assets\data\maps.json:209:                                                              },
+  assets\data\maps.json:210:                                                              {
+  assets\data\maps.json:211:                                                                  "x":  -52,
+  assets\data\maps.json:212:                                                                  "y":  0,
+  assets\data\maps.json:213:                                                                  "z":  -80,
+  assets\data\maps.json:214:                                                                  "rotY":  0,
+  assets\data\maps.json:215:                                                                  "scale":  5
+  assets\data\maps.json:216:                                                              },
+  assets\data\maps.json:217:                                                              {
+  assets\data\maps.json:218:                                                                  "x":  -50,
+  assets\data\maps.json:219:                                                                  "y":  0,
+  assets\data\maps.json:220:                                                                  "z":  -80,
+  assets\data\maps.json:221:                                                                  "rotY":  0,
+  assets\data\maps.json:222:                                                                  "scale":  5
+  assets\data\maps.json:223:                                                              },
+  assets\data\maps.json:224:                                                              {
+> assets\data\maps.json:2627:                                            "targetMap":  "city_01",
+  assets\data\maps.json:2628:                                            "position":  {
+  assets\data\maps.json:2629:                                                             "x":  -55,
+  assets\data\maps.json:2630:                                                             "y":  0,
+  assets\data\maps.json:2631:                                                             "z":  0
+  assets\data\maps.json:2632:                                                         },
+  assets\data\maps.json:2633:                                            "label":  "Cidade de Prontera"
+  assets\data\maps.json:2634:                                        },
+  assets\data\maps.json:2635:                                        {
+  assets\data\maps.json:2636:                                            "targetMap":  "caves_01",
+  assets\data\maps.json:2637:                                            "position":  {
+  assets\data\maps.json:2638:                                                             "x":  55,
+  assets\data\maps.json:2639:                                                             "y":  0,
+  assets\data\maps.json:2640:                                                             "z":  0
+  assets\data\maps.json:2641:                                                         },
+  assets\data\maps.json:2642:                                            "label":  "Cavernas de Byalan"
+  assets\data\maps.json:2643:                                        }
+  assets\data\maps.json:2644:                                    ],
+  assets\data\maps.json:2645:                     "decoration":  [
+  assets\data\maps.json:2646:                                        {
+  assets\data\maps.json:2647:                                            "model":  "BirchTree_1",
+  assets\data\maps.json:2648:                                            "path":  "assets/models/nature/BirchTree_1.gltf",
+  assets\data\maps.json:2649:                                            "count":  8,
+  assets\data\maps.json:2650:                                            "area":  {
+  assets\data\maps.json:2651:                                                         "xMin":  -40,
+  assets\data\maps.json:2652:                                                         "xMax":  40,
+  assets\data\maps.json:2653:                                                         "zMin":  -40,
+  assets\data\maps.json:2654:                                                         "zMax":  40
+  assets\data\maps.json:2655:                                                     },
+  assets\data\maps.json:2656:                                            "scaleRange":  [
+  assets\data\maps.json:2657:                                                               0.9,
+  assets\data\maps.json:2658:                                                               1.2
+  assets\data\maps.json:2659:                                                           ],
+  assets\data\maps.json:2660:                                            "rotateY":  true
+  assets\data\maps.json:2661:                                        },
+  assets\data\maps.json:2662:                                        {
+  assets\data\maps.json:2663:                                            "model":  "BirchTree_2",
+  assets\data\maps.json:2664:                                            "path":  "assets/models/nature/BirchTree_2.gltf",
+  assets\data\maps.json:2665:                                            "count":  8,
+  assets\data\maps.json:2666:                                            "area":  {
+  assets\data\maps.json:2667:                                                         "xMin":  -42,
+  assets\data\maps.json:2668:                                                         "xMax":  42,
+  assets\data\maps.json:2669:                                                         "zMin":  -42,
+  assets\data\maps.json:2670:                                                         "zMax":  42
+  assets\data\maps.json:2671:                                                     },
+  assets\data\maps.json:2672:                                            "scaleRange":  [
+  assets\data\maps.json:2673:                                                               0.9,
+  assets\data\maps.json:2674:                                                               1.2
+  assets\data\maps.json:2675:                                                           ],
+  assets\data\maps.json:2676:                                            "rotateY":  true
+  assets\data\maps.json:2677:                                        },
+  assets\data\maps.json:2678:                                        {
+  assets\data\maps.json:2679:                                            "model":  "BirchTree_3",
+  assets\data\maps.json:2680:                                            "path":  "assets/models/nature/BirchTree_3.gltf",
+  assets\data\maps.json:2681:                                            "count":  8,
+  assets\data\maps.json:2682:                                            "area":  {
+  assets\data\maps.json:2683:                                                         "xMin":  -44,
+  assets\data\maps.json:2684:                                                         "xMax":  44,
+  assets\data\maps.json:2685:                                                         "zMin":  -44,
+  assets\data\maps.json:2686:                                                         "zMax":  44
+  assets\data\maps.json:2687:                                                     },
+  assets\data\maps.json:2688:                                            "scaleRange":  [
+  assets\data\maps.json:2689:                                                               0.9,
+  assets\data\maps.json:2690:                                                               1.25
+  assets\data\maps.json:2691:                                                           ],
+  assets\data\maps.json:2692:                                            "rotateY":  true
+  assets\data\maps.json:2693:                                        },
+  assets\data\maps.json:2694:                                        {
+  assets\data\maps.json:2695:                                            "model":  "MapleTree_1",
+  assets\data\maps.json:2696:                                            "path":  "assets/models/nature/MapleTree_1.gltf",
+  assets\data\maps.json:2697:                                            "count":  5,
+  assets\data\maps.json:2698:                                            "area":  {
+  assets\data\maps.json:2699:                                                         "xMin":  -38,
+  assets\data\maps.json:2700:                                                         "xMax":  38,
+  assets\data\maps.json:2701:                                                         "zMin":  -38,
+  assets\data\maps.json:2702:                                                         "zMax":  38
+  assets\data\maps.json:2703:                                                     },
+  assets\data\maps.json:2704:                                            "scaleRange":  [
+  assets\data\maps.json:2705:                                                               0.85,
+  assets\data\maps.json:2706:                                                               1.15
+  assets\data\maps.json:2707:                                                           ],
+  assets\data\maps.json:2708:                                            "rotateY":  true
+  assets\data\maps.json:2709:                                        },
+  assets\data\maps.json:2710:                                        {
+  assets\data\maps.json:2711:                                            "model":  "MapleTree_2",
+  assets\data\maps.json:2712:                                            "path":  "assets/models/nature/MapleTree_2.gltf",
+  assets\data\maps.json:2713:                                            "count":  5,
+  assets\data\maps.json:2714:                                            "area":  {
+  assets\data\maps.json:2715:                                                         "xMin":  -36,
+  assets\data\maps.json:2716:                                                         "xMax":  36,
+  assets\data\maps.json:2717:                                                         "zMin":  -36,
+  assets\data\maps.json:2718:                                                         "zMax":  36
+  assets\data\maps.json:2719:                                                     },
+  assets\data\maps.json:2720:                                            "scaleRange":  [
+  assets\data\maps.json:2721:                                                               0.85,
+  assets\data\maps.json:2722:                                                               1.15
+  assets\data\maps.json:2723:                                                           ],
+  assets\data\maps.json:2724:                                            "rotateY":  true
+  assets\data\maps.json:2725:                                        },
+  assets\data\maps.json:2726:                                        {
+  assets\data\maps.json:2727:                                            "model":  "Bush_Large",
+  assets\data\maps.json:2728:                                            "path":  "assets/models/nature/Bush_Large.gltf",
+  assets\data\maps.json:2729:                                            "count":  10,
+  assets\data\maps.json:2730:                                            "area":  {
+  assets\data\maps.json:2731:                                                         "xMin":  -46,
+  assets\data\maps.json:2732:                                                         "xMax":  46,
+  assets\data\maps.json:2733:                                                         "zMin":  -46,
+  assets\data\maps.json:2734:                                                         "zMax":  46
+  assets\data\maps.json:2735:                                                     },
+  assets\data\maps.json:2736:                                            "scaleRange":  [
+  assets\data\maps.json:2737:                                                               0.85,
+  assets\data\maps.json:2738:                                                               1.15
+  assets\data\maps.json:2739:                                                           ],
+  assets\data\maps.json:2740:                                            "rotateY":  true
+  assets\data\maps.json:2741:                                        },
+  assets\data\maps.json:2742:                                        {
+  assets\data\maps.json:2743:                                            "model":  "Bush_Small_Flowers",
+  assets\data\maps.json:2744:                                            "path":  "assets/models/nature/Bush_Small_Flowers.gltf",
+  assets\data\maps.json:2745:                                            "count":  8,
+  assets\data\maps.json:2746:                                            "area":  {
+  assets\data\maps.json:2747:                                                         "xMin":  -42,
+  assets\data\maps.json:2748:                                                         "xMax":  42,
+  assets\data\maps.json:2749:                                                         "zMin":  -42,
+  assets\data\maps.json:2750:                                                         "zMax":  42
+  assets\data\maps.json:2751:                                                     },
+  assets\data\maps.json:2752:                                            "scaleRange":  [
+  assets\data\maps.json:2753:                                                               0.8,
+  assets\data\maps.json:2754:                                                               1.1
+  assets\data\maps.json:2755:                                                           ],
+  assets\data\maps.json:2756:                                            "rotateY":  true
+  assets\data\maps.json:2757:                                        },
+  assets\data\maps.json:2758:                                        {
+  assets\data\maps.json:2759:                                            "model":  "Grass_Large",
+  assets\data\maps.json:2760:                                            "path":  "assets/models/nature/Grass_Large.gltf",
+  assets\data\maps.json:2761:                                            "count":  15,
+  assets\data\maps.json:2762:                                            "area":  {
+  assets\data\maps.json:2763:                                                         "xMin":  -48,
+  assets\data\maps.json:2764:                                                         "xMax":  48,
+  assets\data\maps.json:2765:                                                         "zMin":  -48,
+  assets\data\maps.json:2766:                                                         "zMax":  48
+  assets\data\maps.json:2767:                                                     },
+  assets\data\maps.json:2768:                                            "scaleRange":  [
+  assets\data\maps.json:2769:                                                               0.8,
+  assets\data\maps.json:2770:                                                               1.2
+  assets\data\maps.json:2771:                                                           ],
+  assets\data\maps.json:2772:                                            "rotateY":  true
+  assets\data\maps.json:2773:                                        },
+  assets\data\maps.json:2774:                                        {
+  assets\data\maps.json:2775:                                            "model":  "Flower_1_Clump",
+  assets\data\maps.json:2776:                                            "path":  "assets/models/nature/Flower_1_Clump.gltf",
+  assets\data\maps.json:2777:                                            "count":  5,
+  assets\data\maps.json:2778:                                            "area":  {
+  assets\data\maps.json:2779:                                                         "xMin":  -40,
+  assets\data\maps.json:2780:                                                         "xMax":  40,
+  assets\data\maps.json:2781:                                                         "zMin":  -40,
+  assets\data\maps.json:2782:                                                         "zMax":  40
+  assets\data\maps.json:2783:                                                     },
+  assets\data\maps.json:2784:                                            "scaleRange":  [
+  assets\data\maps.json:2785:                                                               0.8,
+  assets\data\maps.json:2786:                                                               1.1
+  assets\data\maps.json:2787:                                                           ],
+  assets\data\maps.json:2788:                                            "rotateY":  true
+  assets\data\maps.json:2789:                                        },
+  assets\data\maps.json:2790:                                        {
+  assets\data\maps.json:2791:                                            "model":  "Flower_2_Clump",
+  assets\data\maps.json:2792:                                            "path":  "assets/models/nature/Flower_2_Clump.gltf",
+  assets\data\maps.json:2793:                                            "count":  5,
+  assets\data\maps.json:2794:                                            "area":  {
+  assets\data\maps.json:2795:                                                         "xMin":  -40,
+  assets\data\maps.json:2796:                                                         "xMax":  40,
+  assets\data\maps.json:2797:                                                         "zMin":  -40,
+  assets\data\maps.json:2798:                                                         "zMax":  40
+  assets\data\maps.json:2799:                                                     },
+  assets\data\maps.json:2800:                                            "scaleRange":  [
+  assets\data\maps.json:2801:                                                               0.8,
+  assets\data\maps.json:2802:                                                               1.1
+  assets\data\maps.json:2803:                                                           ],
+  assets\data\maps.json:2804:                                            "rotateY":  true
+  assets\data\maps.json:2805:                                        },
+  assets\data\maps.json:2806:                                        {
+  assets\data\maps.json:2807:                                            "model":  "Flower_3_Clump",
+  assets\data\maps.json:2808:                                            "path":  "assets/models/nature/Flower_3_Clump.gltf",
+  assets\data\maps.json:2809:                                            "count":  5,
+  assets\data\maps.json:2810:                                            "area":  {
+  assets\data\maps.json:2811:                                                         "xMin":  -40,
+  assets\data\maps.json:2812:                                                         "xMax":  40,
+  assets\data\maps.json:2813:                                                         "zMin":  -40,
+  assets\data\maps.json:2814:                                                         "zMax":  40
+  assets\data\maps.json:2815:                                                     },
+  assets\data\maps.json:2816:                                            "scaleRange":  [
+  assets\data\maps.json:2817:                                                               0.8,
+  assets\data\maps.json:2818:                                                               1.1
+  assets\data\maps.json:2819:                                                           ],
+  assets\data\maps.json:2820:                                            "rotateY":  true
+  assets\data\maps.json:2821:                                        }
+  assets\data\maps.json:2822:                                    ],
+  assets\data\maps.json:2823:                     "audioProfile":  {
+  assets\data\maps.json:2824:                                          "bgm":  "bgm_forest",
+  assets\data\maps.json:2825:                                          "ambient":  [
+  assets\data\maps.json:2826:                                                          "sfx_ambient_birds",
+  assets\data\maps.json:2827:                                                          "sfx_ambient_wind"
+  assets\data\maps.json:2828:                                                      ],
+  assets\data\maps.json:2829:                                          "reverb":  "outdoor"
+  assets\data\maps.json:2830:                                      },
+  assets\data\maps.json:2831:                     "weatherProfile":  {
+  assets\data\maps.json:2832:                                            "options":  [
+  assets\data\maps.json:2833:                                                            "clear",
+  assets\data\maps.json:2834:                                                            "rain"
+  assets\data\maps.json:2835:                                                        ],
+  assets\data\maps.json:2836:                                            "changeInterval":  300
+  assets\data\maps.json:2837:                                        },
+  assets\data\maps.json:2838:                     "lighting":  {
+  assets\data\maps.json:2839:                                      "day":  {
+  assets\data\maps.json:2840:                                                  "ambient":  "#ffffff",
+  assets\data\maps.json:2841:                                                  "directional":  "#ffffcc",
+  assets\data\maps.json:2842:                                                  "intensity":  1.0
+  assets\data\maps.json:2843:                                              },
+  assets\data\maps.json:2844:                                      "night":  {
+  assets\data\maps.json:2845:                                                    "ambient":  "#1a1a3a",
+  assets\data\maps.json:2846:                                                    "directional":  "#4444aa",
+  assets\data\maps.json:2847:                                                    "intensity":  0.8
+
+
+
+
+===== WORLD JS FULL NUMBERED =====
+
+   1: import * as THREE from 'three';
+   2: import { getScene, getCamera, add, remove, updateLighting, setSkybox } from './scene.js';
+   3: import { spawnMonster, spawnGroup } from '../entities/monsters.js';
+   4: import { spawnFromConfig } from '../entities/npcs.js';
+   5: import * as Models from '../core/models.js';
+   6: import { playBGM, playSFX } from '../core/audio.js';
+   7: import { getPosition, getState } from '../entities/player.js';
+   8: import { on, off, emit } from '../core/events.js';
+   9: 
+  10: let _maps = [];
+  11: let _mapsById = new Map();
+  12: let _currentMapId = null;
+  13: let _currentMapConfig = null;
+  14: let _terrainMesh = null;
+  15: let _decorationGroup = null;
+  16: let _instancedMeshes = [];
+  17: let _mapObjects = [];
+  18: let _exitNearTarget = null;
+  19: let _npcsConfig = null;
+  20: let _boundExitPointAction = null;
+  21: let _cycleTime = 150;
+  22: let _weatherTime = 0;
+  23: let _currentWeather = 'clear';
+  24: let _currentPhase = 'day';
+  25: let _lastEmittedPhase = null;
+  26: 
+  27: const DAY_NIGHT_CYCLE_DURATION = 300;
+  28: 
+  29: /**
+  30:  * Inicializa o mÃ³dulo de mundo e carrega maps.json.
+  31:  * @returns {Promise<void>}
+  32:  */
+  33: export async function init() {
+  34:   const response = await fetch('assets/data/maps.json');
+  35:   if (!response.ok) {
+  36:     throw new Error(`[world] Falha ao carregar maps.json: ${response.status}`);
+  37:   }
+  38: 
+  39:   const data = await response.json();
+  40:   _maps = data.maps;
+  41:   _mapsById = new Map(_maps.map(map => [map.id, map]));
+  42: 
+  43:   const npcsResponse = await fetch('assets/data/npcs.json');
+  44:   if (!npcsResponse.ok) {
+  45:     throw new Error(`[world] Falha ao carregar npcs.json: ${npcsResponse.status}`);
+  46:   }
+  47:   _npcsConfig = await npcsResponse.json();
+  48: 
+  49:   _boundExitPointAction = ({ targetMap } = {}) => {
+  50:     if (!targetMap) return;
+  51:     loadMap(targetMap);
+  52:   };
+  53: 
+  54:   on('exitPointAction', _boundExitPointAction);
+  55: }
+  56: 
+  57: /**
+  58:  * Carrega um mapa pelo id.
+  59:  * @param {string} mapId
+  60:  * @returns {Promise<void>}
+  61:  */
+  62: export async function loadMap(mapId) {
+  63:   const nextMap = _mapsById.get(mapId);
+  64:   if (!nextMap) {
+  65:     console.warn(`[world] Mapa desconhecido: ${mapId}`);
+  66:     return;
+  67:   }
+  68: 
+  69:   const previousMapId = _currentMapId;
+  70:   emit('mapUnloading', previousMapId);
+  71: 
+  72:   _clearCurrentMap();
+  73: 
+  74:   _currentMapId = mapId;
+  75:   _currentMapConfig = nextMap;
+  76:   _exitNearTarget = null;
+  77: 
+  78:   _terrainMesh = _createTerrain(nextMap);
+  79:   add(_terrainMesh);
+  80:   _mapObjects.push(_terrainMesh);
+  81: 
+  82:   await _spawnMapDecoration(nextMap);
+  83:   await _spawnMapMonsters(nextMap);
+  84:   await _spawnMapNpcs(nextMap);
+  85:   _applyMapAudio(nextMap);
+  86:   _updatePlayerCurrentMap(mapId);
+  87:   const skyboxUrls = nextMap.skybox ?? null;
+  88:   setSkybox(skyboxUrls);
+  89:   updateLighting('day', 1.0, nextMap.lighting ?? {});
+  90:   emit('weatherChanged', { weather: 'clear' });
+  91: 
+  92:   emit('mapLoaded', {
+  93:     mapId,
+  94:     mapName: nextMap.name ?? mapId
+  95:   });
+  96: }
+  97: 
+  98: /**
+  99:  * Retorna id do mapa atual.
+ 100:  * @returns {string|null}
+ 101:  */
+ 102: export function getCurrentMap() {
+ 103:   return _currentMapId;
+ 104: }
+ 105: 
+ 106: /**
+ 107:  * Retorna config do mapa atual.
+ 108:  * @returns {Object|null}
+ 109:  */
+ 110: export function getMapConfig() {
+ 111:   return _currentMapConfig;
+ 112: }
+ 113: 
+ 114: /**
+ 115:  * Retorna estado atual do ciclo dia/noite.
+ 116:  * @returns {{ phase: 'day'|'night'|'dawn'|'dusk', progress: number }}
+ 117:  */
+ 118: export function getDayNightCycle() {
+ 119:   return {
+ 120:     phase: _currentPhase,
+ 121:     progress: _getPhaseProgress(_cycleTime / DAY_NIGHT_CYCLE_DURATION)
+ 122:   };
+ 123: }
+ 124: 
+ 125: /**
+ 126:  * Atualiza lÃ³gica do mundo.
+ 127:  * @param {number} delta
+ 128:  * @returns {void}
+ 129:  */
+ 130: export function update(delta) {
+ 131:   if (!_currentMapConfig) return;
+ 132: 
+ 133:   _updateDayNightCycle(delta);
+ 134:   _updateWeather(delta);
+ 135: 
+ 136:   const playerPos = getPosition();
+ 137:   const exitPoints = Array.isArray(_currentMapConfig.exitPoints) ? _currentMapConfig.exitPoints : [];
+ 138: 
+ 139:   let nearestExit = null;
+ 140:   let nearestDistance = Infinity;
+ 141: 
+ 142:   for (const exitPoint of exitPoints) {
+ 143:     const distance = _distanceToExit(playerPos, exitPoint.position);
+ 144:     if (distance < nearestDistance) {
+ 145:       nearestDistance = distance;
+ 146:       nearestExit = exitPoint;
+ 147:     }
+ 148:   }
+ 149: 
+ 150:   if (nearestExit && nearestDistance <= 3) {
+ 151:     if (_exitNearTarget !== nearestExit.targetMap) {
+ 152:       _exitNearTarget = nearestExit.targetMap;
+ 153:       emit('exitPointNear', {
+ 154:         targetMap: nearestExit.targetMap,
+ 155:         label: nearestExit.label
+ 156:       });
+ 157:     }
+ 158:     return;
+ 159:   }
+ 160: 
+ 161:   if (_exitNearTarget && (!nearestExit || nearestDistance > 5)) {
+ 162:     _exitNearTarget = null;
+ 163:     emit('exitPointLeft');
+ 164:   }
+ 165: }
+ 166: 
+ 167: // â”€â”€â”€ FunÃ§Ãµes privadas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ 168: 
+ 169: function _clearCurrentMap() {
+ 170:   // TODO PARTE 4: stopAmbient()
+ 171: 
+ 172:   for (const obj of _mapObjects) {
+ 173:     remove(obj);
+ 174:     _disposeObject(obj);
+ 175:   }
+ 176: for (const im of _instancedMeshes) {
+ 177:     remove(im);
+ 178:     im.geometry?.dispose?.();
+ 179:     if (Array.isArray(im.material)) {
+ 180:       im.material.forEach(m => m?.dispose?.());
+ 181:     } else {
+ 182:       im.material?.dispose?.();
+ 183:     }
+ 184:   }
+ 185:   _instancedMeshes = [];
+ 186:   _mapObjects = [];
+ 187:   _decorationGroup = null;
+ 188:   _terrainMesh = null;
+ 189:   _cycleTime = 150;
+ 190:   _weatherTime = 0;
+ 191:   _currentWeather = 'clear';
+ 192:   _currentPhase = 'day';
+ 193:   _lastEmittedPhase = null;
+ 194: }
+ 195: 
+ 196: function _createTerrain(mapConfig) {
+ 197:   const geometry = new THREE.PlaneGeometry(mapConfig.terrainSize, mapConfig.terrainSize);
+ 198:   const material = new THREE.MeshLambertMaterial({
+ 199:     color: mapConfig.terrainColor ?? '#7caa5a'
+ 200:   });
+ 201: 
+ 202:   const mesh = new THREE.Mesh(geometry, material);
+ 203:   mesh.rotation.x = -Math.PI / 2;
+ 204:   mesh.receiveShadow = true;
+ 205:   mesh.name = `terrain_${mapConfig.id}`;
+ 206:   mesh.position.y = -0.01;
+ 207: 
+ 208:   if (mapConfig.terrainTexture) {
+ 209:     const loader = new THREE.TextureLoader();
+ 210:     loader.load(
+ 211:       mapConfig.terrainTexture,
+ 212:       (texture) => {
+ 213:         if (!mesh.parent) return;
+ 214:         texture.wrapS = THREE.RepeatWrapping;
+ 215:         texture.wrapT = THREE.RepeatWrapping;
+ 216:         const tileCount = Math.round(mapConfig.terrainSize / 10);
+ 217:         texture.repeat.set(tileCount, tileCount);
+ 218:         material.map = texture;
+ 219:         material.color.set(0xffffff);
+ 220:         material.needsUpdate = true;
+ 221:       },
+ 222:       undefined,
+ 223:       (err) => {
+ 224:         console.warn(`[world] Falha ao carregar terrainTexture: ${mapConfig.terrainTexture}`, err);
+ 225:       }
+ 226:     );
+ 227:   }
+ 228: 
+ 229:   return mesh;
+ 230: }
+ 231: async function _spawnMapDecoration(mapConfig) {
+ 232:   const decorations = Array.isArray(mapConfig.decoration) ? mapConfig.decoration : [];
+ 233:   if (decorations.length === 0) return;
+ 234: 
+ 235:   _decorationGroup = new THREE.Group();
+ 236:   _decorationGroup.name = 'decorationGroup';
+ 237:   add(_decorationGroup);
+ 238:   _mapObjects.push(_decorationGroup);
+ 239: 
+ 240:   const proceduralByModel = new Map();
+ 241:   const nonProcedural = [];
+ 242: 
+ 243:   for (const entry of decorations) {
+ 244:     const count = Math.max(0, Number(entry.count || 0));
+ 245:     if (count <= 0 && !Array.isArray(entry.positions)) continue;
+ 246: 
+ 247:     if (entry.procedural === true) {
+ 248:       const key = entry.model ?? 'unknown';
+ 249:       if (!proceduralByModel.has(key)) {
+ 250:         proceduralByModel.set(key, { entry, totalCount: 0, entries: [] });
+ 251:       }
+ 252:       const bucket = proceduralByModel.get(key);
+ 253:       bucket.totalCount += count;
+ 254:       bucket.entries.push({ entry, count });
+ 255:     } else {
+ 256:       nonProcedural.push({ entry, count });
+ 257:     }
+ 258:   }
+ 259: 
+ 260:   for (const [model, bucket] of proceduralByModel) {
+ 261:     _spawnProceduralInstancedMesh(model, bucket);
+ 262:   }
+ 263: 
+ 264:   for (const { entry, count } of nonProcedural) {
+ 265:     await _spawnModelDecoration(entry, count, _decorationGroup);
+ 266:   }
+ 267: }
+ 268: 
+ 269: async function _spawnModelDecoration(entry, count, group) {
+ 270:   if (!entry?.path) return;
+ 271: 
+ 272:   let gltf = null;
+ 273:   try {
+ 274:     gltf = await Models.loadModel(entry.path);
+ 275:   } catch (err) {
+ 276:     console.warn(`[world] Falha ao carregar decoraÃ§Ã£o: ${entry.model ?? entry.path}`, err);
+ 277:     return;
+ 278:   }
+ 279: 
+ 280:   if (!gltf?.scene) return;
+ 281: // PosiÃ§Ã£o fixa: entry.positions sobrepÃµe area/count
+ 282:   if (Array.isArray(entry.positions) && entry.positions.length > 0) {
+ 283:     for (const pos of entry.positions) {
+ 284:       const instance = Models.cloneModel(gltf);
+ 285:       if (!instance) continue;
+ 286:       instance.position.set(Number(pos.x ?? 0), Number(pos.y ?? 0), Number(pos.z ?? 0));
+ 287:       instance.rotation.y = Number(pos.rotY ?? 0);
+ 288:       instance.scale.setScalar(Number(pos.scale ?? 1));
+ 289:       instance.traverse?.((child) => {
+ 290:         if (child?.isMesh) {
+ 291:           child.castShadow = false;
+ 292:           child.receiveShadow = true;
+ 293:         }
+ 294:       });
+ 295:       group.add(instance);
+ 296:     }
+ 297:     return;
+ 298:   }
+ 299:   for (let i = 0; i < count; i++) {
+ 300:     const instance = Models.cloneModel(gltf);
+ 301:     if (!instance) continue;
+ 302: 
+ 303:     _applyDecorationTransform(instance, entry);
+ 304:     instance.traverse?.((child) => {
+ 305:       if (child?.isMesh) {
+ 306:         child.castShadow = false;
+ 307:         child.receiveShadow = false;
+ 308:       }
+ 309:     });
+ 310:     group.add(instance);
+ 311:   }
+ 312: }
+ 313: 
+ 314: function _spawnProceduralInstancedMesh(modelKey, bucket) {
+ 315:   const { totalCount, entries } = bucket;
+ 316:   if (totalCount <= 0) return;
+ 317: 
+ 318:   const geometry = _createProceduralGeometry(modelKey);
+ 319:   if (!geometry) return;
+ 320: 
+ 321:   const material = new THREE.MeshStandardMaterial({
+ 322:     color: _getProceduralColor(modelKey),
+ 323:     roughness: 1,
+ 324:     metalness: 0
+ 325:   });
+ 326: 
+ 327:   const instanced = new THREE.InstancedMesh(geometry, material, totalCount);
+ 328:   instanced.name = `instanced_${modelKey}`;
+ 329:   instanced.castShadow = false;
+ 330:   instanced.receiveShadow = false;
+ 331: 
+ 332:   const dummy = new THREE.Object3D();
+ 333:   let idx = 0;
+ 334: 
+ 335:   for (const { entry, count } of entries) {
+ 336:     for (let i = 0; i < count; i++) {
+ 337:       _applyDecorationTransform(dummy, entry);
+ 338:       dummy.updateMatrix();
+ 339:       instanced.setMatrixAt(idx, dummy.matrix);
+ 340:       idx++;
+ 341:     }
+ 342:   }
+ 343: 
+ 344:   instanced.instanceMatrix.needsUpdate = true;
+ 345: 
+ 346:   add(instanced);
+ 347:   _instancedMeshes.push(instanced);
+ 348: }
+ 349: 
+ 350: function _applyDecorationTransform(object, entry) {
+ 351:   const area = entry.area ?? {};
+ 352:   const xMin = Number(area.xMin ?? -10);
+ 353:   const xMax = Number(area.xMax ?? 10);
+ 354:   const zMin = Number(area.zMin ?? -10);
+ 355:   const zMax = Number(area.zMax ?? 10);
+ 356:   const scaleRange = Array.isArray(entry.scaleRange) ? entry.scaleRange : [1, 1];
+ 357:   const minScale = Number(scaleRange[0] ?? 1);
+ 358:   const maxScale = Number(scaleRange[1] ?? minScale);
+ 359:   const x = THREE.MathUtils.lerp(xMin, xMax, Math.random());
+ 360:   const z = THREE.MathUtils.lerp(zMin, zMax, Math.random());
+ 361:   const y = _getGroundHeight(x, z);
+ 362:   const scale = THREE.MathUtils.lerp(minScale, maxScale, Math.random());
+ 363: 
+ 364:   object.position.set(x, y, z);
+ 365:   object.scale.setScalar(scale);
+ 366: 
+ 367:   if (entry.rotateY) {
+ 368:     object.rotation.y = Math.random() * Math.PI * 2;
+ 369:   }
+ 370: }
+ 371: 
+ 372: function _createProceduralGeometry(kind) {
+ 373:   switch (kind) {
+ 374:     case 'pillar_cylinder':
+ 375:       return new THREE.CylinderGeometry(0.45, 0.6, 2.6, 8);
+ 376:     case 'broken_pillar':
+ 377:       return new THREE.CylinderGeometry(0.45, 0.7, 1.6, 8);
+ 378:     case 'torch_placeholder':
+ 379:       return new THREE.CylinderGeometry(0.08, 0.1, 1.4, 6);
+ 380:     case 'skull_placeholder':
+ 381:       return new THREE.SphereGeometry(0.35, 10, 8);
+ 382:     case 'rock_sphere':
+ 383:     default:
+ 384:       return new THREE.SphereGeometry(0.7, 10, 8);
+ 385:   }
+ 386: }
+ 387: 
+ 388: function _getProceduralColor(kind) {
+ 389:   switch (kind) {
+ 390:     case 'pillar_cylinder':
+ 391:     case 'broken_pillar':
+ 392:       return '#7a6a56';
+ 393:     case 'torch_placeholder':
+ 394:       return '#8a5a2b';
+ 395:     case 'skull_placeholder':
+ 396:       return '#b7b0a3';
+ 397:     case 'rock_sphere':
+ 398:     default:
+ 399:       return '#7b7b82';
+ 400:   }
+ 401: }
+ 402: 
+ 403: function _getGroundHeight(x, z) {
+ 404:   return 0;
+ 405: }
+ 406: 
+ 407: 
+ 408: async function _spawnMapMonsters(mapConfig) {
+ 409:   const pool = Array.isArray(mapConfig.monsterPool) ? mapConfig.monsterPool : [];
+ 410:   const maxMonsters = Number(mapConfig.maxMonsters || 0);
+ 411: 
+ 412:   if (pool.length === 0 || maxMonsters <= 0) return;
+ 413: 
+ 414:   for (let i = 0; i < maxMonsters; i++) {
+ 415:     const selected = _pickWeightedMonster(pool);
+ 416:     if (!selected) continue;
+ 417: 
+ 418:     const position = _randomPointInMap(mapConfig.terrainSize);
+ 419:     await spawnMonster(selected.monsterId, position);
+ 420:   }
+ 421: }
+ 422: 
+ 423: async function _spawnMapNpcs(mapConfig) {
+ 424:   if (!_npcsConfig || !Array.isArray(mapConfig.npcs) || mapConfig.npcs.length === 0) return;
+ 425: 
+ 426:   const filtered = {
+ 427:     npcs: _npcsConfig.npcs.filter(npc => mapConfig.npcs.includes(npc.id))
+ 428:   };
+ 429: 
+ 430:   if (filtered.npcs.length > 0) {
+ 431:     await spawnFromConfig(filtered);
+ 432:   }
+ 433: }
+ 434: 
+ 435: function _applyMapAudio(mapConfig) {
+ 436:   const profile = mapConfig.audioProfile ?? {};
+ 437:   const bgmId = profile.bgm;
+ 438: 
+ 439:   if (bgmId) {
+ 440:     playBGM(`assets/audio/bgm/${bgmId}.ogg`);
+ 441:   }
+ 442:   // TODO PARTE 4: startAmbient com ambient sounds
+ 443: }
+ 444: 
+ 445: function _updatePlayerCurrentMap(mapId) {
+ 446:   emit('playerCurrentMapChanged', { mapId });
+ 447: }
+ 448: 
+ 449: function _pickWeightedMonster(pool) {
+ 450:   let totalWeight = 0;
+ 451: 
+ 452:   for (const entry of pool) {
+ 453:     totalWeight += Math.max(0, Number(entry.weight || 0));
+ 454:   }
+ 455: 
+ 456:   if (totalWeight <= 0) return null;
+ 457: 
+ 458:   const roll = Math.random() * totalWeight;
+ 459:   let accumulated = 0;
+ 460: 
+ 461:   for (const entry of pool) {
+ 462:     accumulated += Math.max(0, Number(entry.weight || 0));
+ 463:     if (roll <= accumulated) {
+ 464:       return entry;
+ 465:     }
+ 466:   }
+ 467: 
+ 468:   return pool[pool.length - 1] ?? null;
+ 469: }
+ 470: 
+ 471: function _randomPointInMap(terrainSize) {
+ 472:   const half = terrainSize * 0.5;
+ 473:   return {
+ 474:     x: (Math.random() * terrainSize) - half,
+ 475:     y: 0.5,
+ 476:     z: (Math.random() * terrainSize) - half
+ 477:   };
+ 478: }
+ 479: 
+ 480: function _distanceToExit(playerPos, exitPos) {
+ 481:   const dx = playerPos.x - exitPos.x;
+ 482:   const dy = (playerPos.y ?? 0) - (exitPos.y ?? 0);
+ 483:   const dz = playerPos.z - exitPos.z;
+ 484:   return Math.sqrt(dx * dx + dy * dy + dz * dz);
+ 485: }
+ 486: 
+ 487: function _disposeObject(object) {
+ 488:   if (!object) return;
+ 489: 
+ 490:   object.traverse?.((child) => {
+ 491:     if (child.geometry?.dispose) {
+ 492:       child.geometry.dispose();
+ 493:     }
+ 494: 
+ 495:     if (Array.isArray(child.material)) {
+ 496:       for (const material of child.material) {
+ 497:         material?.dispose?.();
+ 498:       }
+ 499:     } else if (child.material?.dispose) {
+ 500:       child.material.dispose();
+ 501:     }
+ 502:   });
+ 503: 
+ 504:   if (object.geometry?.dispose) {
+ 505:     object.geometry.dispose();
+ 506:   }
+ 507: 
+ 508:   if (Array.isArray(object.material)) {
+ 509:     for (const material of object.material) {
+ 510:       material?.dispose?.();
+ 511:     }
+ 512:   } else if (object.material?.dispose) {
+ 513:     object.material.dispose();
+ 514:   }
+ 515: }
+ 516: 
+ 517: // â”€â”€â”€ Ciclo dia/noite â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ 518: 
+ 519: // _cacheSceneLights removido: iluminaÃ§Ã£o gerenciada por scene.js via updateLighting()
+ 520: 
+ 521: function _updateDayNightCycle(delta) {
+ 522:   if (!_currentMapConfig) return;
+ 523: 
+ 524:   const isOutdoor = _currentMapConfig.audioProfile?.reverb === 'outdoor';
+ 525:   if (!isOutdoor) {
+ 526:     _currentPhase = 'day';
+ 527:     _emitPhaseEventIfNeeded();
+ 528:     updateLighting('day', 1.0, _currentMapConfig.lighting ?? {});
+ 529:     return;
+ 530:   }
+ 531: 
+ 532:   _cycleTime = (_cycleTime + delta) % DAY_NIGHT_CYCLE_DURATION;
+ 533:   const cycleProgress = _cycleTime / DAY_NIGHT_CYCLE_DURATION;
+ 534: 
+ 535:   let phase, phaseProgress;
+ 536: 
+ 537:   if (cycleProgress < 0.25) {
+ 538:     phase         = 'dawn';
+ 539:     phaseProgress = cycleProgress / 0.25;
+ 540:   } else if (cycleProgress < 0.75) {
+ 541:     phase         = 'day';
+ 542:     phaseProgress = (cycleProgress - 0.25) / 0.50;
+ 543:   } else if (cycleProgress < 0.85) {
+ 544:     phase         = 'dusk';
+ 545:     phaseProgress = (cycleProgress - 0.75) / 0.10;
+ 546:   } else {
+ 547:     phase         = 'night';
+ 548:     phaseProgress = (cycleProgress - 0.85) / 0.15;
+ 549:   }
+ 550: 
+ 551:   _currentPhase = phase;
+ 552:   _emitPhaseEventIfNeeded();
+ 553:   updateLighting(phase, phaseProgress, _currentMapConfig.lighting ?? {});
+ 554: }
+ 555: 
+ 556: 
+ 557: 
+ 558: 
+ 559: // â”€â”€â”€ Clima â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ 560: 
+ 561: function _updateWeather(delta) {
+ 562:   if (!_currentMapConfig) return;
+ 563: 
+ 564:   const weatherProfile = _currentMapConfig.weatherProfile ?? {};
+ 565:   const options = Array.isArray(weatherProfile.options) ? weatherProfile.options : ['none'];
+ 566:   const validOptions = options.filter(option => option !== 'none');
+ 567:   const changeInterval = Number(weatherProfile.changeInterval || 0);
+ 568: 
+ 569:   if (validOptions.length === 0 || changeInterval <= 0) {
+ 570:     if (_currentWeather !== 'clear') {
+ 571:       _currentWeather = 'clear';
+ 572:       emit('weatherChanged', { weather: 'clear' });
+ 573:     }
+ 574:     return;
+ 575:   }
+ 576: 
+ 577:   _weatherTime += delta;
+ 578:   if (_weatherTime < changeInterval) return;
+ 579: 
+ 580:   _weatherTime = 0;
+ 581:   const nextWeather = validOptions[Math.floor(Math.random() * validOptions.length)] ?? 'clear';
+ 582: 
+ 583:   if (nextWeather === _currentWeather) return;
+ 584: 
+ 585:   _currentWeather = nextWeather;
+ 586:   emit('weatherChanged', { weather: nextWeather });
+ 587: }
+ 588: 
+ 589: // â”€â”€â”€ Eventos de fase â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ 590: 
+ 591: function _emitPhaseEventIfNeeded() {
+ 592:   if (_lastEmittedPhase === _currentPhase) return;
+ 593: 
+ 594:   const previousPhase = _lastEmittedPhase;
+ 595:   _lastEmittedPhase = _currentPhase;
+ 596: 
+ 597:   if (_currentPhase === 'night' && previousPhase !== 'night') {
+ 598:     emit('nightStarted');
+ 599:   }
+ 600: 
+ 601:   if ((_currentPhase === 'day' || _currentPhase === 'dawn') && previousPhase === 'night') {
+ 602:     emit('dayStarted');
+ 603:   }
+ 604: }
+ 605: 
+ 606: function _getPhaseProgress(cycleProgress) {
+ 607:   if (_currentPhase === 'dawn') {
+ 608:     return THREE.MathUtils.clamp(cycleProgress / 0.25, 0, 1);
+ 609:   }
+ 610:   if (_currentPhase === 'day') {
+ 611:     return THREE.MathUtils.clamp((cycleProgress - 0.25) / 0.50, 0, 1);
+ 612:   }
+ 613:   if (_currentPhase === 'dusk') {
+ 614:     return THREE.MathUtils.clamp((cycleProgress - 0.75) / 0.10, 0, 1);
+ 615:   }
+ 616:   return THREE.MathUtils.clamp((cycleProgress - 0.85) / 0.15, 0, 1);
+ 617: }
+
+===== NPCS JS FULL NUMBERED =====
+
+   1: // js/entities/npcs.js
+   2: // Camada: entities
+   3: // DependÃªncias: THREE (importmap), events.js (event bus), ui.js (isDialogOpen via import direto â€” R8 exceÃ§Ã£o justificada: consulta sÃ­ncrona de estado de UI necessÃ¡ria no update loop)
+   4: 
+   5: import * as THREE from 'three';
+   6: import * as Events from '../core/events.js';
+   7: import * as Quests from '../systems/quests.js';
+   8: import * as Classes from '../systems/classes.js';
+   9: import { updateNpcQuestIndicator } from '../ui/ui.js';
+  10: import * as Scene from '../world/scene.js';
+  11: import { playSFX3D } from '../core/audio.js';
+  12: import * as Models from '../core/models.js';
+  13: /** @type {Array<NPCInstance>} */
+  14: const _npcs = [];
+  15: 
+  16: let _scene = null;
+  17: 
+  18: /**
+  19:  * @typedef {Object} NPCInstance
+  20:  * @property {string} id
+  21:  * @property {string} name
+  22:  * @property {THREE.Mesh} mesh
+  23:  * @property {THREE.Vector3} position
+  24:  * @property {Object} dialogTree
+  25:  * @property {boolean} playerInRange
+  26:  */
+  27: 
+  28: // â”€â”€â”€ indicador de proximidade â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  29: 
+  30: /** NPC que estÃ¡ atualmente com player no raio */
+  31: let _nearestInRange = null;
+  32: let _dialogOpen = false;
+  33: /** Intervalo mÃ­nimo entre emissÃµes do hint (ms) */
+  34: const HINT_COOLDOWN = 1500;
+  35: let _lastHintTime = 0;
+  36: 
+  37: const INTERACT_RADIUS = 2;        // unidades
+  38: const INTERACT_RADIUS_SQ = INTERACT_RADIUS * INTERACT_RADIUS;
+  39: 
+  40: // â”€â”€â”€ geometria compartilhada â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  41: // Uma geometria e um material por cor economiza draw calls (R6)
+  42: let _sharedGeo = null;
+  43: let _sharedMat = null;
+  44: 
+  45: function _getSharedAssets() {
+  46:   if (!_sharedGeo) {
+  47:     // Three.js r169 tem CapsuleGeometry nativo
+  48:     _sharedGeo = new THREE.CapsuleGeometry(0.35, 0.9, 4, 8);
+  49:   }
+  50:   if (!_sharedMat) {
+  51:     _sharedMat = new THREE.MeshLambertMaterial({ color: 0xFFD700 });
+  52:   }
+  53:   return { geo: _sharedGeo, mat: _sharedMat };
+  54: }
+  55: // --- helpers 3D (Sessao 25D) ---
+  56: 
+  57: function _findIdleClip(clips) {
+  58:   if (!Array.isArray(clips) || clips.length === 0) return null;
+  59:   const byName = ['idle', 'Idle', 'IDLE', 'idle_01', 'Idle_01'];
+  60:   for (const wanted of byName) {
+  61:     const clip = clips.find(c => c?.name === wanted);
+  62:     if (clip) return clip;
+  63:   }
+  64:   const partial = clips.find(c => /idle/i.test(c?.name ?? ''));
+  65:   if (partial) return partial;
+  66:   return clips[0] ?? null;
+  67: }
+  68: 
+  69: function _prepareModelRoot(root, npcId) {
+  70:   root.traverse((child) => {
+  71:     child.userData = child.userData ?? {};
+  72:     child.userData.npcId = npcId;
+  73:     if (child.isMesh || child.isSkinnedMesh) {
+  74:       child.castShadow = true;
+  75:       child.receiveShadow = false;
+  76:     }
+  77:   });
+  78: }
+  79: 
+  80: async function _createNpcVisual(def) {
+  81:   if (def?.modelFile) {
+  82:     try {
+  83:       const gltf = await Models.loadModel(def.modelFile);
+  84:       const model = gltf?.scene ?? null;
+  85:       if (model) {
+  86:         _prepareModelRoot(model, def.id);
+  87:         model.scale.set(1.0, 1.0, 1.0);
+  88:         const mixer = Models.createMixer(model);
+  89:         const clips = Models.getAnimationClips(gltf);
+  90:         const idleClip = _findIdleClip(clips);
+  91:         let idleAction = null;
+  92:         if (idleClip) {
+  93:           idleAction = mixer.clipAction(idleClip);
+  94:           idleAction.reset();
+  95:           idleAction.play();
+  96:         }
+  97:         return { mesh: model, mixer, idleAction };
+  98:       }
+  99:     } catch (err) {
+ 100:       console.warn('[npcs] Falha ao carregar modelFile de ' + def.id + ': ' + def.modelFile, err);
+ 101:     }
+ 102:   }
+ 103:   const { geo, mat } = _getSharedAssets();
+ 104:   const fallback = new THREE.Mesh(geo, mat);
+ 105:   fallback.castShadow = true;
+ 106:   fallback.userData.npcId = def.id;
+ 107:   return { mesh: fallback, mixer: null, idleAction: null };
+ 108: }
+ 109: // â”€â”€â”€ API pÃºblica â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ 110: 
+ 111: /**
+ 112:  * Inicializa o mÃ³dulo de NPCs.
+ 113:  * Deve ser chamado apÃ³s scene.init().
+ 114:  * @param {THREE.Scene} scene - cena Three.js ativa
+ 115:  */
+ 116: export function init(scene) {
+ 117:   _scene = scene;
+ 118: 
+ 119:   // Escuta tecla F para iniciar diÃ¡logo
+ 120:   Events.on('keyPressed', _onKeyPressed);
+ 121:   Events.on('dialogStarted', () => { _dialogOpen = true; });
+ 122:   Events.on('dialogEnded',   () => { _dialogOpen = false; });
+ 123: }
+ 124: 
+ 125: /**
+ 126:  * Cria meshes e registra NPCs a partir do JSON de configuraÃ§Ã£o.
+ 127:  * @param {Object} config - conteÃºdo parseado de assets/data/npcs.json
+ 128:  */
+ 129: export async function spawnFromConfig(config) {
+ 130:   if (!_scene) {
+ 131:     console.error('[npcs] init() deve ser chamado antes de spawnFromConfig()');
+ 132:     return;
+ 133:   }
+ 134: 
+ 135:   for (const def of config.npcs) {
+ 136:     const { mesh, mixer, idleAction } = await _createNpcVisual(def);
+ 137: 
+ 138:     mesh.position.set(def.position.x, def.position.y, def.position.z);
+ 139:     if (!mixer) {
+ 140:       mesh.position.y += 0.95;
+ 141:     }
+ 142: 
+ 143:     mesh.userData = mesh.userData ?? {};
+ 144:     mesh.userData.npcId = def.id;
+ 145: 
+ 146:     _scene.add(mesh);
+ 147: 
+ 148:     const instance = {
+ 149:       id:           def.id,
+ 150:       name:         def.name,
+ 151:       mesh,
+ 152:       position:     new THREE.Vector3(def.position.x, def.position.y, def.position.z),
+ 153:       dialogTree:   def.dialogTree,
+ 154:       playerInRange: false,
+ 155:       mixer,
+ 156:       idleAction,
+ 157:       lastAmbientSfxAt: 0,
+ 158:     };
+ 159: 
+ 160:     _npcs.push(instance);
+ 161:   }
+ 162: 
+ 163:   Events.emit('npcsSpawned', { count: _npcs.length });
+ 164: }
+ 165: 
+ 166: /**
+ 167:  * Atualiza proximidade do player a cada frame.
+ 168:  * Deve ser chamado no game loop principal com a posiÃ§Ã£o atual do player.
+ 169:  * @param {number} delta - tempo desde o Ãºltimo frame (segundos)
+ 170:  * @param {THREE.Vector3} playerPos - posiÃ§Ã£o atual do player
+ 171:  */
+ 172: export function updateAll(delta, playerPos) {
+ 173:   if (!playerPos) return;
+ 174:   const camera = Scene.getCamera();
+ 175:   let closestNpc = null;
+ 176:   let closestDistSq = Infinity;
+ 177: 
+ 178:   for (const npc of _npcs) {
+ 179:     if (npc.mixer) npc.mixer.update(delta);
+ 180:     const dx = playerPos.x - npc.position.x;
+ 181:     const dz = playerPos.z - npc.position.z;
+ 182:     const distSq = dx * dx + dz * dz;
+ 183: 
+ 184:     const wasInRange = npc.playerInRange;
+ 185:     npc.playerInRange = distSq <= INTERACT_RADIUS_SQ;
+ 186:     const now = performance.now();
+ 187:     if (
+ 188:         npc.id === 'blacksmith' &&
+ 189:         distSq <= 225 &&
+ 190:         now - (npc.lastAmbientSfxAt ?? 0) >= 30000
+ 191:     ) {
+ 192:         playSFX3D('assets/audio/sfx/sfx_npc_blacksmith_hammer.ogg', npc.mesh.position);
+ 193:         npc.lastAmbientSfxAt = now;
+ 194:     }
+ 195: 
+ 196:     if (npc.playerInRange && distSq < closestDistSq) {
+ 197:       closestDistSq = distSq;
+ 198:       closestNpc = npc;
+ 199:     }
+ 200: 
+ 201:     // Pequena animaÃ§Ã£o: NPC "olha" para o player quando prÃ³ximo
+ 202:     if (npc.playerInRange) {
+ 203:       npc.mesh.lookAt(playerPos.x, npc.mesh.position.y, playerPos.z);
+ 204:     }
+ 205:   }
+ 206: 
+ 207:   // Exibe hint HUD se NPC prÃ³ximo mudou ou cooldown expirou
+ 208:   const now = performance.now();
+ 209:   if (closestNpc && (closestNpc !== _nearestInRange || now - _lastHintTime > HINT_COOLDOWN)) {
+ 210:     _nearestInRange = closestNpc;
+ 211:     _lastHintTime = now;
+ 212:     Events.emit('uiHintShow', { message: `Pressione F para falar com ${closestNpc.name}` });
+ 213:   } else if (!closestNpc && _nearestInRange) {
+ 214:     _nearestInRange = null;
+ 215:     Events.emit('uiHintHide', {});
+ 216:   }
+ 217:     for (const npc of _npcs) {
+ 218:     updateNpcQuestIndicator(npc.id, npc.mesh, camera, Scene.getRenderer());
+ 219:   }
+ 220: }
+ 221: 
+ 222: /**
+ 223:  * Retorna array de todos os NPCs instanciados.
+ 224:  * @returns {NPCInstance[]}
+ 225:  */
+ 226: export function getAll() {
+ 227:   return _npcs;
+ 228: }
+ 229: 
+ 230: // â”€â”€â”€ handlers internos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ 231: 
+ 232: /**
+ 233:  * Trata pressionamento de tecla F para iniciar diÃ¡logo.
+ 234:  * @param {Object} payload - { key: string }
+ 235:  */
+ 236: function _onKeyPressed({ code, action, key }) {
+ 237:   const isInteract =
+ 238:     action === 'interact' ||
+ 239:     code === 'KeyF' ||
+ 240:     key === 'f' ||
+ 241:     key === 'F';
+ 242: 
+ 243:   if (!isInteract) return;
+ 244:   if (_dialogOpen) return;
+ 245:   if (!_nearestInRange) return;
+ 246: 
+ 247:   const npc = _nearestInRange;
+ 248: 
+ 249:   // TODO: SFX quando audio.json existir â€” playSFX('sfx_dialog_open')
+ 250: 
+ 251:   Events.emit('dialogStarted', {
+ 252:     npcId:      npc.id,
+ 253:     npcName:    npc.name,
+ 254:     dialogTree: npc.dialogTree,
+ 255:   });
+ 256: }/**
+ 257:  * Executa a action de uma opÃ§Ã£o de diÃ¡logo.
+ 258:  * @param {{ type: string, questId: string }} action
+ 259:  */
+ 260: function _executeAction(action) {
+ 261:     if (!action) return;
+ 262:     const { type, questId } = action;
+ 263: 
+ 264:     if (type === 'offerQuest') {
+ 265:         import('../entities/player.js').then(PlayerMod => {
+ 266:             Quests.acceptQuest(questId, PlayerMod.getState?.() ?? null);
+ 267:         });
+ 268:     }
+ 269:     if (type === 'completeQuest') Quests.completeQuest(questId);
+ 270:     if (type === 'doJobChange') {
+ 271:         import('../entities/player.js').then(PlayerMod => {
+ 272:             PlayerMod.applyJobChange(action.jobId);
+ 273:         });
+ 274:     }
+ 275:     if (type === 'refine') {
+ 276:         Events.emit('uiWindowToggle', { id: 'refine' });
+ 277:     }
+ 278: }
+ 279: 
+ 280: Events.on('dialogOptionSelected', ({ npcId, nodeId, optionIndex }) => {
+ 281:     const npc = _npcs.find(n => n.id === npcId);
+ 282:     if (!npc) return;
+ 283: 
+ 284:     const node = npc.dialogTree.nodes[nodeId];
+ 285:     if (!node) return;
+ 286: 
+ 287:     const opt = node.options[optionIndex];
+ 288:     if (opt?.action) _executeAction(opt.action);
+ 289: });

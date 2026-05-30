@@ -1,0 +1,3037 @@
+﻿# 1. city_01 completo no maps.json
+
+>                      "id":  "city_01",
+                       "name":  "Cidade de Prontera",
+                       "terrainSize":  800,
+                       "terrainColor":  "#7caa5a",
+                       "terrainTexture":  "assets/textures/terrain/city_cobblestone.jpg",
+                       "skybox":  [
+                                      "assets/textures/skybox/px.png",
+                                      "assets/textures/skybox/nx.png",
+                                      "assets/textures/skybox/py.png",
+                                      "assets/textures/skybox/ny.png",
+                                      "assets/textures/skybox/pz.png",
+                                      "assets/textures/skybox/nz.png"
+                                  ],
+                       "monsterPool":  [
+  
+                                       ],
+                       "npcs":  [
+                                    "mayor",
+                                    "blacksmith",
+                                    "guard",
+                                    "merchant",
+                                    "priest",
+                                    "sage",
+                                    "master_swordsman",
+                                    "master_mage",
+                                    "master_archer",
+                                    "master_assassin",
+                                    "grandmaster_lord_knight",
+                                    "grandmaster_high_wizard",
+                                    "grandmaster_sniper",
+                                    "grandmaster_shadow_assassin"
+                                ],
+                       "maxMonsters":  0,
+                       "respawnTime":  0,
+                       "exitPoints":  [
+                                          {
+                                              "id":  "exit_south",
+                                              "position":  {
+                                                               "x":  0,
+                                                               "y":  0,
+                                                               "z":  78
+                                                           },
+                                              "radius":  3,
+                                              "targetMap":  "forest_01",
+                                              "targetPosition":  {
+                                                                     "x":  0,
+                                                                     "y":  0,
+                                                                     "z":  -50
+                                                                 }
+                                          },
+                                          {
+                                              "id":  "exit_north",
+                                              "position":  {
+                                                               "x":  0,
+                                                               "y":  0,
+                                                               "z":  -78
+                                                           },
+                                              "radius":  3,
+                                              "targetMap":  "caves_01",
+                                              "targetPosition":  {
+                                                                     "x":  0,
+                                                                     "y":  0,
+                                                                     "z":  50
+                                                                 }
+                                          }
+                                      ],
+                       "decoration":  [
+                                          {
+                                              "path":  "assets/models/buildings/wall_corner_A_outside.gltf",
+                                              "positions":  [
+                                                                {
+                                                                    "x":  -80,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  80,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  1.5707963267948966,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  80,
+                                                                    "y":  0,
+                                                                    "z":  80,
+                                                                    "rotY":  3.141592653589793,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -80,
+                                                                    "y":  0,
+                                                                    "z":  80,
+                                                                    "rotY":  4.71238898038469,
+                                                                    "scale":  5
+                                                                }
+                                                            ]
+                                          },
+                                          {
+                                              "path":  "assets/models/buildings/wall_straight_gate.gltf",
+                                              "positions":  [
+                                                                {
+                                                                    "x":  0,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  0,
+                                                                    "y":  0,
+                                                                    "z":  80,
+                                                                    "rotY":  3.141592653589793,
+                                                                    "scale":  5
+                                                                }
+                                                            ]
+                                          },
+                                          {
+                                              "path":  "assets/models/buildings/wall_straight.gltf",
+                                              "positions":  [
+                                                                {
+                                                                    "x":  -76,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -74,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -72,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -70,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -68,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -66,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -64,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -62,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -60,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -58,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -56,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -54,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -52,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -50,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -48,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -46,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -44,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -42,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -40,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -38,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -36,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -34,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -32,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -30,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -28,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -26,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -24,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -22,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -20,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -18,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -16,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -14,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -12,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -10,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -8,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -6,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  -4,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  4,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  6,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  8,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  10,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  12,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  14,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  16,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  18,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  20,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  22,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  24,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  26,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  28,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  30,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  32,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  34,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+                                                                    "x":  36,
+                                                                    "y":  0,
+                                                                    "z":  -80,
+                                                                    "rotY":  0,
+                                                                    "scale":  5
+                                                                },
+                                                                {
+>                                             "targetMap":  "city_01",
+                                              "position":  {
+                                                               "x":  -55,
+                                                               "y":  0,
+                                                               "z":  0
+                                                           },
+                                              "label":  "Cidade de Prontera"
+                                          },
+                                          {
+                                              "targetMap":  "caves_01",
+                                              "position":  {
+                                                               "x":  55,
+                                                               "y":  0,
+                                                               "z":  0
+                                                           },
+                                              "label":  "Cavernas de Byalan"
+                                          }
+                                      ],
+                       "decoration":  [
+                                          {
+                                              "model":  "BirchTree_1",
+                                              "path":  "assets/models/nature/BirchTree_1.gltf",
+                                              "count":  8,
+                                              "area":  {
+                                                           "xMin":  -40,
+                                                           "xMax":  40,
+                                                           "zMin":  -40,
+                                                           "zMax":  40
+                                                       },
+                                              "scaleRange":  [
+                                                                 0.9,
+                                                                 1.2
+                                                             ],
+                                              "rotateY":  true
+                                          },
+                                          {
+                                              "model":  "BirchTree_2",
+                                              "path":  "assets/models/nature/BirchTree_2.gltf",
+                                              "count":  8,
+                                              "area":  {
+                                                           "xMin":  -42,
+                                                           "xMax":  42,
+                                                           "zMin":  -42,
+                                                           "zMax":  42
+                                                       },
+                                              "scaleRange":  [
+                                                                 0.9,
+                                                                 1.2
+                                                             ],
+                                              "rotateY":  true
+                                          },
+                                          {
+                                              "model":  "BirchTree_3",
+                                              "path":  "assets/models/nature/BirchTree_3.gltf",
+                                              "count":  8,
+                                              "area":  {
+                                                           "xMin":  -44,
+                                                           "xMax":  44,
+                                                           "zMin":  -44,
+                                                           "zMax":  44
+                                                       },
+                                              "scaleRange":  [
+                                                                 0.9,
+                                                                 1.25
+                                                             ],
+                                              "rotateY":  true
+                                          },
+                                          {
+                                              "model":  "MapleTree_1",
+                                              "path":  "assets/models/nature/MapleTree_1.gltf",
+                                              "count":  5,
+                                              "area":  {
+                                                           "xMin":  -38,
+                                                           "xMax":  38,
+                                                           "zMin":  -38,
+                                                           "zMax":  38
+                                                       },
+                                              "scaleRange":  [
+                                                                 0.85,
+                                                                 1.15
+                                                             ],
+                                              "rotateY":  true
+                                          },
+                                          {
+                                              "model":  "MapleTree_2",
+                                              "path":  "assets/models/nature/MapleTree_2.gltf",
+                                              "count":  5,
+                                              "area":  {
+                                                           "xMin":  -36,
+                                                           "xMax":  36,
+                                                           "zMin":  -36,
+                                                           "zMax":  36
+                                                       },
+                                              "scaleRange":  [
+                                                                 0.85,
+                                                                 1.15
+                                                             ],
+                                              "rotateY":  true
+                                          },
+                                          {
+                                              "model":  "Bush_Large",
+                                              "path":  "assets/models/nature/Bush_Large.gltf",
+                                              "count":  10,
+                                              "area":  {
+                                                           "xMin":  -46,
+                                                           "xMax":  46,
+                                                           "zMin":  -46,
+                                                           "zMax":  46
+                                                       },
+                                              "scaleRange":  [
+                                                                 0.85,
+                                                                 1.15
+                                                             ],
+                                              "rotateY":  true
+                                          },
+                                          {
+                                              "model":  "Bush_Small_Flowers",
+                                              "path":  "assets/models/nature/Bush_Small_Flowers.gltf",
+                                              "count":  8,
+                                              "area":  {
+                                                           "xMin":  -42,
+                                                           "xMax":  42,
+                                                           "zMin":  -42,
+                                                           "zMax":  42
+                                                       },
+                                              "scaleRange":  [
+                                                                 0.8,
+                                                                 1.1
+                                                             ],
+                                              "rotateY":  true
+                                          },
+                                          {
+                                              "model":  "Grass_Large",
+                                              "path":  "assets/models/nature/Grass_Large.gltf",
+                                              "count":  15,
+                                              "area":  {
+                                                           "xMin":  -48,
+                                                           "xMax":  48,
+                                                           "zMin":  -48,
+                                                           "zMax":  48
+                                                       },
+                                              "scaleRange":  [
+                                                                 0.8,
+                                                                 1.2
+                                                             ],
+                                              "rotateY":  true
+                                          },
+                                          {
+                                              "model":  "Flower_1_Clump",
+                                              "path":  "assets/models/nature/Flower_1_Clump.gltf",
+                                              "count":  5,
+                                              "area":  {
+                                                           "xMin":  -40,
+                                                           "xMax":  40,
+                                                           "zMin":  -40,
+                                                           "zMax":  40
+                                                       },
+                                              "scaleRange":  [
+                                                                 0.8,
+                                                                 1.1
+                                                             ],
+                                              "rotateY":  true
+                                          },
+                                          {
+                                              "model":  "Flower_2_Clump",
+                                              "path":  "assets/models/nature/Flower_2_Clump.gltf",
+                                              "count":  5,
+                                              "area":  {
+                                                           "xMin":  -40,
+                                                           "xMax":  40,
+                                                           "zMin":  -40,
+                                                           "zMax":  40
+                                                       },
+                                              "scaleRange":  [
+                                                                 0.8,
+                                                                 1.1
+                                                             ],
+                                              "rotateY":  true
+                                          },
+                                          {
+                                              "model":  "Flower_3_Clump",
+                                              "path":  "assets/models/nature/Flower_3_Clump.gltf",
+                                              "count":  5,
+                                              "area":  {
+                                                           "xMin":  -40,
+                                                           "xMax":  40,
+                                                           "zMin":  -40,
+                                                           "zMax":  40
+                                                       },
+                                              "scaleRange":  [
+                                                                 0.8,
+                                                                 1.1
+                                                             ],
+                                              "rotateY":  true
+                                          }
+                                      ],
+                       "audioProfile":  {
+                                            "bgm":  "bgm_forest",
+                                            "ambient":  [
+                                                            "sfx_ambient_birds",
+                                                            "sfx_ambient_wind"
+                                                        ],
+                                            "reverb":  "outdoor"
+                                        },
+                       "weatherProfile":  {
+                                              "options":  [
+                                                              "clear",
+                                                              "rain"
+                                                          ],
+                                              "changeInterval":  300
+                                          },
+                       "lighting":  {
+                                        "day":  {
+                                                    "ambient":  "#ffffff",
+                                                    "directional":  "#ffffcc",
+                                                    "intensity":  1.0
+                                                },
+                                        "night":  {
+                                                      "ambient":  "#1a1a3a",
+                                                      "directional":  "#4444aa",
+                                                      "intensity":  0.8
+                                                  }
+                                    }
+                   },
+                   {
+                       "id":  "caves_01",
+                       "name":  "Cavernas de Byalan",
+                       "terrainSize":  800,
+                       "terrainColor":  "#3a3a4a",
+                       "terrainTexture":  "assets/textures/terrain/cave_rock.jpg",
+                       "skybox":  [
+                                      "assets/textures/skybox/px.png",
+                                      "assets/textures/skybox/nx.png",
+                                      "assets/textures/skybox/py.png",
+                                      "assets/textures/skybox/ny.png",
+                                      "assets/textures/skybox/pz.png",
+                                      "assets/textures/skybox/nz.png"
+                                  ],
+                       "monsterPool":  [
+                                           {
+                                               "monsterId":  "esqueleto",
+                                               "weight":  30
+                                           },
+                                           {
+                                               "monsterId":  "golem-pequeno",
+                                               "weight":  25
+                                           },
+                                           {
+                                               "monsterId":  "zumbi",
+                                               "weight":  25
+                                           },
+                                           {
+                                               "monsterId":  "esqueleto-arqueiro",
+                                               "weight":  20
+                                           }
+                                       ],
+                       "npcs":  [
+  
+                                ],
+                       "maxMonsters":  15,
+                       "respawnTime":  30,
+                       "exitPoints":  [
+                                          {
+                                              "targetMap":  "forest_01",
+                                              "position":  {
+                                                               "x":  -45,
+                                                               "y":  0,
+                                                               "z":  0
+                                                           },
+                                              "label":  "Floresta de Payon"
+                                          },
+                                          {
+                                              "targetMap":  "ruins_01",
+                                              "position":  {
+                                                               "x":  45,
+                                                               "y":  0,
+                                                               "z":  0
+                                                           },
+                                              "label":  "RuÃ­nas de Glast Heim"
+                                          }
+                                      ],
+                       "decoration":  [
+                                          {
+                                              "model":  "rock_sphere",
+                                              "path":  "",
+                                              "procedural":  true,
+                                              "count":  10,
+                                              "area":  {
+                                                           "xMin":  -35,
+                                                           "xMax":  35,
+                                                           "zMin":  -35,
+                                                           "zMax":  35
+                                                       },
+                                              "scaleRange":  [
+                                                                 0.8,
+                                                                 1.6
+                                                             ],
+                                              "rotateY":  true
+                                          },
+                                          {
+                                              "model":  "pillar_cylinder",
+                                              "path":  "",
+                                              "procedural":  true,
+                                              "count":  6,
+                                              "area":  {
+                                                           "xMin":  -30,
+                                                           "xMax":  30,
+                                                           "zMin":  -30,
+                                                           "zMax":  30
+                                                       },
+                                              "scaleRange":  [
+                                                                 0.9,
+                                                                 1.3
+                                                             ],
+                                              "rotateY":  true
+                                          }
+                                      ],
+                       "audioProfile":  {
+                                            "bgm":  "bgm_caves",
+                                            "ambient":  [
+                                                            "sfx_ambient_cave_drip",
+                                                            "sfx_ambient_water"
+                                                        ],
+                                            "reverb":  "indoor"
+                                        },
+                       "weatherProfile":  {
+                                              "options":  [
+                                                              "none"
+                                                          ],
+                                              "changeInterval":  0
+                                          },
+                       "lighting":  {
+                                        "day":  {
+                                                    "ambient":  "#7a7a8a",
+                                                    "directional":  "#8a8ab0",
+                                                    "intensity":  0.55
+                                                },
+                                        "night":  {
+                                                      "ambient":  "#7a7a8a",
+                                                      "directional":  "#8a8ab0",
+                                                      "intensity":  0.55
+                                                  }
+                                    }
+                   },
+                   {
+                       "id":  "ruins_01",
+                       "name":  "RuÃ­nas de Glast Heim",
+                       "terrainSize":  8000,
+                       "terrainColor":  "#4a4a3a",
+                       "terrainTexture":  "assets/textures/terrain/ruins_dirt.jpg",
+                       "skybox":  [
+                                      "assets/textures/skybox/px.png",
+                                      "assets/textures/skybox/nx.png",
+                                      "assets/textures/skybox/py.png",
+                                      "assets/textures/skybox/ny.png",
+                                      "assets/textures/skybox/pz.png",
+                                      "assets/textures/skybox/nz.png"
+                                  ],
+                       "monsterPool":  [
+                                           {
+                                               "monsterId":  "lobisomem",
+                                               "weight":  25
+                                           },
+                                           {
+                                               "monsterId":  "orc_warrior",
+                                               "weight":  25
+                                           },
+                                           {
+                                               "monsterId":  "fantasma",
+                                               "weight":  25
+                                           },
+                                           {
+                                               "monsterId":  "demonio-menor",
+                                               "weight":  25
+                                           }
+                                       ],
+                       "npcs":  [
+  
+                                ],
+                       "maxMonsters":  15,
+                       "respawnTime":  35,
+                       "exitPoints":  [
+                                          {
+                                              "targetMap":  "caves_01",
+                                              "position":  {
+                                                               "x":  -50,
+                                                               "y":  0,
+                                                               "z":  0
+                                                           },
+                                              "label":  "Cavernas de Byalan"
+                                          },
+                                          {
+                                              "targetMap":  "castle_01",
+                                              "position":  {
+                                                               "x":  50,
+                                                               "y":  0,
+                                                               "z":  0
+                                                           },
+                                              "label":  "Castelo de Geffen"
+                                          }
+                                      ],
+                       "decoration":  [
+                                          {
+                                              "model":  "DeadTree_1",
+                                              "path":  "assets/models/nature/DeadTree_1.gltf",
+                                              "count":  5,
+                                              "area":  {
+                                                           "xMin":  -40,
+                                                           "xMax":  40,
+                                                           "zMin":  -40,
+                                                           "zMax":  40
+                                                       },
+                                              "scaleRange":  [
+                                                                 0.9,
+                                                                 1.2
+                                                             ],
+                                              "rotateY":  true
+                                          },
+                                          {
+                                              "model":  "DeadTree_2",
+                                              "path":  "assets/models/nature/DeadTree_2.gltf",
+                                              "count":  5,
+                                              "area":  {
+                                                           "xMin":  -42,
+                                                           "xMax":  42,
+                                                           "zMin":  -42,
+                                                           "zMax":  42
+                                                       },
+                                              "scaleRange":  [
+                                                                 0.9,
+                                                                 1.2
+                                                             ],
+                                              "rotateY":  true
+                                          },
+                                          {
+                                              "model":  "DeadTree_3",
+                                              "path":  "assets/models/nature/DeadTree_3.gltf",
+                                              "count":  5,
+                                              "area":  {
+                                                           "xMin":  -44,
+                                                           "xMax":  44,
+                                                           "zMin":  -44,
+                                                           "zMax":  44
+                                                       },
+                                              "scaleRange":  [
+                                                                 0.9,
+                                                                 1.25
+                                                             ],
+                                              "rotateY":  true
+                                          },
+                                          {
+                                              "model":  "Bush",
+                                              "path":  "assets/models/nature/Bush.gltf",
+                                              "count":  8,
+                                              "area":  {
+                                                           "xMin":  -36,
+                                                           "xMax":  36,
+                                                           "zMin":  -36,
+                                                           "zMax":  36
+                                                       },
+                                              "scaleRange":  [
+                                                                 0.85,
+                                                                 1.1
+                                                             ],
+                                              "rotateY":  true
+                                          },
+                                          {
+                                              "model":  "rock_sphere",
+                                              "path":  "",
+                                              "procedural":  true,
+                                              "count":  8,
+                                              "area":  {
+                                                           "xMin":  -34,
+                                                           "xMax":  34,
+                                                           "zMin":  -34,
+                                                           "zMax":  34
+                                                       },
+                                              "scaleRange":  [
+                                                                 0.9,
+                                                                 1.5
+                                                             ],
+                                              "rotateY":  true
+                                          },
+                                          {
+                                              "model":  "broken_pillar",
+                                              "path":  "",
+                                              "procedural":  true,
+                                              "count":  4,
+                                              "area":  {
+                                                           "xMin":  -28,
+                                                           "xMax":  28,
+                                                           "zMin":  -28,
+                                                           "zMax":  28
+                                                       },
+                                              "scaleRange":  [
+                                                                 0.8,
+                                                                 1.15
+                                                             ],
+                                              "rotateY":  true
+                                          }
+                                      ],
+
+# 2. npcs.json completo
+{
+  "npcs": [
+    {
+      "id": "mayor",
+      "name": "Prefeito Aldric",
+      "position": {
+        "x": -3,
+        "y": 0,
+        "z": -4
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#FFD700"
+      },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "SaudaÃƒÂ§ÃƒÂµes, aventureiro! Nossa vila precisa de ajuda.",
+            "options": [
+              {
+                "text": "O que estÃƒÂ¡ acontecendo?",
+                "next": "problema"
+              },
+              {
+                "text": "[MissÃƒÂ£o] Aceitar caÃƒÂ§ada aos slimes",
+                "next": "aceitar_slimes",
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_slimes"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_slimes"
+                }
+              },
+              {
+                "text": "[Entregar] JÃƒÂ¡ eliminei os slimes!",
+                "next": "slimes_completo",
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_slimes"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_slimes"
+                }
+              },
+              {
+                "text": "Ainda estou caÃƒÂ§ando os slimes.",
+                "next": "end",
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_slimes"
+                }
+              },
+              {
+                "text": "[MissÃƒÂ£o] Preciso de um pacote entregue",
+                "next": "aceitar_entrega",
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_delivery"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_delivery"
+                }
+              },
+              {
+                "text": "AtÃƒÂ© logo.",
+                "next": "end"
+              }
+            ]
+          },
+          "problema": {
+            "text": "Slimes invadiram os arredores! E preciso de um pacote urgente no ferreiro. Pode ajudar?",
+            "options": [
+              {
+                "text": "Voltarei ao menu anterior.",
+                "next": "root"
+              }
+            ]
+          },
+          "aceitar_slimes": {
+            "text": "Excelente! Elimine 5 slimes nos arredores e volte a mim. Boa sorte!",
+            "options": [
+              {
+                "text": "Pode contar comigo.",
+                "next": "end"
+              }
+            ]
+          },
+          "slimes_completo": {
+            "text": "FantÃƒÂ¡stico! A vila estÃƒÂ¡ mais segura graÃƒÂ§as a vocÃƒÂª. Aqui estÃƒÂ¡ sua recompensa, aventureiro!",
+            "options": [
+              {
+                "text": "Obrigado, prefeito!",
+                "next": "end"
+              }
+            ]
+          },
+          "aceitar_entrega": {
+            "text": "Preciso que este pacote chegue ao ferreiro com urgÃƒÂªncia. VocÃƒÂª pode fazer isso?",
+            "options": [
+              {
+                "text": "Sim, levarei o pacote.",
+                "next": "end"
+              },
+              {
+                "text": "Agora nÃƒÂ£o posso.",
+                "next": "end"
+              }
+            ]
+          }
+        }
+      },
+      "modelFile": "assets/models/player/mage.glb"
+    },
+    {
+      "id": "blacksmith",
+      "name": "Ferreiro Bram",
+      "position": {
+        "x": 4,
+        "y": 0,
+        "z": -3
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#FFD700"
+      },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "Oi! Ocupado com as forjas agora. Tem algo pra mim?",
+            "options": [
+              {
+                "text": "[Entregar] Aqui estÃƒÂ¡ o pacote do prefeito.",
+                "next": "receber_pacote",
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_delivery"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_delivery"
+                }
+              },
+              {
+                "text": "Refinar Equipamento",
+                "next": "end",
+                "action": {
+                  "type": "refine"
+                }
+              },
+              {
+                "text": "SÃƒÂ³ vim dar uma olhada.",
+                "next": "end"
+              }
+            ]
+          },
+          "receber_pacote": {
+            "text": "Ah, finalmente chegou! Estava esperando por isso. Aqui estÃƒÂ¡ sua recompensa pelo trabalho.",
+            "options": [
+              {
+                "text": "Disponha, ferreiro!",
+                "next": "end"
+              }
+            ]
+          }
+        }
+      },
+      "modelFile": "assets/models/npcs/barbarian.glb"
+    },
+    {
+      "id": "sage",
+      "name": "SÃƒÂ¡bio AnciÃƒÂ£o",
+      "type": "quest",
+      "position": {
+        "x": 15,
+        "y": 0,
+        "z": -10
+      },
+      "dialogues": {
+        "default": {
+          "text": "Jovem aventureiro... sinto uma energia especial em vocÃƒÂª. Talvez esteja pronto para o desafio do EspÃƒÂ­rito Arcano.",
+          "options": []
+        }
+      },
+      "actions": [
+        {
+          "type": "offerQuest",
+          "questId": "quest_pet_espirito"
+        },
+        {
+          "type": "completeQuest",
+          "questId": "quest_pet_espirito"
+        }
+      ],
+      "modelFile": "assets/models/npcs/rogue_hooded.glb"
+    },
+    {
+      "id": "merchant",
+      "name": "Comerciante Lyra",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": -6
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#FFD700"
+      },
+      "dialogTree": {
+        "root": "greet",
+        "nodes": {
+          "greet": {
+            "text": "Boa tarde! Lyra's Mercadorias, o melhor preÃƒÂ§o da cidade Ã¢â‚¬â€ aliÃƒÂ¡s, o ÃƒÂºnico preÃƒÂ§o da cidade! O que vocÃƒÂª precisa?",
+            "options": [
+              {
+                "text": "O que vocÃƒÂª tem para vender?",
+                "next": "wares"
+              },
+              {
+                "text": "Como estÃƒÂ£o os negÃƒÂ³cios?",
+                "next": "business"
+              },
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "wares": {
+            "text": "PoÃƒÂ§ÃƒÂµes de vida, ervas medicinais, pergaminhos... Tudo o que o aventureiro moderno precisa para sobreviver! Meu inventÃƒÂ¡rio completo abre em breve.",
+            "options": [
+              {
+                "text": "Aguardo a abertura.",
+                "next": "thanks"
+              },
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "business": {
+            "text": "PÃƒÂ©ssimos, para ser honesta. Com monstros bloqueando as estradas, as caravanas pararam de chegar. Se isso continuar, vou ÃƒÂ  falÃƒÂªncia.",
+            "options": [
+              {
+                "text": "Espero que melhore.",
+                "next": "thanks"
+              },
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "thanks": {
+            "text": "Volte sempre! E se encontrar itens valiosos por aÃƒÂ­, eu compro Ã¢â‚¬â€ pagando bem!",
+            "options": [
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          }
+        }
+      },
+      "modelFile": "assets/models/player/archer.glb"
+    },
+    {
+      "id": "priest",
+      "name": "Padre Silas",
+      "position": {
+        "x": -5,
+        "y": 0,
+        "z": 2
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#FFD700"
+      },
+      "dialogTree": {
+        "root": "greet",
+        "nodes": {
+          "greet": {
+            "text": "A luz de Odin guie seus passos, filho. Estou aqui para curar corpos e almas. VocÃƒÂª veio buscar conforto ou orientaÃƒÂ§ÃƒÂ£o?",
+            "options": [
+              {
+                "text": "Pode me curar?",
+                "next": "heal"
+              },
+              {
+                "text": "O que ÃƒÂ© este lugar?",
+                "next": "lore"
+              },
+              {
+                "text": "Adeus, Padre.",
+                "next": "end"
+              }
+            ]
+          },
+          "heal": {
+            "text": "A cura divina ainda nÃƒÂ£o me foi concedida neste plano... mas ore comigo e sua forÃƒÂ§a se renovarÃƒÂ¡. Em breve poderei fazer mais por vocÃƒÂª.",
+            "options": [
+              {
+                "text": "Obrigado mesmo assim.",
+                "next": "blessing"
+              },
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "lore": {
+            "text": "Lumie foi construÃƒÂ­da sobre as ruÃƒÂ­nas de um antigo templo. Dizem que poder dorme sob a terra aqui. Talvez por isso os monstros circulam tanto.",
+            "options": [
+              {
+                "text": "Interessante...",
+                "next": "blessing"
+              },
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "blessing": {
+            "text": "Que Odin proteja sua jornada. Leve esta bÃƒÂªnÃƒÂ§ÃƒÂ£o: que cada passo seu seja firme e cada golpe, certeiro.",
+            "options": [
+              {
+                "text": "Adeus, Padre.",
+                "next": "end"
+              }
+            ]
+          }
+        }
+      },
+      "modelFile": "assets/models/npcs/priest.glb"
+    },
+    {
+      "id": "guard",
+      "name": "Guarda Torren",
+      "position": {
+        "x": 3,
+        "y": 0,
+        "z": 3
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#FFD700"
+      },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "Alto aÃƒÂ­! Ah, ÃƒÂ© vocÃƒÂª. Preciso de alguÃƒÂ©m de confianÃƒÂ§a para uma tarefa.",
+            "options": [
+              {
+                "text": "[MissÃƒÂ£o] Qual tarefa?",
+                "next": "oferecer_exploracao",
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_forest"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_forest"
+                }
+              },
+              {
+                "text": "[Entregar] JÃƒÂ¡ verifiquei a floresta, estÃƒÂ¡ tudo certo!",
+                "next": "exploracao_completa",
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_forest"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_forest"
+                }
+              },
+              {
+                "text": "Nada por agora.",
+                "next": "end"
+              }
+            ]
+          },
+          "oferecer_exploracao": {
+            "text": "Preciso que vocÃƒÂª verifique o ponto de observaÃƒÂ§ÃƒÂ£o na floresta a nordeste, perto de (40, 40). Confirme que estÃƒÂ¡ tudo seguro.",
+            "options": [
+              {
+                "text": "Entendido. Vou verificar.",
+                "next": "end"
+              }
+            ]
+          },
+          "exploracao_completa": {
+            "text": "Excelente trabalho! O ponto estava seguro, como esperÃƒÂ¡vamos. A vila agradece sua coragem!",
+            "options": [
+              {
+                "text": "Sempre ÃƒÂ s ordens, guarda.",
+                "next": "end"
+              }
+            ]
+          }
+        }
+      },
+      "modelFile": "assets/models/player/knight.glb"
+    },
+    {
+      "id": "mestre_knight",
+      "name": "Mestre Cavaleiro",
+      "position": {
+        "x": 10,
+        "y": 0,
+        "z": 5
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#888888"
+      },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "SaudaÃƒÂ§ÃƒÂµes, guerreiro. Tenho uma missÃƒÂ£o para os dignos.",
+            "options": [
+              {
+                "text": "Continue treinando, Cavaleiro.",
+                "next": "already_knight",
+                "condition": {
+                  "type": "playerClassIs",
+                  "value": "knight"
+                }
+              },
+              {
+                "text": "Aceitar Prova do Cavaleiro",
+                "next": "aceitar_prova",
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_jobchange_knight"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_jobchange_knight"
+                }
+              },
+              {
+                "text": "Continuo na prova.",
+                "next": "em_andamento",
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_jobchange_knight"
+                }
+              },
+              {
+                "text": "Completei a Prova do Cavaleiro!",
+                "next": "completar_prova",
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_jobchange_knight"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_jobchange_knight"
+                }
+              },
+              {
+                "text": "Estou pronto para me tornar Knight!",
+                "next": "confirmar_jobchange",
+                "condition": {
+                  "type": "questCompleted",
+                  "questId": "quest_jobchange_knight"
+                },
+                "action": {
+                  "type": "doJobChange",
+                  "jobId": "knight"
+                }
+              },
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "already_knight": {
+            "text": "Continue treinando, Cavaleiro.",
+            "options": [
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "aceitar_prova": {
+            "text": "Derrote o Orc Warrior nas ruÃƒÂ­nas e prove sua forÃƒÂ§a. Volte quando terminar.",
+            "options": [
+              {
+                "text": "Pode contar comigo.",
+                "next": "end"
+              }
+            ]
+          },
+          "em_andamento": {
+            "text": "Termine a prova antes de continuar.",
+            "options": [
+              {
+                "text": "Voltarei.",
+                "next": "end"
+              }
+            ]
+          },
+          "completar_prova": {
+            "text": "VocÃƒÂª superou a prova. EstÃƒÂ¡ pronto para o juramento.",
+            "options": [
+              {
+                "text": "Estou pronto.",
+                "next": "end"
+              }
+            ]
+          },
+          "confirmar_jobchange": {
+            "text": "Que a forÃƒÂ§a guie sua lÃƒÂ¢mina. VocÃƒÂª agora ÃƒÂ© um Knight!",
+            "options": [
+              {
+                "text": "Obrigado, Mestre.",
+                "next": "end"
+              }
+            ]
+          }
+        }
+      },
+      "modelFile": "assets/models/player/knight.glb"
+    },
+    {
+      "id": "mestre_wizard",
+      "name": "Mestre Arcano",
+      "position": {
+        "x": -10,
+        "y": 0,
+        "z": 5
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#4444ff"
+      },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "A magia exige dedicaÃƒÂ§ÃƒÂ£o e sabedoria. Prove que vocÃƒÂª ÃƒÂ© digno.",
+            "options": [
+              {
+                "text": "Continue aprimorando sua magia, Wizard.",
+                "next": "already_wizard",
+                "condition": {
+                  "type": "playerClassIs",
+                  "value": "wizard"
+                }
+              },
+              {
+                "text": "Aceitar o desafio da Sabedoria Arcana",
+                "next": "aceitar_prova",
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_jobchange_wizard"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_jobchange_wizard"
+                }
+              },
+              {
+                "text": "Ainda estou coletando os cristais.",
+                "next": "em_andamento",
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_jobchange_wizard"
+                }
+              },
+              {
+                "text": "Coletei os 3 Cristais Arcanos!",
+                "next": "completar_prova",
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_jobchange_wizard"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_jobchange_wizard"
+                }
+              },
+              {
+                "text": "Estou pronto para me tornar Wizard!",
+                "next": "confirmar_jobchange",
+                "condition": {
+                  "type": "questCompleted",
+                  "questId": "quest_jobchange_wizard"
+                },
+                "action": {
+                  "type": "doJobChange",
+                  "jobId": "wizard"
+                }
+              },
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "already_wizard": {
+            "text": "Continue aprimorando sua magia, Wizard.",
+            "options": [
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "aceitar_prova": {
+            "text": "Colete 3 Cristais Arcanos dos slimes elementais. A magia os atrai.",
+            "options": [
+              {
+                "text": "Entendido.",
+                "next": "end"
+              }
+            ]
+          },
+          "em_andamento": {
+            "text": "ReÃƒÂºna os cristais antes de retornar.",
+            "options": [
+              {
+                "text": "Voltarei.",
+                "next": "end"
+              }
+            ]
+          },
+          "completar_prova": {
+            "text": "Os cristais vibram com poder. Sua dedicaÃƒÂ§ÃƒÂ£o foi comprovada.",
+            "options": [
+              {
+                "text": "Estou pronto.",
+                "next": "end"
+              }
+            ]
+          },
+          "confirmar_jobchange": {
+            "text": "Que os arcanos guiem seus feitiÃƒÂ§os. VocÃƒÂª agora ÃƒÂ© um Wizard!",
+            "options": [
+              {
+                "text": "Obrigado, Mestre.",
+                "next": "end"
+              }
+            ]
+          }
+        }
+      },
+      "modelFile": "assets/models/player/mage.glb"
+    },
+    {
+      "id": "mestre_hunter",
+      "name": "Mestre CaÃƒÂ§ador",
+      "position": {
+        "x": 10,
+        "y": 0,
+        "z": -5
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#44aa22"
+      },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "A floresta ÃƒÂ© implacÃƒÂ¡vel. Apenas os precisos sobrevivem.",
+            "options": [
+              {
+                "text": "Continue aprimorando sua mira, Hunter.",
+                "next": "already_hunter",
+                "condition": {
+                  "type": "playerClassIs",
+                  "value": "hunter"
+                }
+              },
+              {
+                "text": "Aceitar a CaÃƒÂ§ada da Floresta",
+                "next": "aceitar_prova",
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_jobchange_hunter"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_jobchange_hunter"
+                }
+              },
+              {
+                "text": "Ainda estou caÃƒÂ§ando.",
+                "next": "em_andamento",
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_jobchange_hunter"
+                }
+              },
+              {
+                "text": "Eliminei os 20 monstros!",
+                "next": "completar_prova",
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_jobchange_hunter"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_jobchange_hunter"
+                }
+              },
+              {
+                "text": "Estou pronto para me tornar Hunter!",
+                "next": "confirmar_jobchange",
+                "condition": {
+                  "type": "questCompleted",
+                  "questId": "quest_jobchange_hunter"
+                },
+                "action": {
+                  "type": "doJobChange",
+                  "jobId": "hunter"
+                }
+              },
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "already_hunter": {
+            "text": "Continue aprimorando sua mira, Hunter.",
+            "options": [
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "aceitar_prova": {
+            "text": "Elimine 20 monstros onde quiser. Quantidade revela disciplina.",
+            "options": [
+              {
+                "text": "Aceito o desafio.",
+                "next": "end"
+              }
+            ]
+          },
+          "em_andamento": {
+            "text": "Continue caÃƒÂ§ando. Ainda nÃƒÂ£o ÃƒÂ© suficiente.",
+            "options": [
+              {
+                "text": "Voltarei.",
+                "next": "end"
+              }
+            ]
+          },
+          "completar_prova": {
+            "text": "Impressionante. Sua precisÃƒÂ£o e resistÃƒÂªncia foram comprovadas.",
+            "options": [
+              {
+                "text": "Estou pronto.",
+                "next": "end"
+              }
+            ]
+          },
+          "confirmar_jobchange": {
+            "text": "Que seu arco nunca falhe. VocÃƒÂª agora ÃƒÂ© um Hunter!",
+            "options": [
+              {
+                "text": "Obrigado, Mestre.",
+                "next": "end"
+              }
+            ]
+          }
+        }
+      },
+      "modelFile": "assets/models/player/archer.glb"
+    },
+    {
+      "id": "mestre_assassin",
+      "name": "Mestre das Sombras",
+      "position": {
+        "x": -10,
+        "y": 0,
+        "z": -5
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#222222"
+      },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "As sombras falam de vocÃƒÂª. Ainda nÃƒÂ£o sei se merecem.",
+            "options": [
+              {
+                "text": "Continue nas sombras, Mestre.",
+                "next": "already_assassin_master",
+                "condition": {
+                  "type": "playerClassIs",
+                  "value": "assassin_master"
+                }
+              },
+              {
+                "text": "Aceitar as Sombras Mortais",
+                "next": "aceitar_prova",
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_jobchange_assassin"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_jobchange_assassin"
+                }
+              },
+              {
+                "text": "Ainda estou completando a missÃƒÂ£o.",
+                "next": "em_andamento",
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_jobchange_assassin"
+                }
+              },
+              {
+                "text": "Trouxe os venenos e eliminei o alvo.",
+                "next": "completar_prova",
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_jobchange_assassin"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_jobchange_assassin"
+                }
+              },
+              {
+                "text": "Estou pronto para me tornar Assassin Master!",
+                "next": "confirmar_jobchange",
+                "condition": {
+                  "type": "questCompleted",
+                  "questId": "quest_jobchange_assassin"
+                },
+                "action": {
+                  "type": "doJobChange",
+                  "jobId": "assassin_master"
+                }
+              },
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "already_assassin_master": {
+            "text": "Continue nas sombras, Mestre.",
+            "options": [
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "aceitar_prova": {
+            "text": "Colete 5 Venenos Raros e elimine o Assassino das Sombras. NÃƒÂ£o decepcione.",
+            "options": [
+              {
+                "text": "SerÃƒÂ¡ feito.",
+                "next": "end"
+              }
+            ]
+          },
+          "em_andamento": {
+            "text": "Ainda nÃƒÂ£o terminou. Volte quando completar.",
+            "options": [
+              {
+                "text": "Voltarei.",
+                "next": "end"
+              }
+            ]
+          },
+          "completar_prova": {
+            "text": "As sombras o reconhecem como digno.",
+            "options": [
+              {
+                "text": "Estou pronto.",
+                "next": "end"
+              }
+            ]
+          },
+          "confirmar_jobchange": {
+            "text": "DesapareÃƒÂ§a nas sombras e ressurja como Mestre. VocÃƒÂª agora ÃƒÂ© Assassin Master!",
+            "options": [
+              {
+                "text": "Obrigado, Mestre.",
+                "next": "end"
+              }
+            ]
+          }
+        }
+      },
+      "modelFile": "assets/models/npcs/rogue.glb"
+    },
+    {
+      "id": "mestre_lord_knight",
+      "name": "GrÃƒÂ£o-Mestre do Lorde Cavaleiro",
+      "position": {
+        "x": 15,
+        "y": 0,
+        "z": 8
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#b08d57"
+      },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "A honra da ordem exige mais do que forÃƒÂ§a. Exige feitos dignos de uma lenda.",
+            "options": [
+              {
+                "text": "Continue seu caminho, Lord Knight.",
+                "next": "already_lord_knight",
+                "condition": {
+                  "type": "playerClassIs",
+                  "value": "lord_knight"
+                }
+              },
+              {
+                "text": "Aceitar a ProvaÃƒÂ§ÃƒÂ£o do Lorde Cavaleiro",
+                "next": "aceitar_prova",
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_evo2_lord_knight"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_evo2_lord_knight"
+                }
+              },
+              {
+                "text": "Ainda estou cumprindo a provaÃƒÂ§ÃƒÂ£o.",
+                "next": "em_andamento",
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_evo2_lord_knight"
+                }
+              },
+              {
+                "text": "Completei a provaÃƒÂ§ÃƒÂ£o ÃƒÂ©pica.",
+                "next": "completar_prova",
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_evo2_lord_knight"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_evo2_lord_knight"
+                }
+              },
+              {
+                "text": "Estou pronto para me tornar Lord Knight!",
+                "next": "confirmar_jobchange",
+                "condition": {
+                  "type": "questCompleted",
+                  "questId": "quest_evo2_lord_knight"
+                },
+                "action": {
+                  "type": "doJobChange",
+                  "jobId": "lord_knight"
+                }
+              },
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "already_lord_knight": {
+            "text": "A honra da ordem agora vive em vocÃƒÂª, Lord Knight.",
+            "options": [
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "aceitar_prova": {
+            "text": "VÃƒÂ¡ atÃƒÂ© Eremita Kael e prove que sua lÃƒÂ¢mina serve ÃƒÂ  ordem e ao destino.",
+            "options": [
+              {
+                "text": "Aceito a provaÃƒÂ§ÃƒÂ£o.",
+                "next": "end"
+              }
+            ]
+          },
+          "em_andamento": {
+            "text": "Sua jornada ainda nÃƒÂ£o terminou. Volte quando concluir cada etapa.",
+            "options": [
+              {
+                "text": "Voltarei.",
+                "next": "end"
+              }
+            ]
+          },
+          "completar_prova": {
+            "text": "VocÃƒÂª atravessou a provaÃƒÂ§ÃƒÂ£o como um verdadeiro campeÃƒÂ£o da ordem.",
+            "options": [
+              {
+                "text": "Estou pronto.",
+                "next": "end"
+              }
+            ]
+          },
+          "confirmar_jobchange": {
+            "text": "Erga sua espada e assuma seu destino. VocÃƒÂª agora ÃƒÂ© um Lord Knight!",
+            "options": [
+              {
+                "text": "Obrigado, GrÃƒÂ£o-Mestre.",
+                "next": "end"
+              }
+            ]
+          }
+        }
+      },
+      "modelFile": "assets/models/player/knight.glb"
+    },
+    {
+      "id": "mestre_high_wizard",
+      "name": "GrÃƒÂ£o-Mestre do Grande Bruxo",
+      "position": {
+        "x": -15,
+        "y": 0,
+        "z": 8
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#7a6cff"
+      },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "O verdadeiro arcano nÃƒÂ£o se curva ao caos. Ele o domina.",
+            "options": [
+              {
+                "text": "Continue sua ascensÃƒÂ£o, High Wizard.",
+                "next": "already_high_wizard",
+                "condition": {
+                  "type": "playerClassIs",
+                  "value": "high_wizard"
+                }
+              },
+              {
+                "text": "Aceitar o Rito do Grande Bruxo",
+                "next": "aceitar_prova",
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_evo2_high_wizard"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_evo2_high_wizard"
+                }
+              },
+              {
+                "text": "Ainda estou cumprindo o rito.",
+                "next": "em_andamento",
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_evo2_high_wizard"
+                }
+              },
+              {
+                "text": "ConcluÃƒÂ­ o rito arcano.",
+                "next": "completar_prova",
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_evo2_high_wizard"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_evo2_high_wizard"
+                }
+              },
+              {
+                "text": "Estou pronto para me tornar High Wizard!",
+                "next": "confirmar_jobchange",
+                "condition": {
+                  "type": "questCompleted",
+                  "questId": "quest_evo2_high_wizard"
+                },
+                "action": {
+                  "type": "doJobChange",
+                  "jobId": "high_wizard"
+                }
+              },
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "already_high_wizard": {
+            "text": "Os fluxos arcanos jÃƒÂ¡ reconhecem seu nome, High Wizard.",
+            "options": [
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "aceitar_prova": {
+            "text": "Procure OrÃƒÂ¡culo Lyra. SÃƒÂ³ entÃƒÂ£o compreenderÃƒÂ¡ o que o poder realmente exige.",
+            "options": [
+              {
+                "text": "Seguirei o rito.",
+                "next": "end"
+              }
+            ]
+          },
+          "em_andamento": {
+            "text": "O conhecimento ainda nÃƒÂ£o foi totalmente conquistado.",
+            "options": [
+              {
+                "text": "Voltarei.",
+                "next": "end"
+              }
+            ]
+          },
+          "completar_prova": {
+            "text": "Seu domÃƒÂ­nio do arcano ultrapassou o limite dos magos comuns.",
+            "options": [
+              {
+                "text": "Estou pronto.",
+                "next": "end"
+              }
+            ]
+          },
+          "confirmar_jobchange": {
+            "text": "Que os cÃƒÂ©us e os elementos respondam ao seu chamado. VocÃƒÂª agora ÃƒÂ© um High Wizard!",
+            "options": [
+              {
+                "text": "Obrigado, GrÃƒÂ£o-Mestre.",
+                "next": "end"
+              }
+            ]
+          }
+        }
+      },
+      "modelFile": "assets/models/player/mage.glb"
+    },
+    {
+      "id": "mestre_sniper",
+      "name": "GrÃƒÂ£o-Mestre do Atirador de Elite",
+      "position": {
+        "x": 15,
+        "y": 0,
+        "z": -8
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#5fae4a"
+      },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "Um verdadeiro caÃƒÂ§ador nÃƒÂ£o erra quando o destino depende de seu disparo.",
+            "options": [
+              {
+                "text": "Sua mira jÃƒÂ¡ ÃƒÂ© lendÃƒÂ¡ria, Sniper.",
+                "next": "already_sniper",
+                "condition": {
+                  "type": "playerClassIs",
+                  "value": "sniper"
+                }
+              },
+              {
+                "text": "Aceitar o Julgamento do Sniper",
+                "next": "aceitar_prova",
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_evo2_sniper"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_evo2_sniper"
+                }
+              },
+              {
+                "text": "Ainda estou em julgamento.",
+                "next": "em_andamento",
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_evo2_sniper"
+                }
+              },
+              {
+                "text": "Completei o julgamento.",
+                "next": "completar_prova",
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_evo2_sniper"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_evo2_sniper"
+                }
+              },
+              {
+                "text": "Estou pronto para me tornar Sniper!",
+                "next": "confirmar_jobchange",
+                "condition": {
+                  "type": "questCompleted",
+                  "questId": "quest_evo2_sniper"
+                },
+                "action": {
+                  "type": "doJobChange",
+                  "jobId": "sniper"
+                }
+              },
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "already_sniper": {
+            "text": "Cada flecha sua jÃƒÂ¡ encontra o alvo antes mesmo de ser disparada.",
+            "options": [
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "aceitar_prova": {
+            "text": "Encontre Batedor Thorn. Ele testarÃƒÂ¡ sua disciplina e seus instintos.",
+            "options": [
+              {
+                "text": "Aceito o julgamento.",
+                "next": "end"
+              }
+            ]
+          },
+          "em_andamento": {
+            "text": "A presa ainda nÃƒÂ£o caiu. Continue.",
+            "options": [
+              {
+                "text": "Voltarei.",
+                "next": "end"
+              }
+            ]
+          },
+          "completar_prova": {
+            "text": "Sua precisÃƒÂ£o jÃƒÂ¡ nÃƒÂ£o pertence ao mundo comum.",
+            "options": [
+              {
+                "text": "Estou pronto.",
+                "next": "end"
+              }
+            ]
+          },
+          "confirmar_jobchange": {
+            "text": "Respire, mire e transcenda. VocÃƒÂª agora ÃƒÂ© um Sniper!",
+            "options": [
+              {
+                "text": "Obrigado, GrÃƒÂ£o-Mestre.",
+                "next": "end"
+              }
+            ]
+          }
+        }
+      },
+      "modelFile": "assets/models/player/archer.glb"
+    },
+    {
+      "id": "mestre_shadow_assassin",
+      "name": "GrÃƒÂ£o-Mestre do Assassino das Sombras",
+      "position": {
+        "x": -15,
+        "y": 0,
+        "z": -8
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#3a3a3a"
+      },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "As sombras nÃƒÂ£o acolhem os fracos. Elas os consomem.",
+            "options": [
+              {
+                "text": "As sombras jÃƒÂ¡ o reconhecem, Shadow Assassin.",
+                "next": "already_shadow_assassin",
+                "condition": {
+                  "type": "playerClassIs",
+                  "value": "shadow_assassin"
+                }
+              },
+              {
+                "text": "Aceitar o VÃƒÂ©u Final",
+                "next": "aceitar_prova",
+                "condition": {
+                  "type": "questNotStarted",
+                  "questId": "quest_evo2_shadow_assassin"
+                },
+                "action": {
+                  "type": "offerQuest",
+                  "questId": "quest_evo2_shadow_assassin"
+                }
+              },
+              {
+                "text": "Ainda caminho pelo vÃƒÂ©u.",
+                "next": "em_andamento",
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_evo2_shadow_assassin"
+                }
+              },
+              {
+                "text": "Completei o VÃƒÂ©u Final.",
+                "next": "completar_prova",
+                "condition": {
+                  "type": "questCompletable",
+                  "questId": "quest_evo2_shadow_assassin"
+                },
+                "action": {
+                  "type": "completeQuest",
+                  "questId": "quest_evo2_shadow_assassin"
+                }
+              },
+              {
+                "text": "Estou pronto para me tornar Shadow Assassin!",
+                "next": "confirmar_jobchange",
+                "condition": {
+                  "type": "questCompleted",
+                  "questId": "quest_evo2_shadow_assassin"
+                },
+                "action": {
+                  "type": "doJobChange",
+                  "jobId": "shadow_assassin"
+                }
+              },
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "already_shadow_assassin": {
+            "text": "VocÃƒÂª jÃƒÂ¡ nÃƒÂ£o caminha entre as sombras. VocÃƒÂª ÃƒÂ© uma delas.",
+            "options": [
+              {
+                "text": "Adeus.",
+                "next": "end"
+              }
+            ]
+          },
+          "aceitar_prova": {
+            "text": "Procure Informante Sable. Ele o conduzirÃƒÂ¡ pela etapa que separa o mortal da lenda.",
+            "options": [
+              {
+                "text": "Aceito o vÃƒÂ©u.",
+                "next": "end"
+              }
+            ]
+          },
+          "em_andamento": {
+            "text": "Ainda hÃƒÂ¡ sangue e silÃƒÂªncio entre vocÃƒÂª e seu destino.",
+            "options": [
+              {
+                "text": "Voltarei.",
+                "next": "end"
+              }
+            ]
+          },
+          "completar_prova": {
+            "text": "Nem mesmo a noite negou sua passagem.",
+            "options": [
+              {
+                "text": "Estou pronto.",
+                "next": "end"
+              }
+            ]
+          },
+          "confirmar_jobchange": {
+            "text": "DesapareÃƒÂ§a do mundo antigo. VocÃƒÂª agora ÃƒÂ© um Shadow Assassin!",
+            "options": [
+              {
+                "text": "Obrigado, GrÃƒÂ£o-Mestre.",
+                "next": "end"
+              }
+            ]
+          }
+        }
+      },
+      "modelFile": "assets/models/npcs/rogue_hooded.glb"
+    },
+    {
+      "id": "eremita_kael",
+      "name": "Eremita Kael",
+      "position": {
+        "x": 25,
+        "y": 0,
+        "z": 15
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#8c6b3f"
+      },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "A lÃƒÂ¢mina sÃƒÂ³ alcanÃƒÂ§a grandeza quando encontra propÃƒÂ³sito. Volte ao seu mestre e complete seu juramento.",
+            "options": [
+              {
+                "text": "Entendi.",
+                "next": "end",
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_evo2_lord_knight"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "modelFile": "assets/models/npcs/barbarian.glb"
+    },
+    {
+      "id": "oraculo_lyra",
+      "name": "OrÃƒÂ¡culo Lyra",
+      "position": {
+        "x": -25,
+        "y": 0,
+        "z": 15
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#6f63d9"
+      },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "O poder absoluto exige visÃƒÂ£o absoluta. Leve esta compreensÃƒÂ£o de volta ao GrÃƒÂ£o-Mestre.",
+            "options": [
+              {
+                "text": "Eu compreendo.",
+                "next": "end",
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_evo2_high_wizard"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "modelFile": "assets/models/player/mage.glb"
+    },
+    {
+      "id": "batedor_thorn",
+      "name": "Batedor Thorn",
+      "position": {
+        "x": 25,
+        "y": 0,
+        "z": -15
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#4e8f3b"
+      },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "Olhos atentos. RespiraÃƒÂ§ÃƒÂ£o firme. Agora volte e conclua sua prova.",
+            "options": [
+              {
+                "text": "Vou retornar.",
+                "next": "end",
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_evo2_sniper"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "modelFile": "assets/models/player/archer.glb"
+    },
+    {
+      "id": "informante_sable",
+      "name": "Informante Sable",
+      "position": {
+        "x": -25,
+        "y": 0,
+        "z": -15
+      },
+      "modelPlaceholder": {
+        "type": "capsule",
+        "color": "#4a4a4a"
+      },
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "VocÃƒÂª ouviu o sussurro certo. Agora desapareÃƒÂ§a e retorne ao GrÃƒÂ£o-Mestre.",
+            "options": [
+              {
+                "text": "Entendido.",
+                "next": "end",
+                "condition": {
+                  "type": "questActive",
+                  "questId": "quest_evo2_shadow_assassin"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "modelFile": "assets/models/npcs/rogue.glb"
+    },
+    {
+      "id": "sage",
+      "name": "SÃƒÂ¡bio AnciÃƒÂ£o",
+      "type": "quest",
+      "position": {
+        "x": 15,
+        "y": 0,
+        "z": -10
+      },
+      "dialogues": {
+        "default": {
+          "text": "Jovem aventureiro... sinto uma energia especial em vocÃƒÂª. Talvez esteja pronto para o desafio do EspÃƒÂ­rito Arcano.",
+          "options": []
+        }
+      },
+      "actions": [
+        {
+          "type": "offerQuest",
+          "questId": "quest_pet_espirito"
+        },
+        {
+          "type": "completeQuest",
+          "questId": "quest_pet_espirito"
+        }
+      ],
+      "modelFile": "assets/models/npcs/rogue_hooded.glb"
+    }
+  ]
+}
+
+# 3. npcs.js - spawnFromConfig e imports
+// js/entities/npcs.js
+// Camada: entities
+// DependÃªncias: THREE (importmap), events.js (event bus), ui.js (isDialogOpen via import direto â€” R8 exceÃ§Ã£o justificada: consulta sÃ­ncrona de estado de UI necessÃ¡ria no update loop)
+
+import * as THREE from 'three';
+import * as Events from '../core/events.js';
+import * as Quests from '../systems/quests.js';
+import * as Classes from '../systems/classes.js';
+import { updateNpcQuestIndicator } from '../ui/ui.js';
+import * as Scene from '../world/scene.js';
+import { playSFX3D } from '../core/audio.js';
+import * as Models from '../core/models.js';
+/** @type {Array<NPCInstance>} */
+const _npcs = [];
+
+let _scene = null;
+
+/**
+ * @typedef {Object} NPCInstance
+ * @property {string} id
+ * @property {string} name
+ * @property {THREE.Mesh} mesh
+ * @property {THREE.Vector3} position
+ * @property {Object} dialogTree
+ * @property {boolean} playerInRange
+ */
+
+// â”€â”€â”€ indicador de proximidade â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+/** NPC que estÃ¡ atualmente com player no raio */
+let _nearestInRange = null;
+let _dialogOpen = false;
+/** Intervalo mÃ­nimo entre emissÃµes do hint (ms) */
+const HINT_COOLDOWN = 1500;
+let _lastHintTime = 0;
+
+const INTERACT_RADIUS = 2;        // unidades
+const INTERACT_RADIUS_SQ = INTERACT_RADIUS * INTERACT_RADIUS;
+
+// â”€â”€â”€ geometria compartilhada â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Uma geometria e um material por cor economiza draw calls (R6)
+let _sharedGeo = null;
+let _sharedMat = null;
+
+function _getSharedAssets() {
+  if (!_sharedGeo) {
+    // Three.js r169 tem CapsuleGeometry nativo
+    _sharedGeo = new THREE.CapsuleGeometry(0.35, 0.9, 4, 8);
+  }
+  if (!_sharedMat) {
+    _sharedMat = new THREE.MeshLambertMaterial({ color: 0xFFD700 });
+  }
+  return { geo: _sharedGeo, mat: _sharedMat };
+}
+// --- helpers 3D (Sessao 25D) ---
+
+function _findIdleClip(clips) {
+  if (!Array.isArray(clips) || clips.length === 0) return null;
+  const byName = ['idle', 'Idle', 'IDLE', 'idle_01', 'Idle_01'];
+  for (const wanted of byName) {
+    const clip = clips.find(c => c?.name === wanted);
+    if (clip) return clip;
+  }
+  const partial = clips.find(c => /idle/i.test(c?.name ?? ''));
+  if (partial) return partial;
+  return clips[0] ?? null;
+}
+
+function _prepareModelRoot(root, npcId) {
+  root.traverse((child) => {
+    child.userData = child.userData ?? {};
+    child.userData.npcId = npcId;
+    if (child.isMesh || child.isSkinnedMesh) {
+      child.castShadow = true;
+      child.receiveShadow = false;
+    }
+  });
+}
+
+async function _createNpcVisual(def) {
+  if (def?.modelFile) {
+    try {
+      const gltf = await Models.loadModel(def.modelFile);
+      const model = gltf?.scene ?? null;
+      if (model) {
+        _prepareModelRoot(model, def.id);
+        model.scale.set(1.0, 1.0, 1.0);
+        const mixer = Models.createMixer(model);
+        const clips = Models.getAnimationClips(gltf);
+        const idleClip = _findIdleClip(clips);
+        let idleAction = null;
+        if (idleClip) {
+          idleAction = mixer.clipAction(idleClip);
+          idleAction.reset();
+          idleAction.play();
+        }
+        return { mesh: model, mixer, idleAction };
+      }
+    } catch (err) {
+      console.warn('[npcs] Falha ao carregar modelFile de ' + def.id + ': ' + def.modelFile, err);
+    }
+  }
+  const { geo, mat } = _getSharedAssets();
+  const fallback = new THREE.Mesh(geo, mat);
+  fallback.castShadow = true;
+  fallback.userData.npcId = def.id;
+  return { mesh: fallback, mixer: null, idleAction: null };
+}
+// â”€â”€â”€ API pÃºblica â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+/**
+ * Inicializa o mÃ³dulo de NPCs.
+ * Deve ser chamado apÃ³s scene.init().
+ * @param {THREE.Scene} scene - cena Three.js ativa
+ */
+export function init(scene) {
+  _scene = scene;
+
+  // Escuta tecla F para iniciar diÃ¡logo
+  Events.on('keyPressed', _onKeyPressed);
+  Events.on('dialogStarted', () => { _dialogOpen = true; });
+  Events.on('dialogEnded',   () => { _dialogOpen = false; });
+}
+
+/**
+ * Cria meshes e registra NPCs a partir do JSON de configuraÃ§Ã£o.
+ * @param {Object} config - conteÃºdo parseado de assets/data/npcs.json
+ */
+export async function spawnFromConfig(config) {
+  if (!_scene) {
+    console.error('[npcs] init() deve ser chamado antes de spawnFromConfig()');
+    return;
+  }
+
+  for (const def of config.npcs) {
+    const { mesh, mixer, idleAction } = await _createNpcVisual(def);
+
+    mesh.position.set(def.position.x, def.position.y, def.position.z);
+    if (!mixer) {
+      mesh.position.y += 0.95;
+    }
+
+    mesh.userData = mesh.userData ?? {};
+    mesh.userData.npcId = def.id;
+
+    _scene.add(mesh);
+
+    const instance = {
+      id:           def.id,
+      name:         def.name,
+      mesh,
+      position:     new THREE.Vector3(def.position.x, def.position.y, def.position.z),
+      dialogTree:   def.dialogTree,
+      playerInRange: false,
+      mixer,
+      idleAction,
+      lastAmbientSfxAt: 0,
+    };
+
+    _npcs.push(instance);
+  }
+
+  Events.emit('npcsSpawned', { count: _npcs.length });
+}
+
+/**
+ * Atualiza proximidade do player a cada frame.
+ * Deve ser chamado no game loop principal com a posiÃ§Ã£o atual do player.
+ * @param {number} delta - tempo desde o Ãºltimo frame (segundos)
+ * @param {THREE.Vector3} playerPos - posiÃ§Ã£o atual do player
+ */
+export function updateAll(delta, playerPos) {
+  if (!playerPos) return;
+  const camera = Scene.getCamera();
+  let closestNpc = null;
+  let closestDistSq = Infinity;
+
+  for (const npc of _npcs) {
+    if (npc.mixer) npc.mixer.update(delta);
+    const dx = playerPos.x - npc.position.x;
+    const dz = playerPos.z - npc.position.z;
+    const distSq = dx * dx + dz * dz;
+
+    const wasInRange = npc.playerInRange;
+    npc.playerInRange = distSq <= INTERACT_RADIUS_SQ;
+    const now = performance.now();
+    if (
+        npc.id === 'blacksmith' &&
+        distSq <= 225 &&
+        now - (npc.lastAmbientSfxAt ?? 0) >= 30000
+    ) {
+        playSFX3D('assets/audio/sfx/sfx_npc_blacksmith_hammer.ogg', npc.mesh.position);
+        npc.lastAmbientSfxAt = now;
+    }
+
+    if (npc.playerInRange && distSq < closestDistSq) {
+      closestDistSq = distSq;
+      closestNpc = npc;
+    }
+
+    // Pequena animaÃ§Ã£o: NPC "olha" para o player quando prÃ³ximo
+    if (npc.playerInRange) {
+      npc.mesh.lookAt(playerPos.x, npc.mesh.position.y, playerPos.z);
+    }
+  }
+
+  // Exibe hint HUD se NPC prÃ³ximo mudou ou cooldown expirou
+  const now = performance.now();
+  if (closestNpc && (closestNpc !== _nearestInRange || now - _lastHintTime > HINT_COOLDOWN)) {
+    _nearestInRange = closestNpc;
+    _lastHintTime = now;
+    Events.emit('uiHintShow', { message: `Pressione F para falar com ${closestNpc.name}` });
+  } else if (!closestNpc && _nearestInRange) {
+    _nearestInRange = null;
+    Events.emit('uiHintHide', {});
+  }
+    for (const npc of _npcs) {
+    updateNpcQuestIndicator(npc.id, npc.mesh, camera, Scene.getRenderer());
+  }
+}
+
+/**
+ * Retorna array de todos os NPCs instanciados.
+ * @returns {NPCInstance[]}
+ */
+export function getAll() {
+  return _npcs;
+}
+
+// â”€â”€â”€ handlers internos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+/**
+ * Trata pressionamento de tecla F para iniciar diÃ¡logo.
+ * @param {Object} payload - { key: string }
+ */
+function _onKeyPressed({ code, action, key }) {
+  const isInteract =
+    action === 'interact' ||
+    code === 'KeyF' ||
+    key === 'f' ||
+    key === 'F';
+
+  if (!isInteract) return;
+  if (_dialogOpen) return;
+  if (!_nearestInRange) return;
+
+  const npc = _nearestInRange;
+
+  // TODO: SFX quando audio.json existir â€” playSFX('sfx_dialog_open')
+
+  Events.emit('dialogStarted', {
+    npcId:      npc.id,
+    npcName:    npc.name,
+    dialogTree: npc.dialogTree,
+  });
+}/**
+ * Executa a action de uma opÃ§Ã£o de diÃ¡logo.
+ * @param {{ type: string, questId: string }} action
+ */
+function _executeAction(action) {
+    if (!action) return;
+    const { type, questId } = action;
+
+    if (type === 'offerQuest') {
+        import('../entities/player.js').then(PlayerMod => {
+            Quests.acceptQuest(questId, PlayerMod.getState?.() ?? null);
+        });
+    }
+    if (type === 'completeQuest') Quests.completeQuest(questId);
+    if (type === 'doJobChange') {
+        import('../entities/player.js').then(PlayerMod => {
+            PlayerMod.applyJobChange(action.jobId);
+        });
+    }
+    if (type === 'refine') {
+        Events.emit('uiWindowToggle', { id: 'refine' });
+    }
+}
+
+Events.on('dialogOptionSelected', ({ npcId, nodeId, optionIndex }) => {
+    const npc = _npcs.find(n => n.id === npcId);
+    if (!npc) return;
+
+    const node = npc.dialogTree.nodes[nodeId];
+    if (!node) return;
+
+    const opt = node.options[optionIndex];
+    if (opt?.action) _executeAction(opt.action);
+});
+
+# 4. world.js - _spawnModelDecoration
+  js\world\world.js:12:let _currentMapId = null;
+  js\world\world.js:13:let _currentMapConfig = null;
+  js\world\world.js:14:let _terrainMesh = null;
+> js\world\world.js:15:let _decorationGroup = null;
+  js\world\world.js:16:let _instancedMeshes = [];
+  js\world\world.js:17:let _mapObjects = [];
+  js\world\world.js:18:let _exitNearTarget = null;
+  js\world\world.js:79:  add(_terrainMesh);
+  js\world\world.js:80:  _mapObjects.push(_terrainMesh);
+  js\world\world.js:81:
+> js\world\world.js:82:  await _spawnMapDecoration(nextMap);
+  js\world\world.js:83:  await _spawnMapMonsters(nextMap);
+  js\world\world.js:84:  await _spawnMapNpcs(nextMap);
+  js\world\world.js:85:  _applyMapAudio(nextMap);
+  js\world\world.js:184:  }
+  js\world\world.js:185:  _instancedMeshes = [];
+  js\world\world.js:186:  _mapObjects = [];
+> js\world\world.js:187:  _decorationGroup = null;
+  js\world\world.js:188:  _terrainMesh = null;
+  js\world\world.js:189:  _cycleTime = 150;
+  js\world\world.js:190:  _weatherTime = 0;
+  js\world\world.js:228:
+  js\world\world.js:229:  return mesh;
+  js\world\world.js:230:}
+> js\world\world.js:231:async function _spawnMapDecoration(mapConfig) {
+> js\world\world.js:232:  const decorations = Array.isArray(mapConfig.decoration) ? mapConfig.decoration : [];
+> js\world\world.js:233:  if (decorations.length === 0) return;
+  js\world\world.js:234:
+> js\world\world.js:235:  _decorationGroup = new THREE.Group();
+> js\world\world.js:236:  _decorationGroup.name = 'decorationGroup';
+> js\world\world.js:237:  add(_decorationGroup);
+> js\world\world.js:238:  _mapObjects.push(_decorationGroup);
+  js\world\world.js:239:
+  js\world\world.js:240:  const proceduralByModel = new Map();
+  js\world\world.js:241:  const nonProcedural = [];
+  js\world\world.js:242:
+> js\world\world.js:243:  for (const entry of decorations) {
+  js\world\world.js:244:    const count = Math.max(0, Number(entry.count || 0));
+> js\world\world.js:245:    if (count <= 0 && !Array.isArray(entry.positions)) continue;
+  js\world\world.js:246:
+  js\world\world.js:247:    if (entry.procedural === true) {
+  js\world\world.js:248:      const key = entry.model ?? 'unknown';
+  js\world\world.js:258:  }
+  js\world\world.js:259:
+  js\world\world.js:260:  for (const [model, bucket] of proceduralByModel) {
+> js\world\world.js:261:    _spawnProceduralInstancedMesh(model, bucket);
+  js\world\world.js:262:  }
+  js\world\world.js:263:
+  js\world\world.js:264:  for (const { entry, count } of nonProcedural) {
+> js\world\world.js:265:    await _spawnModelDecoration(entry, count, _decorationGroup);
+  js\world\world.js:266:  }
+  js\world\world.js:267:}
+  js\world\world.js:268:
+> js\world\world.js:269:async function _spawnModelDecoration(entry, count, group) {
+  js\world\world.js:270:  if (!entry?.path) return;
+  js\world\world.js:271:
+  js\world\world.js:272:  let gltf = null;
+  js\world\world.js:278:  }
+  js\world\world.js:279:
+  js\world\world.js:280:  if (!gltf?.scene) return;
+> js\world\world.js:281:// Posição fixa: entry.positions sobrepõe area/count
+> js\world\world.js:282:  if (Array.isArray(entry.positions) && entry.positions.length > 0) {
+> js\world\world.js:283:    for (const pos of entry.positions) {
+  js\world\world.js:284:      const instance = Models.cloneModel(gltf);
+  js\world\world.js:285:      if (!instance) continue;
+  js\world\world.js:286:      instance.position.set(Number(pos.x ?? 0), Number(pos.y ?? 0), Number(pos.z ?? 0));
+  js\world\world.js:300:    const instance = Models.cloneModel(gltf);
+  js\world\world.js:301:    if (!instance) continue;
+  js\world\world.js:302:
+> js\world\world.js:303:    _applyDecorationTransform(instance, entry);
+  js\world\world.js:304:    instance.traverse?.((child) => {
+  js\world\world.js:305:      if (child?.isMesh) {
+  js\world\world.js:306:        child.castShadow = false;
+  js\world\world.js:311:  }
+  js\world\world.js:312:}
+  js\world\world.js:313:
+> js\world\world.js:314:function _spawnProceduralInstancedMesh(modelKey, bucket) {
+  js\world\world.js:315:  const { totalCount, entries } = bucket;
+  js\world\world.js:316:  if (totalCount <= 0) return;
+  js\world\world.js:317:
+  js\world\world.js:334:
+  js\world\world.js:335:  for (const { entry, count } of entries) {
+  js\world\world.js:336:    for (let i = 0; i < count; i++) {
+> js\world\world.js:337:      _applyDecorationTransform(dummy, entry);
+  js\world\world.js:338:      dummy.updateMatrix();
+  js\world\world.js:339:      instanced.setMatrixAt(idx, dummy.matrix);
+  js\world\world.js:340:      idx++;
+  js\world\world.js:347:  _instancedMeshes.push(instanced);
+  js\world\world.js:348:}
+  js\world\world.js:349:
+> js\world\world.js:350:function _applyDecorationTransform(object, entry) {
+  js\world\world.js:351:  const area = entry.area ?? {};
+  js\world\world.js:352:  const xMin = Number(area.xMin ?? -10);
+  js\world\world.js:353:  const xMax = Number(area.xMax ?? 10);
+
+# 5. Modelos NPC disponíveis
+barbarian.glb
+blacksmith.glb
+guard.glb
+merchant.glb
+priest.glb
+rogue.glb
+rogue_hooded.glb
+sage.glb
+
+# 6. Modelos environment disponíveis
+BirchTree_1.bin
+BirchTree_1.gltf
+BirchTree_Bark.jpg
+BirchTree_Bark_Normal.png
+BirchTree_Leaves.png
+Bush.bin
+Bush.gltf
+Bush_Flowers.bin
+Bush_Flowers.gltf
+Bush_Leaves.png
+Flowers.png
+Grass.png
+Leaves_BW.png
+MapleTree_Bark.jpg
+MapleTree_Bark_Normal.png
+MapleTree_Leaves.png
+MapleTree_Leaves_BW.png
+NormalTree_Bark.jpg
+NormalTree_Bark_Normal.png
+NormalTree_Leaves.png
+PalmTree_Leaves.png
+PalmTree_Trunk.jpg
+PalmTree_Trunk_Normal.png
+PineTree_Bark.jpg
+PineTree_Bark_Normal.png
+PineTree_Leaves.png
+Rocks.jpg
+
+# 7. Modelos buildings disponíveis
+barrel.bin
+barrel.gltf
+building_church_blue.bin
+building_church_blue.gltf
+building_market_blue.bin
+building_market_blue.gltf
+building_tower_A_blue.bin
+building_tower_A_blue.gltf
+building_tower_base_blue.bin
+building_tower_base_blue.gltf
+building_tower_B_blue.bin
+building_tower_B_blue.gltf
+building_well_blue.bin
+building_well_blue.gltf
+crate_A_big.bin
+crate_A_big.gltf
+crate_A_small.bin
+crate_A_small.gltf
+crate_B_small.bin
+crate_B_small.gltf
+fence_stone_straight.bin
+fence_stone_straight.gltf
+fence_wood_straight.bin
+fence_wood_straight.gltf
+hexagons_medieval.png
+wall_corner_A_outside.bin
+wall_corner_A_outside.gltf
+wall_straight.bin
+wall_straight.gltf
+wall_straight_gate.bin
+wall_straight_gate.gltf
+
+

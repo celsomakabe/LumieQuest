@@ -1,7 +1,7 @@
-/**
- * scene.js — Cena 3D principal do LumieQuest.
- * Responsável por: THREE.Scene, câmera, luzes, chão e renderer.
- * Não importa entities nem systems (R8 — acoplamento zero com camadas superiores).
+﻿/**
+ * scene.js â€” Cena 3D principal do LumieQuest.
+ * ResponsÃ¡vel por: THREE.Scene, cÃ¢mera, luzes, chÃ£o e renderer.
+ * NÃ£o importa entities nem systems (R8 â€” acoplamento zero com camadas superiores).
  */
 
 import * as THREE from 'three';
@@ -23,8 +23,8 @@ let _renderPass = null;
 let _bloomPass = null;
 let _vignettePass = null;
 /**
- * Mesh do chão. Mantido em escopo de módulo para permitir aplicação de textura
- * via setGroundTexture() após o pipeline de assets ficar pronto (PROMPT 2).
+ * Mesh do chÃ£o. Mantido em escopo de mÃ³dulo para permitir aplicaÃ§Ã£o de textura
+ * via setGroundTexture() apÃ³s o pipeline de assets ficar pronto (PROMPT 2).
  * @type {THREE.Mesh|null}
  */
 let _ground = null;
@@ -32,27 +32,27 @@ let _sun = null;
 let _hemiLight = null;
 
 /**
- * Inicializa cena, câmera, luzes, chão e renderer.
- * Deve ser chamado uma única vez em main.js durante o boot.
+ * Inicializa cena, cÃ¢mera, luzes, chÃ£o e renderer.
+ * Deve ser chamado uma Ãºnica vez em main.js durante o boot.
  * Emite 'sceneReady' ao concluir.
  * @param {HTMLCanvasElement} canvas - Elemento canvas do DOM
  */
 export function init(canvas) {
   // --- Renderer ---
   _renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  _renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Máx 2x para poupar GPU (R6)
+  _renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // MÃ¡x 2x para poupar GPU (R6)
   _renderer.setSize(window.innerWidth, window.innerHeight);
   _renderer.shadowMap.enabled = true;
   _renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Sombras suaves sem custo excessivo
-  _renderer.setClearColor(0x87CEEB); // Azul céu
+  _renderer.setClearColor(0x87CEEB); // Azul cÃ©u
 
   // --- Cena ---
   _scene = new THREE.Scene();
-  _scene.fog = new THREE.FogExp2(0x87CEEB, 0.006);
+  _scene.fog = new THREE.FogExp2(0x87CEEB, 0.0015);
 
-  // --- Câmera perspectiva ---
+  // --- CÃ¢mera perspectiva ---
   _camera = new THREE.PerspectiveCamera(
-    38,                                     // FOV: 75°
+    38,                                     // FOV: 75Â°
     window.innerWidth / window.innerHeight, // Aspect ratio
     0.1,                                    // Near plane
     1000                                    // Far plane
@@ -61,6 +61,7 @@ export function init(canvas) {
     _camera.lookAt(0, 0, 0);
 // --- EffectComposer + passes ---
   _composer = new EffectComposer(_renderer);
+  _composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   _renderPass = new RenderPass(_scene, _camera);
 
   const bloomResolution = new THREE.Vector2(window.innerWidth, window.innerHeight);
@@ -126,11 +127,11 @@ export function init(canvas) {
   _scene.add(_sun);
   _scene.add(_sun.target);
 
-  // --- Chão verde (PlaneGeometry 20×20) ---
-  // Atribuído a _ground (escopo de módulo) para permitir setGroundTexture() depois.
+  // --- ChÃ£o verde (PlaneGeometry 20Ã—20) ---
+  // AtribuÃ­do a _ground (escopo de mÃ³dulo) para permitir setGroundTexture() depois.
   const groundGeo = new THREE.PlaneGeometry(20, 20);
   const groundMat = new THREE.MeshStandardMaterial({
-    color: 0x4a7c3a, // Verde grama (será resetado para branco quando textura for aplicada)
+    color: 0x4a7c3a, // Verde grama (serÃ¡ resetado para branco quando textura for aplicada)
     roughness: 0.9,
     metalness: 0.0,
   });
@@ -138,7 +139,7 @@ export function init(canvas) {
   _ground.rotation.x = -Math.PI / 2; // Rotaciona para horizontal (XZ)
   _ground.receiveShadow = true;
   _scene.add(_ground);
-  _ground.visible = false; // world.js cria terreno próprio
+  _ground.visible = false; // world.js cria terreno prÃ³prio
 
   // --- Resize handler ---
   window.addEventListener('resize', _onResize);
@@ -147,7 +148,7 @@ export function init(canvas) {
 }
 
 /**
- * Atualiza câmera e renderer quando a janela é redimensionada.
+ * Atualiza cÃ¢mera e renderer quando a janela Ã© redimensionada.
  * @private
  */
 function _onResize() {
@@ -156,12 +157,13 @@ function _onResize() {
   _renderer.setSize(window.innerWidth, window.innerHeight);
   if (_composer) {
     _composer.setSize(window.innerWidth, window.innerHeight);
+    _composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   }
 }
 
 /**
  * Executa um frame de render. Chamado pelo game loop a cada requestAnimationFrame.
- * @param {number} delta - Tempo desde o último frame em ms (não usado aqui ainda)
+ * @param {number} delta - Tempo desde o Ãºltimo frame em ms (nÃ£o usado aqui ainda)
  */
 export function render(delta) {
   if (_composer) {
@@ -172,13 +174,13 @@ export function render(delta) {
 }
 
 /**
- * Retorna a instância da THREE.Scene.
+ * Retorna a instÃ¢ncia da THREE.Scene.
  * @returns {THREE.Scene}
  */
 export function getScene() { return _scene; }
 
 /**
- * Retorna a câmera perspectiva ativa.
+ * Retorna a cÃ¢mera perspectiva ativa.
  * @returns {THREE.PerspectiveCamera}
  */
 export function getCamera() { return _camera; }
@@ -227,8 +229,17 @@ export function updateLighting(cyclePhase, cycleProgress, lightingConfig) {
   if (ambient)     _hemiLight.color.set(ambient);
   if (directional) _sun.color.set(directional);
   if (typeof intensity === 'number') {
-    _hemiLight.intensity = intensity * 0.7;
+    _hemiLight.intensity = intensity * 1.4;
     _sun.intensity       = intensity;
+  }
+
+  if (_scene) {
+    let bgI;
+    if (cyclePhase === 'day') bgI = 1.0;
+    else if (cyclePhase === 'night') bgI = 0.25;
+    else if (cyclePhase === 'dawn') bgI = THREE.MathUtils.lerp(0.25, 1.0, cycleProgress);
+    else bgI = THREE.MathUtils.lerp(1.0, 0.25, cycleProgress);
+    _scene.backgroundIntensity = bgI;
   }
 
   if (_scene?.fog) {
@@ -271,7 +282,7 @@ export function setSkybox(urls) {
   );
 }
 /**
- * Adiciona um Object3D à cena.
+ * Adiciona um Object3D Ã  cena.
  * @param {THREE.Object3D} obj - Objeto a adicionar
  */
 export function add(obj) { _scene.add(obj); }
@@ -283,29 +294,30 @@ export function add(obj) { _scene.add(obj); }
 export function remove(obj) { _scene.remove(obj); }
 
 /**
- * Retorna o mesh do chão para inspeção externa (usado por physics e debug).
- * @returns {THREE.Mesh|null} Retorna null se init() ainda não foi chamado.
+ * Retorna o mesh do chÃ£o para inspeÃ§Ã£o externa (usado por physics e debug).
+ * @returns {THREE.Mesh|null} Retorna null se init() ainda nÃ£o foi chamado.
  */
 export function getGround() {
   return _ground;
 }
 
 /**
- * Aplica uma textura ao material do chão.
+ * Aplica uma textura ao material do chÃ£o.
  * Configura repeat e wrapping para tile correto em terrenos grandes.
- * Chamado por main.js após o pipeline de assets emitir 'assetsReady'.
+ * Chamado por main.js apÃ³s o pipeline de assets emitir 'assetsReady'.
  * @param {THREE.Texture} texture - Textura carregada via assets.loadTexture()
  * @returns {void}
  */
 export function setGroundTexture(texture) {
   if (!_ground) {
-    console.warn('[scene] setGroundTexture: mesh do chão não encontrado (init() chamado?)');
+    console.warn('[scene] setGroundTexture: mesh do chÃ£o nÃ£o encontrado (init() chamado?)');
     return;
   }
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(8, 8); // Tile 8x8 sobre o plano de 20×20 unidades
+  texture.repeat.set(8, 8); // Tile 8x8 sobre o plano de 20Ã—20 unidades
   _ground.material.map = texture;
-  _ground.material.color.set(0xffffff); // Reseta cor para branco para não tingir a textura
+  _ground.material.color.set(0xffffff); // Reseta cor para branco para nÃ£o tingir a textura
   _ground.material.needsUpdate = true;
 }
+

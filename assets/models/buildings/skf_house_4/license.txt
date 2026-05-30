@@ -1,0 +1,11 @@
+Model Information:
+* title:	Medieval House
+* source:	https://sketchfab.com/3d-models/medieval-house-1bea14d1a8a34b0b86a5374f256b47bf
+* author:	cizzzoo (https://sketchfab.com/pierpapiercizo)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Medieval House" (https://sketchfab.com/3d-models/medieval-house-1bea14d1a8a34b0b86a5374f256b47bf) by cizzzoo (https://sketchfab.com/pierpapiercizo) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

@@ -5,7 +5,7 @@
                      "name":  "Cidade de Prontera",
                      "terrainSize":  800,
                      "terrainColor":  "#7caa5a",
-                     "terrainTexture":  "assets/textures/terrain/city_cobblestone.jpg",
+                     "texture":  "assets/textures/terrain/city_cobblestone.jpg",
                      "skybox":  [
                                     "assets/textures/skybox/px.png",
                                     "assets/textures/skybox/nx.png",
@@ -41,7 +41,7 @@
                                             "position":  {
                                                              "x":  0,
                                                              "y":  0,
-                                                             "z":  78
+                                                             "z": 74
                                                          },
                                             "radius":  3,
                                             "targetMap":  "forest_01",
@@ -56,7 +56,7 @@
                                             "position":  {
                                                              "x":  0,
                                                              "y":  0,
-                                                             "z":  -78
+                                                             "z": -74
                                                          },
                                             "radius":  3,
                                             "targetMap":  "caves_01",
@@ -102,21 +102,716 @@
                                                           ]
                                         },
                                         {
-                                            "path":  "assets/models/buildings/wall_straight_gate.gltf",
+                                            "type":  "ground_plane",
+                                            "texture":  "assets/textures/terrain/city_cobblestone.jpg",
+                                            "width":  152,
+                                            "height":  152,
+                                            "y":  0.05,
+                                            "x":  0,
+                                            "z":  0
+                                        },
+                                        {
+                                            "path":  "assets/models/buildings/building_church_blue.gltf",
                                             "positions":  [
                                                               {
                                                                   "x":  0,
                                                                   "y":  0,
-                                                                  "z":  -80,
+                                                                  "z":  0,
                                                                   "rotY":  0,
-                                                                  "scale":  5
-                                                              },
+                                                                  "scale":  14
+                                                              }
+                                                          ]
+                                        },
+                                        {
+                                            "path":  "assets/models/buildings/building_well_blue.gltf",
+                                            "positions":  [
                                                               {
                                                                   "x":  0,
                                                                   "y":  0,
-                                                                  "z":  80,
-                                                                  "rotY":  3.141592653589793,
+                                                                  "z":  -22,
+                                                                  "rotY":  0,
+                                                                  "scale":  7
+                                                              }
+                                                          ]
+                                        },
+                                        {
+                                            "path":  "assets/models/buildings/village/House_1.glb",
+                                            "positions":  [
+                                                              {
+                                                                  "x":  -22,
+                                                                  "y":  0,
+                                                                  "z":  -37,
+                                                                  "rotY":  3.08,
                                                                   "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -37,
+                                                                  "y":  0,
+                                                                  "z":  -37,
+                                                                  "rotY":  1.55,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -52,
+                                                                  "y":  0,
+                                                                  "z":  -37,
+                                                                  "rotY":  1.56,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -67,
+                                                                  "y":  0,
+                                                                  "z":  -37,
+                                                                  "rotY":  1.62,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -22,
+                                                                  "y":  0,
+                                                                  "z":  52,
+                                                                  "rotY":  0.01,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -37,
+                                                                  "y":  0,
+                                                                  "z":  52,
+                                                                  "rotY":  0.06,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -52,
+                                                                  "y":  0,
+                                                                  "z":  52,
+                                                                  "rotY":  1.54,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -67,
+                                                                  "y":  0,
+                                                                  "z":  52,
+                                                                  "rotY":  1.59,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  22,
+                                                                  "y":  0,
+                                                                  "z":  -67,
+                                                                  "rotY":  3.09,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  37,
+                                                                  "y":  0,
+                                                                  "z":  -67,
+                                                                  "rotY":  3.15,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  52,
+                                                                  "y":  0,
+                                                                  "z":  -67,
+                                                                  "rotY":  3.17,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  67,
+                                                                  "y":  0,
+                                                                  "z":  -67,
+                                                                  "rotY":  4.77,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  37,
+                                                                  "y":  0,
+                                                                  "z":  22,
+                                                                  "rotY":  4.7,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  52,
+                                                                  "y":  0,
+                                                                  "z":  22,
+                                                                  "rotY":  4.64,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  67,
+                                                                  "y":  0,
+                                                                  "z":  22,
+                                                                  "rotY":  4.77,
+                                                                  "scale":  5
+                                                              }
+                                                          ]
+                                        },
+                                        {
+                                            "path":  "assets/models/buildings/village/House_2.glb",
+                                            "positions":  [
+                                                              {
+                                                                  "x":  -22,
+                                                                  "y":  0,
+                                                                  "z":  -52,
+                                                                  "rotY":  3.16,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -37,
+                                                                  "y":  0,
+                                                                  "z":  -52,
+                                                                  "rotY":  3.07,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -52,
+                                                                  "y":  0,
+                                                                  "z":  -52,
+                                                                  "rotY":  1.5,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -67,
+                                                                  "y":  0,
+                                                                  "z":  -52,
+                                                                  "rotY":  1.51,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -22,
+                                                                  "y":  0,
+                                                                  "z":  67,
+                                                                  "rotY":  -0.02,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -37,
+                                                                  "y":  0,
+                                                                  "z":  67,
+                                                                  "rotY":  -0.03,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -52,
+                                                                  "y":  0,
+                                                                  "z":  67,
+                                                                  "rotY":  0.05,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -67,
+                                                                  "y":  0,
+                                                                  "z":  67,
+                                                                  "rotY":  1.55,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  37,
+                                                                  "y":  0,
+                                                                  "z":  -22,
+                                                                  "rotY":  4.74,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  52,
+                                                                  "y":  0,
+                                                                  "z":  -22,
+                                                                  "rotY":  4.7,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  67,
+                                                                  "y":  0,
+                                                                  "z":  -22,
+                                                                  "rotY":  4.67,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  22,
+                                                                  "y":  0,
+                                                                  "z":  37,
+                                                                  "rotY":  -0.03,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  37,
+                                                                  "y":  0,
+                                                                  "z":  37,
+                                                                  "rotY":  4.75,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  52,
+                                                                  "y":  0,
+                                                                  "z":  37,
+                                                                  "rotY":  4.74,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  67,
+                                                                  "y":  0,
+                                                                  "z":  37,
+                                                                  "rotY":  4.68,
+                                                                  "scale":  5
+                                                              }
+                                                          ]
+                                        },
+                                        {
+                                            "path":  "assets/models/buildings/village/House_3.glb",
+                                            "positions":  [
+                                                              {
+                                                                  "x":  -22,
+                                                                  "y":  0,
+                                                                  "z":  -67,
+                                                                  "rotY":  3.07,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -37,
+                                                                  "y":  0,
+                                                                  "z":  -67,
+                                                                  "rotY":  3.14,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -52,
+                                                                  "y":  0,
+                                                                  "z":  -67,
+                                                                  "rotY":  3.07,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -67,
+                                                                  "y":  0,
+                                                                  "z":  -67,
+                                                                  "rotY":  1.53,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -37,
+                                                                  "y":  0,
+                                                                  "z":  22,
+                                                                  "rotY":  1.65,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -52,
+                                                                  "y":  0,
+                                                                  "z":  22,
+                                                                  "rotY":  1.51,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -67,
+                                                                  "y":  0,
+                                                                  "z":  22,
+                                                                  "rotY":  1.52,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  22,
+                                                                  "y":  0,
+                                                                  "z":  -37,
+                                                                  "rotY":  3.07,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  37,
+                                                                  "y":  0,
+                                                                  "z":  -37,
+                                                                  "rotY":  4.7,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  52,
+                                                                  "y":  0,
+                                                                  "z":  -37,
+                                                                  "rotY":  4.68,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  67,
+                                                                  "y":  0,
+                                                                  "z":  -37,
+                                                                  "rotY":  4.72,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  22,
+                                                                  "y":  0,
+                                                                  "z":  52,
+                                                                  "rotY":  0.08,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  37,
+                                                                  "y":  0,
+                                                                  "z":  52,
+                                                                  "rotY":  -0.06,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  52,
+                                                                  "y":  0,
+                                                                  "z":  52,
+                                                                  "rotY":  4.75,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  67,
+                                                                  "y":  0,
+                                                                  "z":  52,
+                                                                  "rotY":  4.74,
+                                                                  "scale":  5
+                                                              }
+                                                          ]
+                                        },
+                                        {
+                                            "path":  "assets/models/buildings/village/House_4.glb",
+                                            "positions":  [
+                                                              {
+                                                                  "x":  -37,
+                                                                  "y":  0,
+                                                                  "z":  -22,
+                                                                  "rotY":  1.58,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -52,
+                                                                  "y":  0,
+                                                                  "z":  -22,
+                                                                  "rotY":  1.5,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -67,
+                                                                  "y":  0,
+                                                                  "z":  -22,
+                                                                  "rotY":  1.56,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -22,
+                                                                  "y":  0,
+                                                                  "z":  37,
+                                                                  "rotY":  0.07,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -37,
+                                                                  "y":  0,
+                                                                  "z":  37,
+                                                                  "rotY":  1.5,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -52,
+                                                                  "y":  0,
+                                                                  "z":  37,
+                                                                  "rotY":  1.51,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  -67,
+                                                                  "y":  0,
+                                                                  "z":  37,
+                                                                  "rotY":  1.58,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  22,
+                                                                  "y":  0,
+                                                                  "z":  -52,
+                                                                  "rotY":  3.07,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  37,
+                                                                  "y":  0,
+                                                                  "z":  -52,
+                                                                  "rotY":  3.11,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  52,
+                                                                  "y":  0,
+                                                                  "z":  -52,
+                                                                  "rotY":  4.76,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  67,
+                                                                  "y":  0,
+                                                                  "z":  -52,
+                                                                  "rotY":  4.71,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  22,
+                                                                  "y":  0,
+                                                                  "z":  67,
+                                                                  "rotY":  -0.06,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  37,
+                                                                  "y":  0,
+                                                                  "z":  67,
+                                                                  "rotY":  0.0,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  52,
+                                                                  "y":  0,
+                                                                  "z":  67,
+                                                                  "rotY":  0.01,
+                                                                  "scale":  5
+                                                              },
+                                                              {
+                                                                  "x":  67,
+                                                                  "y":  0,
+                                                                  "z":  67,
+                                                                  "rotY":  4.73,
+                                                                  "scale":  5
+                                                              }
+                                                          ]
+                                        },
+                                        {
+                                            "path":  "assets/models/buildings/village/Inn.glb",
+                                            "positions":  [
+                                                              {
+                                                                  "x":  -22,
+                                                                  "y":  0,
+                                                                  "z":  -22,
+                                                                  "rotY":  1.54,
+                                                                  "scale":  5
+                                                              }
+                                                          ]
+                                        },
+                                        {
+                                            "path":  "assets/models/buildings/village/Blacksmith.glb",
+                                            "positions":  [
+                                                              {
+                                                                  "x":  -22,
+                                                                  "y":  0,
+                                                                  "z":  22,
+                                                                  "rotY":  1.59,
+                                                                  "scale":  5
+                                                              }
+                                                          ]
+                                        },
+                                        {
+                                            "path":  "assets/models/buildings/village/Stable.glb",
+                                            "positions":  [
+                                                              {
+                                                                  "x":  22,
+                                                                  "y":  0,
+                                                                  "z":  22,
+                                                                  "rotY":  4.75,
+                                                                  "scale":  5
+                                                              }
+                                                          ]
+                                        },
+                                        {
+                                            "path":  "assets/models/buildings/building_market_blue.gltf",
+                                            "positions":  [
+                                                              {
+                                                                  "x":  22,
+                                                                  "y":  0,
+                                                                  "z":  -22,
+                                                                  "rotY":  4.72,
+                                                                  "scale":  9
+                                                              }
+                                                          ]
+                                        },
+                                        {
+                                            "path":  "assets/models/environment/BirchTree_1.gltf",
+                                            "positions":  [
+                                                              {
+                                                                  "x":  -19,
+                                                                  "y":  0,
+                                                                  "z":  -19,
+                                                                  "rotY":  0.3,
+                                                                  "scale":  1.6
+                                                              },
+                                                              {
+                                                                  "x":  19,
+                                                                  "y":  0,
+                                                                  "z":  -19,
+                                                                  "rotY":  1.1,
+                                                                  "scale":  1.6
+                                                              },
+                                                              {
+                                                                  "x":  -19,
+                                                                  "y":  0,
+                                                                  "z":  19,
+                                                                  "rotY":  2.5,
+                                                                  "scale":  1.6
+                                                              },
+                                                              {
+                                                                  "x":  19,
+                                                                  "y":  0,
+                                                                  "z":  19,
+                                                                  "rotY":  0.8,
+                                                                  "scale":  1.6
+                                                              },
+                                                              {
+                                                                  "x":  -28,
+                                                                  "y":  0,
+                                                                  "z":  -28,
+                                                                  "rotY":  0.5,
+                                                                  "scale":  1.5
+                                                              },
+                                                              {
+                                                                  "x":  28,
+                                                                  "y":  0,
+                                                                  "z":  -28,
+                                                                  "rotY":  2.2,
+                                                                  "scale":  1.5
+                                                              },
+                                                              {
+                                                                  "x":  -28,
+                                                                  "y":  0,
+                                                                  "z":  28,
+                                                                  "rotY":  1.4,
+                                                                  "scale":  1.5
+                                                              },
+                                                              {
+                                                                  "x":  28,
+                                                                  "y":  0,
+                                                                  "z":  28,
+                                                                  "rotY":  0.9,
+                                                                  "scale":  1.5
+                                                              }
+                                                          ]
+                                        },
+                                        {
+                                            "path":  "assets/models/environment/Bush.gltf",
+                                            "positions":  [
+                                                              {
+                                                                  "x":  -45,
+                                                                  "y":  0,
+                                                                  "z":  -45,
+                                                                  "rotY":  0.1,
+                                                                  "scale":  1.4
+                                                              },
+                                                              {
+                                                                  "x":  45,
+                                                                  "y":  0,
+                                                                  "z":  -45,
+                                                                  "rotY":  0.7,
+                                                                  "scale":  1.4
+                                                              },
+                                                              {
+                                                                  "x":  -45,
+                                                                  "y":  0,
+                                                                  "z":  45,
+                                                                  "rotY":  1.2,
+                                                                  "scale":  1.4
+                                                              },
+                                                              {
+                                                                  "x":  45,
+                                                                  "y":  0,
+                                                                  "z":  45,
+                                                                  "rotY":  2.0,
+                                                                  "scale":  1.4
+                                                              }
+                                                          ]
+                                        },
+                                        {
+                                            "path":  "assets/models/buildings/barrel.gltf",
+                                            "positions":  [
+                                                              {
+                                                                  "x":  18,
+                                                                  "y":  0,
+                                                                  "z":  28,
+                                                                  "rotY":  0.2,
+                                                                  "scale":  1.5
+                                                              },
+                                                              {
+                                                                  "x":  20,
+                                                                  "y":  0,
+                                                                  "z":  30,
+                                                                  "rotY":  0.8,
+                                                                  "scale":  1.5
+                                                              },
+                                                              {
+                                                                  "x":  5,
+                                                                  "y":  0,
+                                                                  "z":  72,
+                                                                  "rotY":  0.4,
+                                                                  "scale":  1.5
+                                                              },
+                                                              {
+                                                                  "x":  -5,
+                                                                  "y":  0,
+                                                                  "z":  72,
+                                                                  "rotY":  1.0,
+                                                                  "scale":  1.5
+                                                              },
+                                                              {
+                                                                  "x":  5,
+                                                                  "y":  0,
+                                                                  "z":  -72,
+                                                                  "rotY":  0.3,
+                                                                  "scale":  1.5
+                                                              },
+                                                              {
+                                                                  "x":  -5,
+                                                                  "y":  0,
+                                                                  "z":  -72,
+                                                                  "rotY":  0.9,
+                                                                  "scale":  1.5
+                                                              }
+                                                          ]
+                                        },
+                                        {
+                                            "path":  "assets/models/buildings/crate_A_big.gltf",
+                                            "positions":  [
+                                                              {
+                                                                  "x":  22,
+                                                                  "y":  0,
+                                                                  "z":  30,
+                                                                  "rotY":  0.4,
+                                                                  "scale":  1.5
+                                                              },
+                                                              {
+                                                                  "x":  24,
+                                                                  "y":  0,
+                                                                  "z":  28,
+                                                                  "rotY":  0.7,
+                                                                  "scale":  1.5
+                                                              }
+                                                          ]
+                                        },
+                                        {
+                                            "path":  "assets/models/npcs/guard.glb",
+                                            "positions":  [
+                                                              {
+                                                                  "x":  -9,
+                                                                  "y":  0,
+                                                                  "z":  -76,
+                                                                  "rotY":  0,
+                                                                  "scale":  1
+                                                              },
+                                                              {
+                                                                  "x":  9,
+                                                                  "y":  0,
+                                                                  "z":  -76,
+                                                                  "rotY":  0,
+                                                                  "scale":  1
+                                                              },
+                                                              {
+                                                                  "x":  -9,
+                                                                  "y":  0,
+                                                                  "z":  76,
+                                                                  "rotY":  3.14,
+                                                                  "scale":  1
+                                                              },
+                                                              {
+                                                                  "x":  9,
+                                                                  "y":  0,
+                                                                  "z":  76,
+                                                                  "rotY":  3.14,
+                                                                  "scale":  1
                                                               }
                                                           ]
                                         },
@@ -355,62 +1050,6 @@
                                                                   "scale":  5
                                                               },
                                                               {
-                                                                  "x":  -10,
-                                                                  "y":  0,
-                                                                  "z":  -80,
-                                                                  "rotY":  0,
-                                                                  "scale":  5
-                                                              },
-                                                              {
-                                                                  "x":  -8,
-                                                                  "y":  0,
-                                                                  "z":  -80,
-                                                                  "rotY":  0,
-                                                                  "scale":  5
-                                                              },
-                                                              {
-                                                                  "x":  -6,
-                                                                  "y":  0,
-                                                                  "z":  -80,
-                                                                  "rotY":  0,
-                                                                  "scale":  5
-                                                              },
-                                                              {
-                                                                  "x":  -4,
-                                                                  "y":  0,
-                                                                  "z":  -80,
-                                                                  "rotY":  0,
-                                                                  "scale":  5
-                                                              },
-                                                              {
-                                                                  "x":  4,
-                                                                  "y":  0,
-                                                                  "z":  -80,
-                                                                  "rotY":  0,
-                                                                  "scale":  5
-                                                              },
-                                                              {
-                                                                  "x":  6,
-                                                                  "y":  0,
-                                                                  "z":  -80,
-                                                                  "rotY":  0,
-                                                                  "scale":  5
-                                                              },
-                                                              {
-                                                                  "x":  8,
-                                                                  "y":  0,
-                                                                  "z":  -80,
-                                                                  "rotY":  0,
-                                                                  "scale":  5
-                                                              },
-                                                              {
-                                                                  "x":  10,
-                                                                  "y":  0,
-                                                                  "z":  -80,
-                                                                  "rotY":  0,
-                                                                  "scale":  5
-                                                              },
-                                                              {
                                                                   "x":  12,
                                                                   "y":  0,
                                                                   "z":  -80,
@@ -873,76 +1512,6 @@
                                                                   "scale":  5
                                                               },
                                                               {
-                                                                  "x":  -10,
-                                                                  "y":  0,
-                                                                  "z":  80,
-                                                                  "rotY":  3.141592653589793,
-                                                                  "scale":  5
-                                                              },
-                                                              {
-                                                                  "x":  -8,
-                                                                  "y":  0,
-                                                                  "z":  80,
-                                                                  "rotY":  3.141592653589793,
-                                                                  "scale":  5
-                                                              },
-                                                              {
-                                                                  "x":  -6,
-                                                                  "y":  0,
-                                                                  "z":  80,
-                                                                  "rotY":  3.141592653589793,
-                                                                  "scale":  5
-                                                              },
-                                                              {
-                                                                  "x":  -4,
-                                                                  "y":  0,
-                                                                  "z":  80,
-                                                                  "rotY":  3.141592653589793,
-                                                                  "scale":  5
-                                                              },
-                                                              {
-                                                                  "x":  -2,
-                                                                  "y":  0,
-                                                                  "z":  80,
-                                                                  "rotY":  3.141592653589793,
-                                                                  "scale":  5
-                                                              },
-                                                              {
-                                                                  "x":  2,
-                                                                  "y":  0,
-                                                                  "z":  80,
-                                                                  "rotY":  3.141592653589793,
-                                                                  "scale":  5
-                                                              },
-                                                              {
-                                                                  "x":  4,
-                                                                  "y":  0,
-                                                                  "z":  80,
-                                                                  "rotY":  3.141592653589793,
-                                                                  "scale":  5
-                                                              },
-                                                              {
-                                                                  "x":  6,
-                                                                  "y":  0,
-                                                                  "z":  80,
-                                                                  "rotY":  3.141592653589793,
-                                                                  "scale":  5
-                                                              },
-                                                              {
-                                                                  "x":  8,
-                                                                  "y":  0,
-                                                                  "z":  80,
-                                                                  "rotY":  3.141592653589793,
-                                                                  "scale":  5
-                                                              },
-                                                              {
-                                                                  "x":  10,
-                                                                  "y":  0,
-                                                                  "z":  80,
-                                                                  "rotY":  3.141592653589793,
-                                                                  "scale":  5
-                                                              },
-                                                              {
                                                                   "x":  12,
                                                                   "y":  0,
                                                                   "z":  80,
@@ -1176,7 +1745,7 @@
                                                               {
                                                                   "x":  -80,
                                                                   "y":  0,
-                                                                  "z":  -78,
+                                                                  "z": -74,
                                                                   "rotY":  1.5707963267948966,
                                                                   "scale":  5
                                                               },
@@ -1722,7 +2291,7 @@
                                                               {
                                                                   "x":  80,
                                                                   "y":  0,
-                                                                  "z":  -78,
+                                                                  "z": -74,
                                                                   "rotY":  1.5707963267948966,
                                                                   "scale":  5
                                                               },
@@ -2327,231 +2896,6 @@
                                                                   "scale":  5
                                                               }
                                                           ]
-                                        },
-                                        {
-                                            "path":  "assets/models/buildings/building_church_blue.gltf",
-                                            "positions":  [
-                                                              {
-                                                                  "x":  0,
-                                                                  "y":  0,
-                                                                  "z":  -45,
-                                                                  "rotY":  0,
-                                                                  "scale":  6.0
-                                                              }
-                                                          ]
-                                        },
-                                        {
-                                            "path":  "assets/models/buildings/building_market_blue.gltf",
-                                            "positions":  [
-                                                              {
-                                                                  "x":  40,
-                                                                  "y":  0,
-                                                                  "z":  5,
-                                                                  "rotY":  0,
-                                                                  "scale":  5.75
-                                                              }
-                                                          ]
-                                        },
-                                        {
-                                            "path":  "assets/models/buildings/building_tower_A_blue.gltf",
-                                            "positions":  [
-                                                              {
-                                                                  "x":  50,
-                                                                  "y":  0,
-                                                                  "z":  -40,
-                                                                  "rotY":  0,
-                                                                  "scale":  5.25
-                                                              }
-                                                          ]
-                                        },
-                                        {
-                                            "path":  "assets/models/buildings/building_tower_base_blue.gltf",
-                                            "positions":  [
-                                                              {
-                                                                  "x":  -40,
-                                                                  "y":  0,
-                                                                  "z":  5,
-                                                                  "rotY":  0,
-                                                                  "scale":  5.75
-                                                              },
-                                                              {
-                                                                  "x":  -50,
-                                                                  "y":  0,
-                                                                  "z":  35,
-                                                                  "rotY":  0,
-                                                                  "scale":  5.5
-                                                              },
-                                                              {
-                                                                  "x":  -55,
-                                                                  "y":  0,
-                                                                  "z":  -50,
-                                                                  "rotY":  0,
-                                                                  "scale":  4.5
-                                                              },
-                                                              {
-                                                                  "x":  -55,
-                                                                  "y":  0,
-                                                                  "z":  -30,
-                                                                  "rotY":  0,
-                                                                  "scale":  4.5
-                                                              },
-                                                              {
-                                                                  "x":  -55,
-                                                                  "y":  0,
-                                                                  "z":  -10,
-                                                                  "rotY":  0,
-                                                                  "scale":  4.5
-                                                              },
-                                                              {
-                                                                  "x":  55,
-                                                                  "y":  0,
-                                                                  "z":  -50,
-                                                                  "rotY":  0,
-                                                                  "scale":  4.5
-                                                              },
-                                                              {
-                                                                  "x":  55,
-                                                                  "y":  0,
-                                                                  "z":  -20,
-                                                                  "rotY":  0,
-                                                                  "scale":  4.5
-                                                              },
-                                                              {
-                                                                  "x":  -40,
-                                                                  "y":  0,
-                                                                  "z":  55,
-                                                                  "rotY":  0,
-                                                                  "scale":  4.5
-                                                              },
-                                                              {
-                                                                  "x":  -10,
-                                                                  "y":  0,
-                                                                  "z":  55,
-                                                                  "rotY":  0,
-                                                                  "scale":  4.5
-                                                              },
-                                                              {
-                                                                  "x":  40,
-                                                                  "y":  0,
-                                                                  "z":  55,
-                                                                  "rotY":  0,
-                                                                  "scale":  4.5
-                                                              }
-                                                          ]
-                                        },
-                                        {
-                                            "path":  "assets/models/buildings/building_well_blue.gltf",
-                                            "positions":  [
-                                                              {
-                                                                  "x":  0,
-                                                                  "y":  0,
-                                                                  "z":  0,
-                                                                  "rotY":  0,
-                                                                  "scale":  5
-                                                              }
-                                                          ]
-                                        },
-                                        {
-                                            "path":  "assets/models/buildings/fence_wood_straight.gltf",
-                                            "positions":  [
-                                                              {
-                                                                  "x":  5,
-                                                                  "y":  0,
-                                                                  "z":  2,
-                                                                  "rotY":  0,
-                                                                  "scale":  3.5
-                                                              },
-                                                              {
-                                                                  "x":  -5,
-                                                                  "y":  0,
-                                                                  "z":  2,
-                                                                  "rotY":  0,
-                                                                  "scale":  3.5
-                                                              },
-                                                              {
-                                                                  "x":  5,
-                                                                  "y":  0,
-                                                                  "z":  -2,
-                                                                  "rotY":  0,
-                                                                  "scale":  3.5
-                                                              },
-                                                              {
-                                                                  "x":  -5,
-                                                                  "y":  0,
-                                                                  "z":  -2,
-                                                                  "rotY":  0,
-                                                                  "scale":  3.5
-                                                              }
-                                                          ]
-                                        },
-                                        {
-                                            "path":  "assets/models/buildings/barrel.gltf",
-                                            "positions":  [
-                                                              {
-                                                                  "x":  -35,
-                                                                  "y":  0,
-                                                                  "z":  10,
-                                                                  "rotY":  0,
-                                                                  "scale":  5
-                                                              },
-                                                              {
-                                                                  "x":  -38,
-                                                                  "y":  0,
-                                                                  "z":  12,
-                                                                  "rotY":  0.4,
-                                                                  "scale":  5
-                                                              },
-                                                              {
-                                                                  "x":  -42,
-                                                                  "y":  0,
-                                                                  "z":  10,
-                                                                  "rotY":  -0.4,
-                                                                  "scale":  5
-                                                              }
-                                                          ]
-                                        },
-                                        {
-                                            "path":  "assets/models/buildings/crate_A_big.gltf",
-                                            "positions":  [
-                                                              {
-                                                                  "x":  35,
-                                                                  "y":  0,
-                                                                  "z":  10,
-                                                                  "rotY":  0,
-                                                                  "scale":  5
-                                                              },
-                                                              {
-                                                                  "x":  38,
-                                                                  "y":  0,
-                                                                  "z":  12,
-                                                                  "rotY":  0.2,
-                                                                  "scale":  5
-                                                              }
-                                                          ]
-                                        },
-                                        {
-                                            "path":  "assets/models/buildings/crate_A_small.gltf",
-                                            "positions":  [
-                                                              {
-                                                                  "x":  42,
-                                                                  "y":  0,
-                                                                  "z":  8,
-                                                                  "rotY":  -0.2,
-                                                                  "scale":  5
-                                                              }
-                                                          ]
-                                        },
-                                        {
-                                            "path":  "assets/models/buildings/crate_B_small.gltf",
-                                            "positions":  [
-                                                              {
-                                                                  "x":  35,
-                                                                  "y":  0,
-                                                                  "z":  10,
-                                                                  "rotY":  0.5,
-                                                                  "scale":  5
-                                                              }
-                                                          ]
                                         }
                                     ],
                      "audioProfile":  {
@@ -2570,9 +2914,9 @@
                                         },
                      "lighting":  {
                                       "night":  {
-                                                    "ambient":  "#1a1a3a",
-                                                    "intensity":  0.8,
-                                                    "directional":  "#4444aa"
+                                                    "ambient":  "#6a6a9a",
+                                                    "intensity":  1.1,
+                                                    "directional":  "#9999dd"
                                                 },
                                       "day":  {
                                                   "ambient":  "#ffffff",
