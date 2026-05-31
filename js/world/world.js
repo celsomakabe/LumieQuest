@@ -84,6 +84,7 @@ export async function loadMap(mapId) {
   await _spawnMapDecoration(nextMap);
   await _spawnMapMonsters(nextMap);
   await _spawnMapNpcs(nextMap);
+  _spawnExitPointMarkers(nextMap);
   _applyMapAudio(nextMap);
   _updatePlayerCurrentMap(mapId);
   const skyboxUrls = nextMap.skybox ?? null;
@@ -466,7 +467,54 @@ async function _spawnMapNpcs(mapConfig) {
     await spawnFromConfig(filtered);
   }
 }
+function _spawnExitPointMarkers(mapConfig) {
+  const exits = Array.isArray(mapConfig.exitPoints) ? mapConfig.exitPoints : [];
+  for (const ep of exits) {
+    const x = Number(ep.position?.x ?? 0);
+    const z = Number(ep.position?.z ?? 0);
+    const group = new THREE.Group();
+    group.position.set(x, 0, z);
 
+    // Anel portal
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(1.5, 0.15, 12, 32),
+      new THREE.MeshStandardMaterial({ color: 0x00ccff, emissive: 0x0088ff, emissiveIntensity: 0.8, transparent: true, opacity: 0.7 })
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.3;
+    group.add(ring);
+
+    // Pilar de luz
+    const pillar = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.3, 0.3, 4, 8),
+      new THREE.MeshStandardMaterial({ color: 0x00aaff, emissive: 0x0066cc, emissiveIntensity: 0.6, transparent: true, opacity: 0.35 })
+    );
+    pillar.position.y = 2;
+    group.add(pillar);
+
+    // Label com canvas texture
+    const label = ep.label || ep.targetMap || '???';
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(0, 0, 256, 64);
+    ctx.font = 'bold 24px sans-serif';
+    ctx.fillStyle = '#00eeff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, 128, 32);
+    const tex = new THREE.CanvasTexture(canvas);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+    sprite.scale.set(4, 1, 1);
+    sprite.position.y = 4.5;
+    group.add(sprite);
+
+    add(group);
+    _mapObjects.push(group);
+  }
+}
 function _applyMapAudio(mapConfig) {
   const profile = mapConfig.audioProfile ?? {};
   const bgmId = profile.bgm;
