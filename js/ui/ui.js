@@ -446,10 +446,23 @@ export function init() {
         _dirty.xp = true;
     });
 
-    Events.on('damageDealt', ({ target, amount, isCritical }) => {
+     Events.on('damageDealt', ({ target, amount, isCritical, isSkill }) => {
+        
         if (!target?.position) return;
         if (target.type === 'player') return;
-        showDamagePopup(target.position, amount, isCritical);
+        
+        if (isCritical) {
+            showDamagePopup(target.position, amount, true);
+        } else if (isSkill) {
+            _showSkillDamagePopup(target.position, amount);
+        } else {
+            showDamagePopup(target.position, amount, false);
+        }
+    });
+
+    Events.on('mpConsumeRequest', ({ amount }) => {
+        if (typeof amount !== 'number' || amount <= 0) return;
+        showMpPopup(amount);
     });
 
     const goldHud = document.createElement('div');
@@ -2374,7 +2387,73 @@ function showDamagePopup(worldPosition, amount, isCritical) {
     root.appendChild(div);
     div.addEventListener('animationend', () => div.remove(), { once: true });
 }
+/**
+ * Exibe popup de dano de skill (azul) sobre o alvo.
+ * @param {{ x: number, y: number, z: number }} worldPosition
+ * @param {number} amount
+ */
+function _showSkillDamagePopup(worldPosition, amount) {
+    const camera = getCamera();
+    const renderer = getRenderer();
+    if (!camera || !renderer) return;
 
+    const canvas = renderer.domElement;
+    const vec = new THREE.Vector3(worldPosition.x, (worldPosition.y ?? 0) + 1.2, worldPosition.z);
+    vec.project(camera);
+
+    const hw = canvas.clientWidth / 2;
+    const hh = canvas.clientHeight / 2;
+    const sx = Math.round((vec.x * hw) + hw);
+    const sy = Math.round((-vec.y * hh) + hh);
+
+    const div = document.createElement('div');
+    div.className = 'lumie-dmg skill';
+    div.textContent = `${amount}`;
+    div.style.left = `${sx}px`;
+    div.style.top = `${sy}px`;
+    div.style.color = '#ff4444';
+    div.style.textShadow = '0 0 6px rgba(255,68,68,0.95), 0 0 12px rgba(255,68,68,0.55)';
+    div.style.animationDuration = '1.8s';
+
+    const root = document.getElementById('ui-root') ?? document.body;
+    root.appendChild(div);
+    div.addEventListener('animationend', () => div.remove(), { once: true });
+}
+
+/**
+ * Exibe popup flutuante azul de consumo de MP sobre o player.
+ * @param {number} amount
+ */
+function showMpPopup(amount) {
+    const camera = getCamera();
+    const renderer = getRenderer();
+    if (!camera || !renderer) return;
+
+    const worldPosition = Player.getPosition();
+    if (!worldPosition) return;
+
+    const canvas = renderer.domElement;
+    const vec = new THREE.Vector3(worldPosition.x, (worldPosition.y ?? 0) + 1.6, worldPosition.z);
+    vec.project(camera);
+
+    const hw = canvas.clientWidth / 2;
+    const hh = canvas.clientHeight / 2;
+    const sx = Math.round((vec.x * hw) + hw);
+    const sy = Math.round((-vec.y * hh) + hh);
+
+    const div = document.createElement('div');
+    div.className = 'lumie-dmg mp';
+    div.textContent = `-${amount} MP`;
+    div.style.left = `${sx}px`;
+    div.style.top = `${sy}px`;
+    div.style.color = '#4488ff';
+    div.style.textShadow = '0 0 6px rgba(68,136,255,0.95), 0 0 12px rgba(68,136,255,0.55)';
+    div.style.animationDuration = '1.8s';
+
+    const root = document.getElementById('ui-root') ?? document.body;
+    root.appendChild(div);
+    div.addEventListener('animationend', () => div.remove(), { once: true });
+}
 // PROMPT 10 ────────────────────────────────────────────────────────────────
 
 const _CLASS_COLORS = {

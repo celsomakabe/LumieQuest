@@ -80,6 +80,9 @@ let _currentAction = null;
 /** @type {THREE.AnimationClip[]} */
 let _animClips = [];
 let _attackAnimTimer = null;
+let _generalClips = new Map();
+let _isAttacking = false;
+let _attackResetTimer = null;
 let _isDead = false;
 /** @type {Object|null} */
 let _data = null;
@@ -195,6 +198,21 @@ export async function init(saveData = null) {
         if (_dialogOpen) return;
         if (_isDead || !_data || _data.hp <= 0) return;
 
+    on('skillCast', ({ casterId }) => {
+
+
+        on('skillCast', ({ casterId }) => {
+        if (!_data?.name) return;
+        if (casterId !== _data.name) return;
+        _playAttackAnimation();
+    });
+
+
+    if (!_data?.name) return;
+    if (casterId !== _data.name) return;
+    _playAttackAnimation();
+    });
+
         const pos    = _data.position;
         const target = findNearestTarget(pos, 3);
         if (!target) {
@@ -204,7 +222,11 @@ export async function init(saveData = null) {
 
         const result = attack(_data, target);
         if (!result) return;
-
+        if (_mesh && target.position) {
+            const dx = target.position.x - _data.position.x;
+            const dz = target.position.z - _data.position.z;
+            _mesh.rotation.y = Math.atan2(dx, dz);
+        }
         _playAttackAnimation();
     });
 
@@ -289,6 +311,11 @@ export function respawn() {
     if (!_data || !_mesh) return;
 
     _isDead = false;
+    if (_attackResetTimer) {
+        clearTimeout(_attackResetTimer);
+        _attackResetTimer = null;
+    }
+    _isAttacking = false;
 
     _data.currentMap = 'city_01';
     _data.hp = _data.maxHp;
@@ -537,6 +564,11 @@ export function update(delta, inputState) {
 
     if (!_isDead && _data.hp <= 0) {
         _isDead = true;
+        if (_attackResetTimer) {
+            clearTimeout(_attackResetTimer);
+            _attackResetTimer = null;
+        }
+        _isAttacking = false;
         if (_mesh) _mesh.rotation.x = -Math.PI / 2;
         emit('playerDied', {
             position: { x: _data.position.x, y: _data.position.y, z: _data.position.z },
@@ -622,6 +654,10 @@ async function _loadPlayerVisual(classId) {
         Models.loadModel('assets/models/animations/general.glb'),
         Models.loadModel('assets/models/animations/movement.glb')
     ]);
+        _generalClips = new Map();
+    for (const clip of (generalGltf.animations || [])) {
+        _generalClips.set(clip.name, clip);
+    }
 
     _model = playerGltf.scene;
     _mesh = _model;
@@ -638,7 +674,10 @@ async function _loadPlayerVisual(classId) {
         ...Models.getAnimationClips(generalGltf),
         ...Models.getAnimationClips(movementGltf)
     ];
-
+    _generalClips = new Map();
+    for (const clip of (generalGltf.animations || [])) {
+    _generalClips.set(clip.name, clip);
+    }
     _actions = {
         idle: _makeAction(_findClip(['idle'])),
         walk: _makeAction(_findClip(['walk', 'walking', 'run', 'running'])),
@@ -708,14 +747,61 @@ function _playAction(name, fadeDuration = ANIM_FADE_DURATION) {
 }
 
 function _syncMovementAnimation() {
+    if (_isAttacking) return;
     if (!_actions.attack || _currentAction !== _actions.attack) {
         _playAction(_hasMoved ? 'walk' : 'idle');
     }
 }
 
 function _playAttackAnimation() {
-    if (!_actions.attack) return;
-    _playAction('attack', 0.1);
+
+    
+    const _throwClip = _generalClips.get('Throw');
+    const _idleClip = _actions?.idle?.getClip?.();
+    if (!_mixer || !_data) return;
+
+    const clip = _generalClips.get('Throw');
+    if (!clip) {
+        console.warn('[player] Clip Throw não encontrado em general.glb');
+        return;
+    }
+
+    const nextAction = _mixer.clipAction(clip);
+    const previousAction = _currentAction;
+
+    nextAction.reset();
+    nextAction.enabled = true;
+    nextAction.setLoop(THREE.LoopOnce, 1);
+    nextAction.clampWhenFinished = true;
+
+    _isAttacking = true;
+
+    if (_attackResetTimer) {
+        clearTimeout(_attackResetTimer);
+        _attackResetTimer = null;
+    }
+
+    if (previousAction && previousAction !== nextAction) {
+        previousAction.crossFadeTo(nextAction, 0.1, true);
+    }
+
+    _currentAction = nextAction;
+    nextAction.play();
+
+    const onFinished = (event) => {
+        if (event.action !== nextAction) return;
+        _mixer?.removeEventListener('finished', onFinished);
+        _isAttacking = false;
+        _playAction(_hasMoved ? 'walk' : 'idle', 0.1);
+    };
+
+    _mixer.addEventListener('finished', onFinished);
+
+    _attackResetTimer = setTimeout(() => {
+        _mixer?.removeEventListener('finished', onFinished);
+        _isAttacking = false;
+        _playAction(_hasMoved ? 'walk' : 'idle', 0.1);
+    }, 600);
 }
 
 function _onAttackFinished(event) {
@@ -740,7 +826,7 @@ function _onAttackFinished(event) {
  * @param {Object} inputState
  */
 function _updateMovement(delta, inputState) {
-    if (_isDead || _data.hp <= 0) return;
+    if (_isDead || _isAttacking || _data.hp <= 0) return;
     const { keys, mouse } = inputState;
 
      if (mouse.buttons?.right) {

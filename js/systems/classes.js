@@ -168,6 +168,7 @@ let _skillDefs = [];
 function _applyDamage(entity, amount, ctx) {
     if (!entity || typeof entity.hp !== 'number') return;
     entity.hp = Math.max(0, entity.hp - amount);
+    ctx.emit('damageDealt', { attacker: null, target: entity, amount, isCritical: false });
     if (entity.hp <= 0 && entity.id) {
         ctx.emit('entityDied', { entity });
         ctx.emit('monsterDied', { id: entity.id, monsterId: entity.monsterId, xp: entity.xp });

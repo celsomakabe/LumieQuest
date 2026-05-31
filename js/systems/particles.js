@@ -17,6 +17,10 @@ const MAX_PARTICLES = 500;
  *  - drop
  *  - levelup
  *  - skill
+ *  - skill_melee
+ *  - skill_ranged
+ *  - skill_magic
+ *  - skill_buff
  *  - refineSuccess
  *  - refineFail
  *  - weather_rain
@@ -163,6 +167,26 @@ export function update(dt) {
       _positions[idx]     += Math.sin((_ages[i] + i) * 2.0) * dt * 0.5;
       _positions[idx + 2] += Math.cos((_ages[i] + i) * 2.0) * dt * 0.5;
       _positions[idx + 1] += Math.sin((_ages[i] + i) * 1.5) * dt * 0.2;
+    } else if (type === 9) {
+      // skill_melee: arco de partículas rápido (slash)
+      _positions[idx + 1] += dt * 1.2;
+      _positions[idx]     += Math.sin((i + _ages[i] * 10.0)) * dt * 0.8;
+      _sizes[i] = Math.max(0.0, _sizes[i] - dt * 6.0);
+    } else if (type === 10) {
+      // skill_ranged: burst radial (impacto)
+      _positions[idx + 2] -= dt * 3.5;
+      _positions[idx + 1] += Math.sin((_ages[i] + i) * 8.0) * dt * 0.15;
+      _sizes[i] = Math.max(0.0, _sizes[i] - dt * 3.0);
+    } else if (type === 11) {
+      // skill_magic: espiral ascendente
+      const t = _ages[i] * 7.0 + i;
+      _positions[idx]     += Math.cos(t) * dt * 0.9;
+      _positions[idx + 2] += Math.sin(t) * dt * 0.9;
+      _positions[idx + 1] += dt * 1.4;
+    } else if (type === 12) {
+      // skill_buff: coluna de luz subindo
+      _positions[idx + 1] += dt * 0.9;
+      _sizes[i] += dt * 4.0;
     }
   }
 
@@ -174,7 +198,7 @@ export function update(dt) {
 
 /**
  * Emite uma partícula de um tipo específico na posição informada.
- * @param {'damage'|'critical'|'drop'|'levelup'|'skill'|'refineSuccess'|'refineFail'|'weather_rain'|'weather_fireflies'} kind
+ * @param {'damage'|'critical'|'drop'|'levelup'|'skill'|'skill_melee'|'skill_ranged'|'skill_magic'|'skill_buff'|'refineSuccess'|'refineFail'|'weather_rain'|'weather_fireflies'} kind
  * @param {{x:number,y:number,z:number}} position
  */
 export function emit(kind, position) {
@@ -213,15 +237,19 @@ export function emit(kind, position) {
  */
 function _mapKindToType(kind) {
   switch (kind) {
-    case 'damage':          return 0;
-    case 'critical':        return 1;
-    case 'drop':            return 2;
-    case 'levelup':         return 3;
-    case 'skill':           return 4;
-    case 'refineSuccess':   return 5;
-    case 'refineFail':      return 6;
-    case 'weather_rain':    return 7;
+    case 'damage':            return 0;
+    case 'critical':          return 1;
+    case 'drop':              return 2;
+    case 'levelup':           return 3;
+    case 'skill':             return 4;
+    case 'refineSuccess':     return 5;
+    case 'refineFail':        return 6;
+    case 'weather_rain':      return 7;
     case 'weather_fireflies': return 8;
+    case 'skill_melee':       return 9;
+    case 'skill_ranged':      return 10;
+    case 'skill_magic':       return 11;
+    case 'skill_buff':        return 12;
     default: return -1;
   }
 }
@@ -240,39 +268,51 @@ function _findFreeIndex() {
 function _getColorForType(typeId) {
   const c = new THREE.Color(0xffffff);
   switch (typeId) {
-    case 0: c.set('#ff4444'); break; // damage
-    case 1: c.set('#ffdd33'); break; // critical
-    case 2: c.set('#33ccff'); break; // drop
-    case 3: c.set('#7cff7c'); break; // levelup
-    case 4: c.set('#9c27b0'); break; // skill
-    case 5: c.set('#00e676'); break; // refineSuccess
-    case 6: c.set('#ff1744'); break; // refineFail
-    case 7: c.set('#4fc3f7'); break; // rain
-    case 8: c.set('#fff176'); break; // fireflies
-    default: c.set('#ffffff');       break;
+    case 0:  c.set('#ff4444'); break; // damage
+    case 1:  c.set('#ffdd33'); break; // critical
+    case 2:  c.set('#33ccff'); break; // drop
+    case 3:  c.set('#7cff7c'); break; // levelup
+    case 4:  c.set('#9c27b0'); break; // skill
+    case 5:  c.set('#00e676'); break; // refineSuccess
+    case 6:  c.set('#ff1744'); break; // refineFail
+    case 7:  c.set('#4fc3f7'); break; // rain
+    case 8:  c.set('#fff176'); break; // fireflies
+    case 9:  c.set('#ff6600'); break; // skill_melee (laranja)
+    case 10: c.set('#33ff33'); break; // skill_ranged (verde)
+    case 11: c.set('#9933ff'); break; // skill_magic (roxo)
+    case 12: c.set('#ffcc00'); break; // skill_buff (dourado)
+    default: c.set('#ffffff'); break;
   }
   return c;
 }
 
 function _getSizeForType(typeId) {
   switch (typeId) {
-    case 0: return 18;
-    case 1: return 22;
-    case 2: return 10;
-    case 3: return 24;
-    case 4: return 20;
-    case 5: return 26;
-    case 6: return 20;
-    case 7: return 8;
-    case 8: return 12;
+    case 0:  return 18;
+    case 1:  return 22;
+    case 2:  return 10;
+    case 3:  return 24;
+    case 4:  return 20;
+    case 5:  return 26;
+    case 6:  return 20;
+    case 7:  return 8;
+    case 8:  return 12;
+    case 9:  return 24; // skill_melee
+    case 10: return 16; // skill_ranged
+    case 11: return 22; // skill_magic
+    case 12: return 18; // skill_buff
     default: return 16;
   }
 }
 
 function _getLifetimeForType(typeId) {
   switch (typeId) {
-    case 7: return 1.0; // rain
-    case 8: return 3.5; // fireflies
+    case 7:  return 1.0;  // rain
+    case 8:  return 3.5;  // fireflies
+    case 9:  return 0.45; // skill_melee
+    case 10: return 0.7;  // skill_ranged
+    case 11: return 0.9;  // skill_magic
+    case 12: return 1.1;  // skill_buff
     default: return 1.2;
   }
 }

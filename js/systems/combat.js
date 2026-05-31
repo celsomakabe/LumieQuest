@@ -2,6 +2,7 @@
 import { emit, on }    from '../core/events.js';
 import { playSFX }     from '../core/audio.js';
 import * as Classes    from './classes.js';
+import * as Particles  from './particles.js'; // R8 exceção: wiring VFX de skill
 
 /** URLs dos SFX de combate */
 const SFX = {
@@ -23,7 +24,7 @@ const _cooldowns = new Map();
 /** Lista de alvos registrados (monstros, NPCs hostis, etc.) */
 const _targets = new Set();
 
-// ─── Helpers internos ────────────────────────────────────────────────────────
+// ─── Helpers internos ────────────────────────────────────────────────
 
 /**
  * Retorna a defesa efetiva de uma entidade.
@@ -105,7 +106,7 @@ function _applyReflectDamage(attacker, target, dealtDamage) {
 
   // playerDied centralizado em player.js
 }
-// ─── API pública ─────────────────────────────────────────────────────────────
+// ─── API pública ─────────────────────────────────────────────────────
 
 /**
  * Registra uma entidade como alvo atacável (monstro, etc.).
@@ -194,7 +195,7 @@ function attack(attacker, target) {
     const evasionBuff = target._activeBuffs.find(b => b.id === 'evasion' && b.expiresAt > now);
     if (evasionBuff && Math.random() < evasionBuff.modifier.evasionBonus) {
       playSFX(SFX.miss);
-      emit('damageDealt', { attacker, target, amount: 0, isCritical: false, evaded: true });
+      emit('damageDealt', { attacker, target, amount: 0, isCritical: false, isSkill: false, evaded: true });
       return { amount: 0, isCritical: false, evaded: true };
     }
   }
@@ -245,7 +246,7 @@ function attack(attacker, target) {
 
   playSFX(isCritical ? SFX.critical : SFX.hit);
 
-  emit('damageDealt', { attacker, target, amount, isCritical });
+  emit('damageDealt', { attacker, target, amount, isCritical, isSkill: false });
 
   _applyReflectDamage(attacker, target, amount);
 
@@ -256,7 +257,7 @@ function attack(attacker, target) {
 
   return { amount, isCritical };
 }
-// ─── Skills ────────────────────────────────────────────────────────────────
+// ─── Skills ──────────────────────────────────────────────────────────
 
 /**
  * Tenta lançar uma skill do player contra um alvo.
@@ -270,6 +271,8 @@ function attack(attacker, target) {
 function castSkill(playerState, skillId, target) {
   const skillDef = Classes.getSkillDef(skillId);
   if (!skillDef) return { ok: false, reason: 'skill_inexistente' };
+
+  const skillType = skillDef.type ?? 'melee';
 
   if (skillDef.classId !== playerState.class) {
     return { ok: false, reason: 'classe_incorreta' };
@@ -302,20 +305,33 @@ function castSkill(playerState, skillId, target) {
   // Registra cooldown (em ms a partir de agora)
   playerState.cooldowns[skillId] = now + skillDef.cooldown * 1000;
 
+  // Wraps emit para marcar damageDealt de skill com isSkill: true
+  const wrappedEmit = (event, data) => {
+    if (event === 'damageDealt') {
+      data.isSkill = true;
+    }
+    emit(event, data);
+  };
+
   // Monta ctx e executa effect
   const ctx = {
     now,
-    emit,
+    emit: wrappedEmit,
     getEntities: () => Array.from(_targets),
   };
-
+  const _targetPos = target?.position ? { x: target.position.x, y: target.position.y, z: target.position.z } : null;
   const result = Classes.executeSkill(skillId, playerState, target, ctx);
 
   emit('skillCast', {
     skillId,
+    skillType,
+    success: result.ok,
     casterId: playerState.name,
     targetId: target ? target.instanceId : null,
-    success: result.ok,
+    casterPosition: playerState.position
+      ? { x: playerState.position.x, y: playerState.position.y, z: playerState.position.z }
+      : null,
+    targetPosition: _targetPos,
   });
 
   return result;
@@ -392,7 +408,7 @@ function update(_delta) {
     });
   }
 }
-// ─── Boss combat hooks ───────────────────────────────────────────────────────
+// ─── Boss combat hooks ───────────────────────────────────────────────
 
 let _bossCombatHooksRegistered = false;
 
@@ -417,10 +433,25 @@ function _ensureCombatEventHooks() {
   if (_bossCombatHooksRegistered) return;
   _bossCombatHooksRegistered = true;
   on('bossAbilityUsed', _onBossAbilityUsed);
+
+  // Wiring: VFX de skill via particles
+  on('skillCast', ({ success, skillType, casterPosition, targetPosition }) => {
+    if (success !== true) return;
+    const pos = skillType === 'buff' ? casterPosition : targetPosition;
+    if (!pos) return;
+    const kind = 'damage';
+    for (let i = 0; i < 150; i++) {
+        Particles.emit(kind, {
+            x: pos.x + (Math.random() - 0.5) * 1.5,
+            y: (pos.y ?? 0) + Math.random() * 1.5,
+            z: pos.z + (Math.random() - 0.5) * 1.5,
+        });
+    }
+  });
 }
 
 // Balanceamento boss XP verificado: 4 bosses T2 com 500 XP cada (vs 8-72 XP monstros comuns).
 
-// ─── Exports ─────────────────────────────────────────────────────────────────
+// ─── Exports ─────────────────────────────────────────────────────────
 
 export { registerTarget, unregisterTarget, findNearestTarget, canAttack, attack, castSkill, update };
