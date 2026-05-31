@@ -96,6 +96,7 @@ async function init() {
     on('petAttack', _onPetAttack);
     on('playerDied',              _onPlayerDied);
     on('playerRespawned',         _onPlayerRespawned);
+    on('mapUnloading',            _clearAllMonsters);
     _initialized = true;
     console.log(`[monsters] Catálogo: ${Object.keys(_catalogue).length} tipos.`);
 }
@@ -325,6 +326,16 @@ function spawnQuestBoss(bossId, questId, position) {
  * Remove um boss da cena ao abandonar/completar a quest.
  * @param {string} bossId
  */
+function _clearAllMonsters() {
+  for (const [uid, m] of _monsters) {
+    if (m.mesh) sceneRemove(m.mesh);
+  }
+  _monsters.clear();
+  for (const [id, drop] of _drops) {
+    if (drop.mesh) sceneRemove(drop.mesh);
+  }
+  _drops.clear();
+}
 function despawnQuestBoss(bossId) {
     for (const [uid, m] of _monsters) {
         if (m.monsterId === bossId && m.isBoss) {

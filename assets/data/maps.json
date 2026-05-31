@@ -3231,13 +3231,13 @@
                      "respawnTime":  30,
                      "exitPoints":  [
                                         {
-                                            "targetMap":  "forest_01",
+                                            "targetMap":  "city_01",
                                             "position":  {
                                                              "x":  -45,
                                                              "y":  0,
                                                              "z":  0
                                                          },
-                                            "label":  "Floresta de Payon"
+                                            "label":  "Cidade de Prontera"
                                         },
                                         {
                                             "targetMap":  "ruins_01",
@@ -3246,7 +3246,16 @@
                                                              "y":  0,
                                                              "z":  0
                                                          },
-                                            "label":  "RuÃ­nas de Glast Heim"
+                                            "label":  "Ruínas de Glast Heim"
+                                        },
+                                        {
+                                            "targetMap":  "forest_01",
+                                            "position":  {
+                                                "x":  0,
+                                                "y":  0,
+                                                "z":  -45
+                                            },
+                                            "label":  "Floresta de Payon"
                                         }
                                     ],
                      "decoration":  [
