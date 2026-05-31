@@ -41,6 +41,7 @@ on('bossAbyssPoison', ({ damagePerTick, duration }) => {
 // â”€â”€â”€ Constantes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const MOVE_SPEED         = 5;
+const SPRINT_MULTIPLIER  = 2.5;
 const MOUSE_SENSITIVITY  = 0.003;
 const CAM_OFFSET         = new THREE.Vector3(0, 8, 8);
 const CAM_ZOOM_MIN       = 3;
@@ -777,11 +778,12 @@ function _updateMovement(delta, inputState) {
         const worldX = moveX * cos - moveZ * sin;
         const worldZ = moveX * sin + moveZ * cos;
 
-        _mesh.position.x += worldX * MOVE_SPEED * delta;
-        _mesh.position.z += worldZ * MOVE_SPEED * delta;
+        const _speed = keys['ShiftLeft'] || keys['ShiftRight'] ? MOVE_SPEED * SPRINT_MULTIPLIER : MOVE_SPEED;
+        _mesh.position.x += worldX * _speed * delta;
+        _mesh.position.z += worldZ * _speed * delta;
         // --- Colisao com construcoes ---
-        const _oldPx = _mesh.position.x - worldX * MOVE_SPEED * delta;
-        const _oldPz = _mesh.position.z - worldZ * MOVE_SPEED * delta;
+        const _oldPx = _mesh.position.x - worldX * _speed * delta;
+        const _oldPz = _mesh.position.z - worldZ * _speed * delta;
         const _cboxes = getCollisionBoxes();
         for (const b of _cboxes) {
           if (_mesh.position.x + PLAYER_RADIUS > b.minX && _mesh.position.x - PLAYER_RADIUS < b.maxX &&
