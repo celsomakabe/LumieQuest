@@ -22,6 +22,12 @@ let _composer = null;
 let _renderPass = null;
 let _bloomPass = null;
 let _vignettePass = null;
+// --- Profiling Overlay ---
+let _perfOverlay = null;
+let _perfVisible = false;
+const _fpsSamples = [];
+const FPS_SAMPLE_SIZE = 60;
+let _lastFrameTime = performance.now();
 /**
  * Mesh do chÃ£o. Mantido em escopo de mÃ³dulo para permitir aplicaÃ§Ã£o de textura
  * via setGroundTexture() apÃ³s o pipeline de assets ficar pronto (PROMPT 2).
@@ -39,13 +45,14 @@ let _hemiLight = null;
  */
 export function init(canvas) {
   // --- Renderer ---
-  _renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  _renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   _renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // MÃ¡x 2x para poupar GPU (R6)
   _renderer.setSize(window.innerWidth, window.innerHeight);
   _renderer.shadowMap.enabled = true;
   _renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Sombras suaves sem custo excessivo
   _renderer.setClearColor(0x87CEEB); // Azul cÃ©u
-
+  _renderer.info.autoReset = false;
+  _renderer.sortObjects = true;
   // --- Cena ---
   _scene = new THREE.Scene();
   _scene.fog = new THREE.FogExp2(0x87CEEB, 0.0015);
@@ -143,7 +150,26 @@ export function init(canvas) {
 
   // --- Resize handler ---
   window.addEventListener('resize', _onResize);
+// --- Profiling Overlay ---
+  _perfOverlay = document.createElement('div');
+  _perfOverlay.id = 'perf-overlay';
+  Object.assign(_perfOverlay.style, {
+    position: 'fixed', top: '8px', left: '8px',
+    background: 'rgba(0,0,0,0.65)', color: '#00ff88',
+    fontFamily: 'monospace', fontSize: '12px',
+    padding: '8px 12px', borderRadius: '4px',
+    zIndex: '9999', display: 'none',
+    lineHeight: '1.6', pointerEvents: 'none',
+    whiteSpace: 'pre'
+  });
+  document.body.appendChild(_perfOverlay);
 
+  events.on('keyPressed', ({ code }) => {
+    if (code === 'Backquote') {
+      _perfVisible = !_perfVisible;
+      _perfOverlay.style.display = _perfVisible ? 'block' : 'none';
+    }
+  });
   events.emit('sceneReady');
 }
 
@@ -166,13 +192,56 @@ function _onResize() {
  * @param {number} delta - Tempo desde o Ãºltimo frame em ms (nÃ£o usado aqui ainda)
  */
 export function render(delta) {
+  _renderer.info.reset();
+
   if (_composer) {
     _composer.render(delta);
   } else {
     _renderer.render(_scene, _camera);
   }
-}
 
+  const now = performance.now();
+  const frameDelta = now - _lastFrameTime;
+  _lastFrameTime = now;
+  if (frameDelta > 0) {
+    _fpsSamples.push(1000 / frameDelta);
+    if (_fpsSamples.length > FPS_SAMPLE_SIZE) _fpsSamples.shift();
+  }
+
+  if (_perfVisible && _perfOverlay) {
+    const stats = getPerformanceStats();
+    _perfOverlay.textContent =
+      `FPS:        ${stats.fps}\n` +
+      `Draw Calls: ${stats.drawCalls}\n` +
+      `Triangles:  ${stats.triangles}\n` +
+      `Geometries: ${stats.geometries}\n` +
+      `Textures:   ${stats.textures}\n` +
+      `Meshes:     ${stats.meshCount}`;
+  }
+}
+/**
+ * Retorna snapshot de metricas de performance atuais.
+ * @returns {{ fps: number, drawCalls: number, triangles: number, geometries: number, textures: number, meshCount: number }}
+ */
+export function getPerformanceStats() {
+  const fps = _fpsSamples.length > 0
+    ? Math.round(_fpsSamples.reduce((a, b) => a + b, 0) / _fpsSamples.length)
+    : 0;
+
+  let meshCount = 0;
+  if (_scene) {
+    _scene.traverse((obj) => { if (obj.isMesh) meshCount++; });
+  }
+
+  return {
+    fps,
+    drawCalls:  _renderer?.info.render.calls     ?? 0,
+    triangles:  _renderer?.info.render.triangles  ?? 0,
+    geometries: _renderer?.info.memory.geometries ?? 0,
+    textures:   _renderer?.info.memory.textures   ?? 0,
+    meshCount
+  };
+}
 /**
  * Retorna a instÃ¢ncia da THREE.Scene.
  * @returns {THREE.Scene}
