@@ -3186,9 +3186,9 @@
                                                   "intensity":  1.0
                                               },
                                       "night":  {
-                                                    "ambient":  "#1a1a3a",
-                                                    "directional":  "#4444aa",
-                                                    "intensity":  0.8
+                                                    "ambient":  "#8888bb",
+                                                    "directional":  "#aaaadd",
+                                                    "intensity":  1.4
                                                 }
                                   }
                  },
@@ -3491,9 +3491,9 @@
                                                   "intensity":  0.9
                                               },
                                       "night":  {
-                                                    "ambient":  "#232330",
-                                                    "directional":  "#5b5f88",
-                                                    "intensity":  0.8
+                                                    "ambient":  "#8a8aa0",
+                                                    "directional":  "#aaaacc",
+                                                    "intensity":  1.4
                                                 }
                                   }
                  },
@@ -3628,9 +3628,9 @@
                                                   "intensity":  0.95
                                               },
                                       "night":  {
-                                                    "ambient":  "#1d1d35",
-                                                    "directional":  "#5555aa",
-                                                    "intensity":  0.8
+                                                    "ambient":  "#7a7a9a",
+                                                    "directional":  "#9999bb",
+                                                    "intensity":  1.4
                                                 }
                                   }
                  },
