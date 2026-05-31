@@ -504,11 +504,11 @@ function _pickWeightedMonster(pool) {
 }
 
 function _randomPointInMap(terrainSize) {
-  const half = terrainSize * 0.5;
+  const half = 70;
   return {
-    x: (Math.random() * terrainSize) - half,
+    x: (Math.random() * half * 2) - half,
     y: 0.5,
-    z: (Math.random() * terrainSize) - half
+    z: (Math.random() * half * 2) - half
   };
 }
 

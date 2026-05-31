@@ -161,6 +161,12 @@ async function spawnMonster(monsterId, position, linkedQuestId = null) {
             mesh.traverse(child => {
                 if (child.isMesh || child.isSkinnedMesh) {
                     child.castShadow = true;
+                    child.receiveShadow = true;
+                if (child.material) {
+                        if ('metalness' in child.material) child.material.metalness = 0;
+                        if ('roughness' in child.material) child.material.roughness = 1;
+                        child.material.needsUpdate = true;
+                    }
                 }
             });
         } catch (err) {

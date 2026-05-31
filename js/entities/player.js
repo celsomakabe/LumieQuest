@@ -207,6 +207,10 @@ export async function init(saveData = null) {
         _playAttackAnimation();
     });
 
+// Validar spawn contra colisoes
+    _validateSpawnPosition();
+
+    _validateSpawnPosition();
     emit('playerSpawned', { position: _mesh.position.clone() });
     console.log('[player] Spawnou em', _mesh.position);
 }
@@ -238,6 +242,44 @@ export function getPosition() {
  * Respawna o player na cidade, restaurando HP/MP e limpando estado de morte.
  * @returns {void}
  */
+function _validateSpawnPosition() {
+  if (!_mesh) return;
+  const boxes = getCollisionBoxes();
+  const r = 0.5;
+  const px = _mesh.position.x;
+  const pz = _mesh.position.z;
+
+  let inside = false;
+  for (const box of boxes) {
+    if (px + r > box.minX && px - r < box.maxX && pz + r > box.minZ && pz - r < box.maxZ) {
+      inside = true;
+      break;
+    }
+  }
+  if (!inside) return;
+
+  // Tentar offsets pequenos ao redor da posicao atual
+  for (let dist = 2; dist <= 20; dist += 2) {
+    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 4) {
+      const tx = px + Math.cos(angle) * dist;
+      const tz = pz + Math.sin(angle) * dist;
+      let free = true;
+      for (const box of boxes) {
+        if (tx + r > box.minX && tx - r < box.maxX && tz + r > box.minZ && tz - r < box.maxZ) {
+          free = false;
+          break;
+        }
+      }
+      if (free && Math.abs(tx) <= 75 && Math.abs(tz) <= 75) {
+        _mesh.position.set(tx, 0, tz);
+        _data.position = { x: tx, y: 0, z: tz };
+        console.log('[player] Spawn ajustado para', tx.toFixed(1), tz.toFixed(1));
+        return;
+      }
+    }
+  }
+}
+
 export function respawn() {
     if (!_data || !_mesh) return;
 
@@ -296,6 +338,21 @@ export function takeDamage(amount, source) {
             source: source ?? 'unknown',
         });
         console.log(`[player] Morreu (fonte: ${source})`);
+        setTimeout(() => {
+            _isDead = false;
+            _data.hp = _data.maxHp;
+            _data.mp = _data.maxMp;
+            _data.position = { x: 0, y: 0, z: 0 };
+            if (_mesh) {
+                _mesh.rotation.set(0, _rotationY, 0);
+                _mesh.position.set(0, 0, 0);
+            }
+            _validateSpawnPosition();
+            emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+            emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+            emit('playerRespawned', { position: _data.position, currentMap: _data.currentMap });
+            console.log('[player] Auto-respawn no centro do mapa');
+        }, 2000);
     }
     }
 
@@ -472,7 +529,34 @@ export function update(delta, inputState) {
     }
 
     if (_isDead) return;
-    
+
+    if (!_isDead && _data.hp <= 0) {
+        _isDead = true;
+        if (_mesh) _mesh.rotation.x = -Math.PI / 2;
+        emit('playerDied', {
+            position: { x: _data.position.x, y: _data.position.y, z: _data.position.z },
+            currentMap: _data.currentMap,
+            source: 'combat',
+        });
+        console.log('[player] Morreu (detectado no update)');
+        setTimeout(() => {
+            _isDead = false;
+            _data.hp = _data.maxHp;
+            _data.mp = _data.maxMp;
+            _data.position = { x: 0, y: 0, z: 0 };
+            if (_mesh) {
+                _mesh.rotation.set(0, _rotationY, 0);
+                _mesh.position.set(0, 0, 0);
+            }
+            _validateSpawnPosition();
+            emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+            emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+            emit('playerRespawned', { position: _data.position, currentMap: _data.currentMap });
+            console.log('[player] Auto-respawn no centro do mapa');
+        }, 2000);
+        return;
+    }
+
     if (Array.isArray(_data._activeBuffs) && _data._activeBuffs.length > 0) {
         const now = performance.now();
         _data._activeBuffs = _data._activeBuffs.filter(buff => {
@@ -489,7 +573,7 @@ export function update(delta, inputState) {
         _regenTimer -= REGEN_TICK_S;
         const hpRegen = Math.floor(_data.maxHp / 200) + Math.floor((_data.baseStats?.vit ?? 0) / 5);
         const mpRegen = 1 + Math.floor(_data.maxMp / 100) + Math.floor((_data.baseStats?.int ?? 0) / 6);
-        if (hpRegen > 0 && _data.hp < _data.maxHp) {
+        if (hpRegen > 0 && _data.hp > 0 && _data.hp < _data.maxHp) {
             _data.hp = Math.min(_data.maxHp, _data.hp + hpRegen);
             emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
         }
@@ -651,7 +735,7 @@ function _onAttackFinished(event) {
  * @param {Object} inputState
  */
 function _updateMovement(delta, inputState) {
-    if (_isDead) return;
+    if (_isDead || _data.hp <= 0) return;
     const { keys, mouse } = inputState;
 
      if (mouse.buttons?.right) {

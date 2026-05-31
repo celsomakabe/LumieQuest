@@ -7,6 +7,28 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone as cloneSkeleton } from 'three/addons/utils/SkeletonUtils.js';
 
+/** @type {Map<string, THREE.Material>} */
+const _materialCache = new Map();
+let _materialCacheHits = 0;
+
+function _getMaterialKey(mat) {
+  const mapUrl = mat.map?.source?.data?.src ?? mat.map?.image?.src ?? '';
+  const color  = mat.color ? mat.color.getHexString() : 'none';
+  const metal  = (mat.metalness ?? 0).toFixed(2);
+  const rough  = (mat.roughness ?? 1).toFixed(2);
+  return `${mat.type}|${mapUrl}|${color}|${metal}|${rough}`;
+}
+
+function _getCachedMaterial(mat) {
+  const key = _getMaterialKey(mat);
+  if (_materialCache.has(key)) {
+    _materialCacheHits++;
+    return _materialCache.get(key);
+  }
+  _materialCache.set(key, mat);
+  return mat;
+}
+
 let _loader = null;
 /** @type {Map<string, any>} */
 const _cache = new Map();
@@ -66,8 +88,18 @@ export async function loadModel(url) {
  * @returns {THREE.Object3D|null}
  */
 export function cloneModel(gltf) {
-    if (!gltf?.scene) return null;
-    return cloneSkeleton(gltf.scene);
+  if (!gltf?.scene) return null;
+  const clone = cloneSkeleton(gltf.scene);
+  clone.traverse((child) => {
+    if (child.isMesh && child.material) {
+      if (Array.isArray(child.material)) {
+        child.material = child.material.map(_getCachedMaterial);
+      } else {
+        child.material = _getCachedMaterial(child.material);
+      }
+    }
+  });
+  return clone;
 }
 
 /**
@@ -104,4 +136,14 @@ function _cloneGltf(gltf) {
             ? gltf.animations.map((clip) => clip.clone())
             : [],
     };
+}
+/**
+ * Retorna estatisticas do cache de materiais para profiling.
+ * @returns {{ totalCached: number, reuses: number }}
+ */
+export function getMaterialCacheStats() {
+  return {
+    totalCached: _materialCache.size,
+    reuses: _materialCacheHits
+  };
 }

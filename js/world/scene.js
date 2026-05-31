@@ -284,7 +284,7 @@ export function updateLighting(cyclePhase, cycleProgress, lightingConfig) {
   } else if (cyclePhase === 'night') {
     ambient     = night.ambient;
     directional = night.directional;
-    intensity   = night.intensity ?? 0.6;
+    intensity   = night.intensity ?? 0.8;
   } else if (cyclePhase === 'dawn') {
     ambient     = _lerpColorHex(night.ambient, day.ambient, cycleProgress);
     directional = _lerpColorHex(night.directional, day.directional, cycleProgress);
@@ -305,9 +305,9 @@ export function updateLighting(cyclePhase, cycleProgress, lightingConfig) {
   if (_scene) {
     let bgI;
     if (cyclePhase === 'day') bgI = 1.0;
-    else if (cyclePhase === 'night') bgI = 0.25;
+    else if (cyclePhase === 'night') bgI = 0.65;
     else if (cyclePhase === 'dawn') bgI = THREE.MathUtils.lerp(0.25, 1.0, cycleProgress);
-    else bgI = THREE.MathUtils.lerp(1.0, 0.25, cycleProgress);
+    else bgI = THREE.MathUtils.lerp(1.0, 0.65, cycleProgress);
     _scene.backgroundIntensity = bgI;
   }
 

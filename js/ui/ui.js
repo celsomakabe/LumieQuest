@@ -3139,28 +3139,26 @@ function _createMonsterHpBar(monsterId) {
     el.style.cssText = `
         position: fixed;
         width: 60px;
-        height: 6px;
+        height: auto;
         background: rgba(0,0,0,0.7);
         border: 1px solid rgba(0,0,0,0.85);
         border-radius: 2px;
         pointer-events: none;
         z-index: 90;
         transform: translate(-50%, -100%);
-        overflow: hidden;
+
         display: none;
     `;
-
+    const nameTag = document.createElement('div');
+    nameTag.className = 'monster-hpbar-name';
+    nameTag.style.cssText = 'color:#fff;font-size:10px;font-family:sans-serif;text-align:center;text-shadow:1px 1px 2px #000;white-space:nowrap;margin-bottom:2px;';
+    el.appendChild(nameTag);
     const fill = document.createElement('div');
     fill.className = 'monster-hpbar-fill';
-    fill.style.cssText = `
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(to bottom, #ff5050, #c83232);
-        transition: width 0.15s linear;
-    `;
+    fill.style.cssText = 'width:100%;height:6px;background:linear-gradient(to bottom,#ff5050,#c83232);transition:width 0.15s linear;border-radius:2px;';
     el.appendChild(fill);
 
-    document.body.appendChild(el);
+     document.body.appendChild(el);
     _monsterHpBars.set(monsterId, el);
 }
 
@@ -3210,7 +3208,11 @@ export function updateMonsterHpBars() {
         el.style.left = `${screenX}px`;
         el.style.top = `${screenY}px`;
 
-        const fill = el.firstChild;
+        const nameEl = el.querySelector('.monster-hpbar-name');
+        const fill = el.querySelector('.monster-hpbar-fill');
+        if (nameEl && !nameEl.textContent) {
+            nameEl.textContent = monster.name ?? monster.monsterId ?? '???';
+        }
         if (fill) {
             const pct = Math.max(0, Math.min(100, (monster.hp / monster.maxHp) * 100));
             fill.style.width = `${pct.toFixed(1)}%`;
