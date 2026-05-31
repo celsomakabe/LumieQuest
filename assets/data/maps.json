@@ -3310,14 +3310,14 @@
                                         },
                      "lighting":  {
                                       "day":  {
-                                                  "ambient":  "#7a7a8a",
-                                                  "directional":  "#8a8ab0",
-                                                  "intensity":  0.55
+                                                  "ambient":  "#aaaabc",
+                                                  "directional":  "#bbbbdd",
+                                                  "intensity":  1.6
                                               },
                                       "night":  {
-                                                    "ambient":  "#7a7a8a",
-                                                    "directional":  "#8a8ab0",
-                                                    "intensity":  0.55
+                                                    "ambient":  "#aaaabc",
+                                                  "directional":  "#bbbbdd",
+                                                  "intensity":  1.5
                                                 }
                                   }
                  },
