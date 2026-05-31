@@ -4,7 +4,7 @@ import { spawnMonster, spawnGroup } from '../entities/monsters.js';
 import { spawnFromConfig } from '../entities/npcs.js';
 import * as Models from '../core/models.js';
 import { playBGM, playSFX } from '../core/audio.js';
-import { getPosition, getState } from '../entities/player.js';
+import { getPosition, getState, getInstance, setPosition } from '../entities/player.js';
 import { on, off, emit } from '../core/events.js';
 
 let _maps = [];
@@ -49,7 +49,8 @@ export async function init() {
 
   _boundExitPointAction = ({ targetMap } = {}) => {
     if (!targetMap) return;
-    loadMap(targetMap);
+    const fromMap = _currentMapId;
+    loadMap(targetMap, fromMap);
   };
 
   on('exitPointAction', _boundExitPointAction);
@@ -60,7 +61,7 @@ export async function init() {
  * @param {string} mapId
  * @returns {Promise<void>}
  */
-export async function loadMap(mapId) {
+export async function loadMap(mapId, fromMapId) {
   const nextMap = _mapsById.get(mapId);
   if (!nextMap) {
     console.warn(`[world] Mapa desconhecido: ${mapId}`);
@@ -92,10 +93,23 @@ export async function loadMap(mapId) {
   updateLighting('day', 1.0, nextMap.lighting ?? {});
   emit('weatherChanged', { weather: 'clear' });
 
+  // Posicionar player no exit point que leva de volta ao mapa de origem
+  if (fromMapId) {
+    const arrivals = Array.isArray(nextMap.exitPoints) ? nextMap.exitPoints : [];
+    const arrival = arrivals.find(ep => ep.targetMap === fromMapId);
+    if (arrival?.position) {
+      const px = Number(arrival.position.x ?? 0);
+      const pz = Number(arrival.position.z ?? 0);
+      setPosition(px, 0, pz);
+      console.log('[world] Player posicionado no exit point (' + px + ', ' + pz + ')');
+    }
+  }
+
   emit('mapLoaded', {
     mapId,
     mapName: nextMap.name ?? mapId
   });
+
 }
 
 /**

@@ -239,6 +239,10 @@ export function getState() {
 export function getPosition() {
     return _mesh ? _mesh.position.clone() : new THREE.Vector3();
 }
+export function setPosition(x, y, z) {
+    if (_mesh) _mesh.position.set(x, y, z);
+    if (_data) _data.position = { x, y, z };
+}
 /**
  * Respawna o player na cidade, restaurando HP/MP e limpando estado de morte.
  * @returns {void}
