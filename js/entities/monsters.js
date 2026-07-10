@@ -70,6 +70,9 @@ let _dropIdCounter = 0;
 let _playerPos = { x: 0, y: 0, z: 0 };
 let _isPlayerDead = false;
 
+/** @type {number} Distância máxima (unidades) que um monstro persegue após ser atacado antes de desistir (leash de aggro por dano). */
+const DAMAGE_AGGRO_LEASH = 35;
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 /**
@@ -90,6 +93,7 @@ async function init() {
     for (const item of itemsData.items) _itemCatalogue[item.id] = item;
 
     on('entityDied',              _onEntityDied);
+    on('damageDealt',             _onDamageDealt);
     on('pickupRequest',           _onPickupRequest);
     on('questBossSpawnRequest',   _onQuestBossSpawnRequest);
     on('questBossDespawnRequest', _onQuestBossDespawnRequest);
@@ -241,6 +245,7 @@ async function spawnMonster(monsterId, position, linkedQuestId = null) {
         _idleTimer:      0,
         _lastAttackTime: 0,
         _attackCounter:  0,
+        _damageAggro:    false,
 
         // Fases (flags para disparar apenas uma vez)
         _phase50Done: false,
@@ -403,6 +408,7 @@ function _onPlayerDied(_payload) {
             m._idleTimer = 0;
             m._idleTarget = null;
             m._lastAttackTime = 0;
+            m._damageAggro = false;
         }
     }
 }
@@ -411,6 +417,30 @@ function _onPlayerRespawned({ position }) {
     _isPlayerDead = false;
     if (position) {
         _playerPos = { x: position.x, y: position.y ?? 0, z: position.z };
+    }
+}
+
+/**
+ * Aggro por dano: quando um monstro registrado recebe dano, entra em perseguição
+ * ao player mesmo estando fora do aggroRange normal (ex.: ataques ranged a 20u).
+ * O alvo de perseguição é sempre o player, cuja posição já é alimentada em
+ * updateAll — por isso não é preciso o campo `attacker` do evento (que, aliás,
+ * vem null em dano de skill). Usa `target` (instância do monstro), presente em
+ * todos os casos de dano relevantes. R8: reação puramente via event bus.
+ * @param {{ target?: Object, amount?: number }} payload
+ */
+function _onDamageDealt({ target, amount } = {}) {
+    if (_isPlayerDead) return;
+    if (!target || target.type !== 'monster') return;
+    if (typeof amount === 'number' && amount <= 0) return; // ignora miss/evasão
+
+    const m = _monsters.get(target.id);
+    if (!m || m.state === 'dead') return;
+
+    m._damageAggro = true;
+    if (m.state === 'idle') {
+        // 'aggro' toca o SFX de aggro e transiciona para 'chase' no próximo frame.
+        m.state = 'aggro';
     }
 }
 function _updateMonster(m, dt, playerPos) {
@@ -926,7 +956,15 @@ function _stateIdle(m, dt, distToPlayer) {
 
 function _stateChase(m, dt, playerPos, dist) {
     if (dist < m.attackRange) { m.state = 'attack'; return; }
-    if (dist > m.aggroRange * 1.5) { m.state = 'idle'; m._idleTimer = 0; m._aggroSfxPlayed = false; return; }
+    // Monstro aggro'd por dano persegue além do aggroRange normal, até o leash.
+    const leash = m._damageAggro ? DAMAGE_AGGRO_LEASH : m.aggroRange * 1.5;
+    if (dist > leash) {
+        m.state = 'idle';
+        m._idleTimer = 0;
+        m._aggroSfxPlayed = false;
+        m._damageAggro = false;
+        return;
+    }
 
     // boss_sniper fica parado atirando à distância se dentro do attackRange estendido
     if (m.monsterId === 'boss_sniper' && dist <= m.attackRange) {
@@ -1325,6 +1363,7 @@ function _respawn(m) {
     m._idleTarget       = null;
     m._lastAttackTime   = 0;
     m._attackCounter    = 0;
+    m._damageAggro      = false;
     m._phase50Done      = false;
     m._phase25Done      = false;
     m._telegraphing        = false;

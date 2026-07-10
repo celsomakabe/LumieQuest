@@ -3,6 +3,7 @@
                  {
                      "id":  "city_01",
                      "name":  "Cidade de Prontera",
+                     "spawn":  { "x": 0, "y": 0, "z": 40 },
                      "terrainSize":  800,
                      "terrainColor":  "#7caa5a",
                      "texture":  "assets/textures/terrain/city_cobblestone.jpg",
@@ -2987,182 +2988,34 @@
                                         }
                                     ],
                      "decoration":  [
-                                        {
-                                            "model":  "BirchTree_1",
-                                            "path":  "assets/models/nature/BirchTree_1.gltf",
-                                            "count":  8,
-                                            "area":  {
-                                                         "xMin":  -40,
-                                                         "xMax":  40,
-                                                         "zMin":  -40,
-                                                         "zMax":  40
-                                                     },
-                                            "scaleRange":  [
-                                                               0.9,
-                                                               1.2
-                                                           ],
-                                            "rotateY":  true
-                                        },
-                                        {
-                                            "model":  "BirchTree_2",
-                                            "path":  "assets/models/nature/BirchTree_2.gltf",
-                                            "count":  8,
-                                            "area":  {
-                                                         "xMin":  -42,
-                                                         "xMax":  42,
-                                                         "zMin":  -42,
-                                                         "zMax":  42
-                                                     },
-                                            "scaleRange":  [
-                                                               0.9,
-                                                               1.2
-                                                           ],
-                                            "rotateY":  true
-                                        },
-                                        {
-                                            "model":  "BirchTree_3",
-                                            "path":  "assets/models/nature/BirchTree_3.gltf",
-                                            "count":  8,
-                                            "area":  {
-                                                         "xMin":  -44,
-                                                         "xMax":  44,
-                                                         "zMin":  -44,
-                                                         "zMax":  44
-                                                     },
-                                            "scaleRange":  [
-                                                               0.9,
-                                                               1.25
-                                                           ],
-                                            "rotateY":  true
-                                        },
-                                        {
-                                            "model":  "MapleTree_1",
-                                            "path":  "assets/models/nature/MapleTree_1.gltf",
-                                            "count":  5,
-                                            "area":  {
-                                                         "xMin":  -38,
-                                                         "xMax":  38,
-                                                         "zMin":  -38,
-                                                         "zMax":  38
-                                                     },
-                                            "scaleRange":  [
-                                                               0.85,
-                                                               1.15
-                                                           ],
-                                            "rotateY":  true
-                                        },
-                                        {
-                                            "model":  "MapleTree_2",
-                                            "path":  "assets/models/nature/MapleTree_2.gltf",
-                                            "count":  5,
-                                            "area":  {
-                                                         "xMin":  -36,
-                                                         "xMax":  36,
-                                                         "zMin":  -36,
-                                                         "zMax":  36
-                                                     },
-                                            "scaleRange":  [
-                                                               0.85,
-                                                               1.15
-                                                           ],
-                                            "rotateY":  true
-                                        },
-                                        {
-                                            "model":  "Bush_Large",
-                                            "path":  "assets/models/nature/Bush_Large.gltf",
-                                            "count":  10,
-                                            "area":  {
-                                                         "xMin":  -46,
-                                                         "xMax":  46,
-                                                         "zMin":  -46,
-                                                         "zMax":  46
-                                                     },
-                                            "scaleRange":  [
-                                                               0.85,
-                                                               1.15
-                                                           ],
-                                            "rotateY":  true
-                                        },
-                                        {
-                                            "model":  "Bush_Small_Flowers",
-                                            "path":  "assets/models/nature/Bush_Small_Flowers.gltf",
-                                            "count":  8,
-                                            "area":  {
-                                                         "xMin":  -42,
-                                                         "xMax":  42,
-                                                         "zMin":  -42,
-                                                         "zMax":  42
-                                                     },
-                                            "scaleRange":  [
-                                                               0.8,
-                                                               1.1
-                                                           ],
-                                            "rotateY":  true
-                                        },
-                                        {
-                                            "model":  "Grass_Large",
-                                            "path":  "assets/models/nature/Grass_Large.gltf",
-                                            "count":  15,
-                                            "area":  {
-                                                         "xMin":  -48,
-                                                         "xMax":  48,
-                                                         "zMin":  -48,
-                                                         "zMax":  48
-                                                     },
-                                            "scaleRange":  [
-                                                               0.8,
-                                                               1.2
-                                                           ],
-                                            "rotateY":  true
-                                        },
-                                        {
-                                            "model":  "Flower_1_Clump",
-                                            "path":  "assets/models/nature/Flower_1_Clump.gltf",
-                                            "count":  5,
-                                            "area":  {
-                                                         "xMin":  -40,
-                                                         "xMax":  40,
-                                                         "zMin":  -40,
-                                                         "zMax":  40
-                                                     },
-                                            "scaleRange":  [
-                                                               0.8,
-                                                               1.1
-                                                           ],
-                                            "rotateY":  true
-                                        },
-                                        {
-                                            "model":  "Flower_2_Clump",
-                                            "path":  "assets/models/nature/Flower_2_Clump.gltf",
-                                            "count":  5,
-                                            "area":  {
-                                                         "xMin":  -40,
-                                                         "xMax":  40,
-                                                         "zMin":  -40,
-                                                         "zMax":  40
-                                                     },
-                                            "scaleRange":  [
-                                                               0.8,
-                                                               1.1
-                                                           ],
-                                            "rotateY":  true
-                                        },
-                                        {
-                                            "model":  "Flower_3_Clump",
-                                            "path":  "assets/models/nature/Flower_3_Clump.gltf",
-                                            "count":  5,
-                                            "area":  {
-                                                         "xMin":  -40,
-                                                         "xMax":  40,
-                                                         "zMin":  -40,
-                                                         "zMax":  40
-                                                     },
-                                            "scaleRange":  [
-                                                               0.8,
-                                                               1.1
-                                                           ],
-                                            "rotateY":  true
-                                        }
+                                        { "model": "BirchTree_1", "path": "assets/models/nature/BirchTree_1.gltf", "instanced": true, "count": 70, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [0.95, 1.45], "rotateY": true },
+                                        { "model": "BirchTree_2", "path": "assets/models/nature/BirchTree_2.gltf", "instanced": true, "count": 70, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [0.95, 1.45], "rotateY": true },
+                                        { "model": "BirchTree_3", "path": "assets/models/nature/BirchTree_3.gltf", "instanced": true, "count": 60, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [0.95, 1.45], "rotateY": true },
+                                        { "model": "BirchTree_4", "path": "assets/models/nature/BirchTree_4.gltf", "instanced": true, "count": 60, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [0.95, 1.45], "rotateY": true },
+                                        { "model": "BirchTree_5", "path": "assets/models/nature/BirchTree_5.gltf", "instanced": true, "count": 50, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [0.95, 1.45], "rotateY": true },
+                                        { "model": "MapleTree_1", "path": "assets/models/nature/MapleTree_1.gltf", "instanced": true, "count": 55, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [0.9, 1.4], "rotateY": true },
+                                        { "model": "MapleTree_2", "path": "assets/models/nature/MapleTree_2.gltf", "instanced": true, "count": 50, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [0.9, 1.4], "rotateY": true },
+                                        { "model": "MapleTree_3", "path": "assets/models/nature/MapleTree_3.gltf", "instanced": true, "count": 45, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [0.9, 1.4], "rotateY": true },
+                                        { "model": "Bush_Large", "path": "assets/models/nature/Bush_Large.gltf", "instanced": true, "count": 70, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [0.9, 1.4], "rotateY": true },
+                                        { "model": "Bush_Large_Flowers", "path": "assets/models/nature/Bush_Large_Flowers.gltf", "instanced": true, "count": 55, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [0.9, 1.4], "rotateY": true },
+                                        { "model": "Bush_Small_Flowers", "path": "assets/models/nature/Bush_Small_Flowers.gltf", "instanced": true, "count": 60, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [0.85, 1.3], "rotateY": true },
+                                        { "model": "Bush_Small", "path": "assets/models/nature/Bush_Small.gltf", "instanced": true, "count": 55, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [0.85, 1.3], "rotateY": true },
+                                        { "model": "Grass_Large", "path": "assets/models/nature/Grass_Large.gltf", "instanced": true, "count": 700, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [1.0, 1.9], "rotateY": true },
+                                        { "model": "Grass_Small", "path": "assets/models/nature/Grass_Small.gltf", "instanced": true, "count": 700, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [1.0, 1.7], "rotateY": true },
+                                        { "model": "Grass_Large_Extruded", "path": "assets/models/nature/Grass_Large_Extruded.gltf", "instanced": true, "count": 300, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [1.0, 1.8], "rotateY": true },
+                                        { "model": "Flower_1_Clump", "path": "assets/models/nature/Flower_1_Clump.gltf", "instanced": true, "count": 12, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [0.85, 1.2], "rotateY": true },
+                                        { "model": "Flower_2_Clump", "path": "assets/models/nature/Flower_2_Clump.gltf", "instanced": true, "count": 12, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [0.85, 1.2], "rotateY": true },
+                                        { "model": "Flower_3_Clump", "path": "assets/models/nature/Flower_3_Clump.gltf", "instanced": true, "count": 12, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [0.85, 1.2], "rotateY": true },
+                                        { "model": "Flower_4_Clump", "path": "assets/models/nature/Flower_4_Clump.gltf", "instanced": true, "count": 12, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [0.85, 1.2], "rotateY": true },
+                                        { "model": "Flower_5_Clump", "path": "assets/models/nature/Flower_5_Clump.gltf", "instanced": true, "count": 12, "area": { "xMin": -72, "xMax": 72, "zMin": -72, "zMax": 72 }, "scaleRange": [0.85, 1.2], "rotateY": true },
+                                        { "model": "Ring_BirchTree_1", "path": "assets/models/nature/BirchTree_1.gltf", "instanced": true, "count": 120, "area": { "xMin": -200, "xMax": 200, "zMin": 75, "zMax": 200 }, "scaleRange": [1.1, 1.7], "rotateY": true },
+                                        { "model": "Ring_MapleTree_1", "path": "assets/models/nature/MapleTree_1.gltf", "instanced": true, "count": 80, "area": { "xMin": -200, "xMax": 200, "zMin": 75, "zMax": 200 }, "scaleRange": [1.1, 1.7], "rotateY": true },
+                                        { "model": "Ring_BirchTree_2", "path": "assets/models/nature/BirchTree_2.gltf", "instanced": true, "count": 120, "area": { "xMin": -200, "xMax": 200, "zMin": -200, "zMax": -75 }, "scaleRange": [1.1, 1.7], "rotateY": true },
+                                        { "model": "Ring_MapleTree_2", "path": "assets/models/nature/MapleTree_2.gltf", "instanced": true, "count": 80, "area": { "xMin": -200, "xMax": 200, "zMin": -200, "zMax": -75 }, "scaleRange": [1.1, 1.7], "rotateY": true },
+                                        { "model": "Ring_BirchTree_3", "path": "assets/models/nature/BirchTree_3.gltf", "instanced": true, "count": 100, "area": { "xMin": 75, "xMax": 200, "zMin": -75, "zMax": 75 }, "scaleRange": [1.1, 1.7], "rotateY": true },
+                                        { "model": "Ring_MapleTree_3", "path": "assets/models/nature/MapleTree_3.gltf", "instanced": true, "count": 70, "area": { "xMin": 75, "xMax": 200, "zMin": -75, "zMax": 75 }, "scaleRange": [1.1, 1.7], "rotateY": true },
+                                        { "model": "Ring_BirchTree_4", "path": "assets/models/nature/BirchTree_4.gltf", "instanced": true, "count": 100, "area": { "xMin": -200, "xMax": -75, "zMin": -75, "zMax": 75 }, "scaleRange": [1.1, 1.7], "rotateY": true },
+                                        { "model": "Ring_BirchTree_5", "path": "assets/models/nature/BirchTree_5.gltf", "instanced": true, "count": 70, "area": { "xMin": -200, "xMax": -75, "zMin": -75, "zMax": 75 }, "scaleRange": [1.1, 1.7], "rotateY": true }
                                     ],
                      "audioProfile":  {
                                           "bgm":  "bgm_forest",

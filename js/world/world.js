@@ -4,7 +4,7 @@ import { spawnMonster, spawnGroup } from '../entities/monsters.js';
 import { spawnFromConfig } from '../entities/npcs.js';
 import * as Models from '../core/models.js';
 import { playBGM, playSFX } from '../core/audio.js';
-import { getPosition, getState, getInstance, setPosition } from '../entities/player.js';
+import { getPosition, getState, getInstance, setPosition, ensureValidSpawn } from '../entities/player.js';
 import { on, off, emit } from '../core/events.js';
 
 let _maps = [];
@@ -15,6 +15,7 @@ let _currentMapConfig = null;
 let _terrainMesh = null;
 let _decorationGroup = null;
 let _instancedMeshes = [];
+let _instancedModelMeshes = [];
 let _mapObjects = [];
 let _exitNearTarget = null;
 let _npcsConfig = null;
@@ -103,6 +104,15 @@ export async function loadMap(mapId, fromMapId) {
       setPosition(px, 0, pz);
       console.log('[world] Player posicionado no exit point (' + px + ', ' + pz + ')');
     }
+  } else if (nextMap.spawn) {
+    // Carga inicial (sem mapa de origem): usa o spawn definido no maps.json.
+    // As collision boxes já foram populadas por _spawnMapDecoration acima, então
+    // ensureValidSpawn() consegue desencaixar o player se cair numa hitbox.
+    const sx = Number(nextMap.spawn.x ?? 0);
+    const sz = Number(nextMap.spawn.z ?? 0);
+    setPosition(sx, 0, sz);
+    ensureValidSpawn();
+    console.log('[world] Player no spawn inicial de ' + mapId + ' (' + sx + ', ' + sz + ')');
   }
 
   emit('mapLoaded', {
@@ -199,6 +209,13 @@ for (const im of _instancedMeshes) {
     }
   }
   _instancedMeshes = [];
+  // Instanced GLTF: geometry/material são compartilhados com o cache de models.js.
+  // Libera apenas o instanceMatrix (dispose do InstancedMesh); nunca geometry/material.
+  for (const im of _instancedModelMeshes) {
+    remove(im);
+    im.dispose?.();
+  }
+  _instancedModelMeshes = [];
   _mapObjects = [];
   _decorationGroup = null;
   _terrainMesh = null;
@@ -254,6 +271,7 @@ async function _spawnMapDecoration(mapConfig) {
   _mapObjects.push(_decorationGroup);
 
   const proceduralByModel = new Map();
+  const instancedModelEntries = [];
   const nonProcedural = [];
 
   for (const entry of decorations) {
@@ -268,6 +286,9 @@ async function _spawnMapDecoration(mapConfig) {
       const bucket = proceduralByModel.get(key);
       bucket.totalCount += count;
       bucket.entries.push({ entry, count });
+    } else if (entry.instanced === true && entry.path && !Array.isArray(entry.positions) && !entry.type) {
+      // Vegetação GLTF instanciada: renderizada via InstancedMesh (1 por mesh/material).
+      instancedModelEntries.push({ entry, count });
     } else {
       nonProcedural.push({ entry, count });
     }
@@ -277,9 +298,46 @@ async function _spawnMapDecoration(mapConfig) {
     _spawnProceduralInstancedMesh(model, bucket);
   }
 
+  for (const { entry, count } of instancedModelEntries) {
+    await _spawnInstancedModelDecoration(entry, count);
+  }
+
   for (const { entry, count } of nonProcedural) {
     await _spawnModelDecoration(entry, count, _decorationGroup);
   }
+}
+
+// ─── Colisão de estruturas ────────────────────────────────────────────────────
+// A hitbox de uma construção é o AABB do modelo ENCOLHIDO em torno do próprio
+// centro, para não bloquear rua/gramado sob beirais e telhados (e corrigir pivô
+// deslocado do modelo). O fator é ajustável para calibração em jogo:
+//   1) entry.collisionScale no maps.json (por entrada, tem prioridade)
+//   2) default por tipo abaixo (match no model/path)
+//   3) COLLISION_SCALE_DEFAULT global.
+const COLLISION_SCALE_DEFAULT = 0.65;
+const COLLISION_SCALE_BY_TYPE = [
+  { match: 'church', scale: 0.60 },
+  { match: 'Inn',    scale: 0.55 },
+  { match: 'Stable', scale: 0.55 },
+  { match: 'tower',  scale: 0.75 },
+  { match: 'House',  scale: 0.65 },
+];
+
+/**
+ * Resolve o fator de encolhimento da hitbox de uma decoração.
+ * Prioridade: entry.collisionScale > default por tipo > global.
+ * @param {Object} entry
+ * @returns {number}
+ */
+function _resolveCollisionScale(entry) {
+  if (typeof entry.collisionScale === 'number' && entry.collisionScale > 0) {
+    return entry.collisionScale;
+  }
+  const key = `${entry.model ?? ''} ${entry.path ?? ''}`;
+  for (const rule of COLLISION_SCALE_BY_TYPE) {
+    if (key.includes(rule.match)) return rule.scale;
+  }
+  return COLLISION_SCALE_DEFAULT;
 }
 
 async function _spawnModelDecoration(entry, count, group) {
@@ -340,8 +398,16 @@ async function _spawnModelDecoration(entry, count, group) {
       // Colisao com construcoes (ignora objetos pequenos)
       instance.updateWorldMatrix(true, true);
       const _cbox = new THREE.Box3().setFromObject(instance);
-      if (_cbox.max.x - _cbox.min.x > 1.5 && _cbox.max.z - _cbox.min.z > 1.5 && !entry.path?.includes('wall_')) {
-        _collisionBoxes.push({ minX: _cbox.min.x, maxX: _cbox.max.x, minZ: _cbox.min.z, maxZ: _cbox.max.z });
+      const _rawW = _cbox.max.x - _cbox.min.x;
+      const _rawD = _cbox.max.z - _cbox.min.z;
+      if (_rawW > 1.5 && _rawD > 1.5 && !entry.path?.includes('wall_')) {
+        // Encolhe o AABB em torno do centro real do box (corrige pivô deslocado).
+        const _f  = _resolveCollisionScale(entry);
+        const _cx = (_cbox.min.x + _cbox.max.x) / 2;
+        const _cz = (_cbox.min.z + _cbox.max.z) / 2;
+        const _hx = (_rawW / 2) * _f;
+        const _hz = (_rawD / 2) * _f;
+        _collisionBoxes.push({ minX: _cx - _hx, maxX: _cx + _hx, minZ: _cz - _hz, maxZ: _cz + _hz });
       }
     }
     return;
@@ -395,6 +461,72 @@ function _spawnProceduralInstancedMesh(modelKey, bucket) {
 
   add(instanced);
   _instancedMeshes.push(instanced);
+}
+
+/**
+ * Cria InstancedMesh(es) para uma decoração GLTF (vegetação densa dentro do R6).
+ * Um InstancedMesh por mesh/material do modelo (ex.: tronco + folhas); cada
+ * instância recebe a mesma distribuição de _applyDecorationTransform (posição na
+ * area, escala, rotação Y), composta com o transform local da mesh dentro do
+ * modelo — assim tronco e folhas da mesma planta ficam alinhados.
+ *
+ * Geometrias e materiais vêm do cache de models.js (compartilhados via
+ * SkeletonUtils.clone) — por isso NÃO são liberados no unload; apenas o
+ * instanceMatrix é liberado por InstancedMesh.dispose() em _clearCurrentMap.
+ * @param {Object} entry - entrada de decoration[] com instanced:true e path
+ * @param {number} count - nº de instâncias
+ * @returns {Promise<void>}
+ */
+async function _spawnInstancedModelDecoration(entry, count) {
+  if (count <= 0) return;
+
+  let gltf = null;
+  try {
+    gltf = await Models.loadModel(entry.path);
+  } catch (err) {
+    console.warn(`[world] Falha ao carregar decoração instanciada: ${entry.model ?? entry.path}`, err);
+    return;
+  }
+  if (!gltf?.scene) return;
+
+  // Normaliza o root para colher o transform local de cada mesh (relativo ao modelo).
+  const root = gltf.scene;
+  root.position.set(0, 0, 0);
+  root.rotation.set(0, 0, 0);
+  root.scale.set(1, 1, 1);
+  root.updateMatrixWorld(true);
+
+  const sources = [];
+  root.traverse((child) => {
+    if (child.isMesh && !child.isSkinnedMesh && child.geometry) {
+      sources.push({ geometry: child.geometry, material: child.material, local: child.matrixWorld.clone() });
+    }
+  });
+  if (sources.length === 0) return;
+
+  // Transforms por planta (mesma distribuição do caminho não-instanciado).
+  const dummy = new THREE.Object3D();
+  const plantMatrices = [];
+  for (let i = 0; i < count; i++) {
+    _applyDecorationTransform(dummy, entry);
+    dummy.updateMatrix();
+    plantMatrices.push(dummy.matrix.clone());
+  }
+
+  const world = new THREE.Matrix4();
+  for (const src of sources) {
+    const inst = new THREE.InstancedMesh(src.geometry, src.material, count);
+    inst.name = `instancedModel_${entry.model ?? entry.path}`;
+    inst.castShadow = false;
+    inst.receiveShadow = false;
+    for (let i = 0; i < count; i++) {
+      world.multiplyMatrices(plantMatrices[i], src.local); // planta ∘ offset local da mesh
+      inst.setMatrixAt(i, world);
+    }
+    inst.instanceMatrix.needsUpdate = true;
+    add(inst);
+    _instancedModelMeshes.push(inst);
+  }
 }
 
 function _applyDecorationTransform(object, entry) {

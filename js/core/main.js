@@ -232,7 +232,19 @@ async function _onAssetsReady() {
         _saveData.player.pets = { collection: [], summonedIndex: null };
     }
     await Player.init(_saveData.player);
-    if (typeof window !== 'undefined') window.Player = Player; // debug console (PROMPT 10)
+    if (typeof window !== 'undefined') {
+        window.Player = Player; // debug console (PROMPT 10)
+        // [DEBUG] Troca de classe pelo console para testar VFX de skills sem upar.
+        // Ex.: window.debugSetClass('mage') e dispare pelo hotbar (1-4).
+        window.debugSetClass = async (classId) => {
+            const ok = await Player.debugSetClass(classId);
+            if (ok) {
+                UI.updateHotbar();
+                UI.updateCooldownVisuals(0);
+            }
+            return ok;
+        };
+    }
     await Inventory.init(_saveData.player.inventory ?? null);
     await Quests.init(_saveData.player.quests ?? null);
     Pets.hydrate(_saveData.player.pets ?? null);

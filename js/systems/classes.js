@@ -725,6 +725,37 @@ export function getBaseStats(job, _level) {
     return { str: base.str, agi: base.agi, vit: base.vit, int: base.int, dex: base.dex, luk: base.luk };
 }
 
+// ─── ATTACK RANGE POR CLASSE ──────────────────────────────────────────────────
+// Ataque básico: classes de arco (archer/hunter/sniper) acertam de longe;
+// todas as demais são corpo-a-corpo. Skills têm range próprio no skills.json.
+
+/** @type {number} Range do ataque básico corpo-a-corpo (padrão). */
+const MELEE_ATTACK_RANGE = 3;
+/** @type {number} Range do ataque básico à distância (classes de arco). */
+const RANGED_ATTACK_RANGE = 20;
+/** @type {Set<string>} Classes cujo ataque básico é à distância. */
+const _rangedClasses = new Set(['archer', 'hunter', 'sniper']);
+
+/**
+ * Retorna o range do ataque básico de uma classe.
+ * archer/hunter/sniper atacam a {@link RANGED_ATTACK_RANGE}u; demais (e classId
+ * desconhecido, ex.: monstros) a {@link MELEE_ATTACK_RANGE}u.
+ * @param {string} [classId]
+ * @returns {number}
+ */
+export function getAttackRange(classId) {
+    return _rangedClasses.has(classId) ? RANGED_ATTACK_RANGE : MELEE_ATTACK_RANGE;
+}
+
+/**
+ * Indica se a classe ataca à distância no ataque básico (archer/hunter/sniper).
+ * @param {string} [classId]
+ * @returns {boolean}
+ */
+export function isRangedClass(classId) {
+    return _rangedClasses.has(classId);
+}
+
 /**
  * Retorna array de skill definitions da cadeia completa de um job (base→evo1→evo2).
  * Constrói a cadeia recursivamente sem duplicatas, preservando ordem hierárquica.

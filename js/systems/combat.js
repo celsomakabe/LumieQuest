@@ -24,6 +24,34 @@ const _cooldowns = new Map();
 /** Lista de alvos registrados (monstros, NPCs hostis, etc.) */
 const _targets = new Set();
 
+// ─── VFX de projétil por skill ranged ────────────────────────────────
+// Cor própria por skill (reconhecível em combate). O tamanho escala com o
+// mpCost (força): skills mais caras/fortes = projétil maior e mais marcante.
+const RANGED_SKILL_COLORS = {
+  // archer
+  doubleStrike:  0x88ff66, // verde-claro (tiro duplo rápido)
+  explosiveShot: 0xff6a00, // laranja-fogo (explosivo)
+  slowShot:      0x66ddff, // ciano-gelo (lentidão)
+  // hunter
+  arrowRain:     0xffcc33, // âmbar/ouro (saraivada)
+  piercingShot:  0xff3366, // magenta-quente (perfurante)
+  // sniper
+  phantomArrow:  0xaa66ff, // violeta (espectral)
+  sharpShoot:    0x66ffff, // branco-ciano intenso (crítico de precisão)
+};
+const RANGED_SKILL_DEFAULT_COLOR = 0x66ff66;
+
+/**
+ * Escala do projétil a partir do mpCost (proxy de força). Clamp [0.9, 2.8]:
+ * doubleStrike(8)→~1.09 ... sharpShoot(70)→~2.58.
+ * @param {number} mpCost
+ * @returns {number}
+ */
+function _rangedSkillScale(mpCost) {
+  const s = 0.9 + (Number(mpCost) || 0) * 0.024;
+  return Math.max(0.9, Math.min(2.8, s));
+}
+
 // ─── Helpers internos ────────────────────────────────────────────────
 
 /**
@@ -160,7 +188,10 @@ function canAttack(attacker, target) {
   const lastTime = _cooldowns.get(attacker) ?? 0;
   if (performance.now() - lastTime < ATTACK_COOLDOWN_MS) return false;
 
-  if (_distXZ(attacker, target) > ATTACK_RANGE) {
+  // Range do ataque básico varia por classe (archer/hunter/sniper = 8, demais = 3).
+  // Atacantes sem classe (monstros) caem no padrão corpo-a-corpo.
+  const attackRange = Classes.getAttackRange(attacker?.class);
+  if (_distXZ(attacker, target) > attackRange) {
     playSFX(SFX.miss);
     return false;
   }
@@ -248,6 +279,17 @@ function attack(attacker, target) {
 
   emit('damageDealt', { attacker, target, amount, isCritical, isSkill: false });
 
+  // VFX de projétil no ataque básico de classes ranged (archer/hunter/sniper).
+  // Origem/destino vêm direto do fluxo de ataque; offset de altura para o tiro
+  // sair na altura do tronco e chegar no corpo do alvo, não no chão.
+  if (attacker.type === 'player' && Classes.isRangedClass(attacker.class) && target.position) {
+    VFX.playProjectile(
+      { x: attacker.position.x, y: (attacker.position.y ?? 0) + 1.2, z: attacker.position.z },
+      { x: target.position.x,   y: (target.position.y ?? 0) + 0.8, z: target.position.z },
+      { color: 0x66ff66, scale: 1.1, speed: 32, trail: true },
+    );
+  }
+
   _applyReflectDamage(attacker, target, amount);
 
   if (target.hp <= 0) {
@@ -317,7 +359,10 @@ function castSkill(playerState, skillId, target) {
   const ctx = {
     now,
     emit: wrappedEmit,
-    getEntities: () => Array.from(_targets),
+    // Skills do player miram o conjunto de inimigos — nunca o próprio player.
+    // Sem este filtro, skills AoE (fireball, meteor, frostNova...) atingem o
+    // player registrado como alvo e o matam quando não há inimigo no alcance.
+    getEntities: () => Array.from(_targets).filter(t => t.type !== 'player'),
   };
   const _targetPos = target?.position ? { x: target.position.x, y: target.position.y, z: target.position.z } : null;
   const result = Classes.executeSkill(skillId, playerState, target, ctx);
@@ -435,8 +480,24 @@ function _ensureCombatEventHooks() {
   on('bossAbilityUsed', _onBossAbilityUsed);
 
   // Wiring: VFX de skill via mesh-based effects
-  on('skillCast', ({ success, skillType, casterPosition, targetPosition }) => {
+  on('skillCast', ({ success, skillId, skillType, casterPosition, targetPosition }) => {
     if (success !== true) return;
+
+    // Skills ranged: projétil viajando do player até o alvo, com cor por skill e
+    // tamanho escalando com a força (mpCost). Requer origem e destino.
+    if (skillType === 'ranged' && casterPosition && targetPosition) {
+      const def = Classes.getSkillDef(skillId);
+      const color = RANGED_SKILL_COLORS[skillId] ?? RANGED_SKILL_DEFAULT_COLOR;
+      const scale = _rangedSkillScale(def?.mpCost);
+      VFX.playProjectile(
+        { x: casterPosition.x, y: (casterPosition.y ?? 0) + 1.2, z: casterPosition.z },
+        { x: targetPosition.x, y: (targetPosition.y ?? 0) + 0.8, z: targetPosition.z },
+        { color, scale, speed: 34, trail: true },
+      );
+      return;
+    }
+
+    // melee / magic / buff (e ranged sem alvo): efeito estático no local.
     const pos = skillType === 'buff' ? casterPosition : targetPosition;
     if (!pos) return;
     VFX.playEffect(skillType, pos);

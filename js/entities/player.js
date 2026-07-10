@@ -10,7 +10,7 @@ import { getState as getInput } from '../core/input.js';
 import { getCamera, getSun, add, remove } from '../world/scene.js';
 import { getCollisionBoxes } from '../world/world.js';
 import { getGroundHeight }          from '../world/physics.js';
-import { getBaseStats, getJobMeta } from '../systems/classes.js';
+import { getBaseStats, getJobMeta, getAllSkillsForClass, getAttackRange, isRangedClass } from '../systems/classes.js';
 import * as Audio from '../core/audio.js';
 import { findNearestTarget, attack } from '../systems/combat.js';
 import { getCardBonuses } from '../systems/cards.js';
@@ -198,34 +198,30 @@ export async function init(saveData = null) {
         if (_dialogOpen) return;
         if (_isDead || !_data || _data.hp <= 0) return;
 
-    on('skillCast', ({ casterId }) => {
-
-
-        on('skillCast', ({ casterId }) => {
-        if (!_data?.name) return;
-        if (casterId !== _data.name) return;
-        _playAttackAnimation();
-    });
-
-
-    if (!_data?.name) return;
-    if (casterId !== _data.name) return;
-    _playAttackAnimation();
-    });
-
         const pos    = _data.position;
-        const target = findNearestTarget(pos, 3);
+        // Alvo do ataque usa o range da classe (20 p/ ranged, 3 p/ melee).
+        const target = findNearestTarget(pos, getAttackRange(_data.class));
         if (!target) {
             Audio.playSFX('assets/audio/sfx/sfx_combat_miss.ogg');
             return;
         }
 
+        // Vira para o MESMO alvo do ataque, ANTES de disparar — funciona a 20u
+        // (arqueiro) porque o alvo é o mesmo achado com getAttackRange.
+        if (target.position) _facePoint(target.position.x, target.position.z);
+
         const result = attack(_data, target);
         if (!result) return;
-        if (_mesh && target.position) {
-            const dx = target.position.x - _data.position.x;
-            const dz = target.position.z - _data.position.z;
-            _mesh.rotation.y = Math.atan2(dx, dz);
+        _playAttackAnimation();
+    });
+
+    // Skill lançada: gira o player para o alvo do cast (exceto buff/self) e anima.
+    // Registrado uma única vez (init roda uma vez) — sem vazamento de listeners.
+    // Usa a targetPosition do próprio skillCast, então cobre skills ranged a distância.
+    on('skillCast', ({ casterId, skillType, targetPosition }) => {
+        if (!_data?.name || casterId !== _data.name) return;
+        if (skillType !== 'buff' && targetPosition) {
+            _facePoint(targetPosition.x, targetPosition.z);
         }
         _playAttackAnimation();
     });
@@ -305,6 +301,17 @@ function _validateSpawnPosition() {
       }
     }
   }
+}
+
+/**
+ * Valida e ajusta o spawn atual contra as collision boxes já carregadas.
+ * Chamado por world.js APÓS loadMap popular as boxes (na init do player as boxes
+ * ainda não existem, por isso a validação de lá é no-op). Reposiciona para o vão
+ * livre mais próximo caso a posição caia dentro de uma hitbox.
+ * @returns {void}
+ */
+export function ensureValidSpawn() {
+    _validateSpawnPosition();
 }
 
 export function respawn() {
@@ -548,6 +555,85 @@ export async function applyJobChange(newJobId) {
 }
 
 /**
+ * [DEBUG] Troca a classe do player instantaneamente, ignorando quest e requisito
+ * de level. Ajusta o level para o mínimo da classe, recarrega as skills próprias
+ * da classe (learnedSkills + equippedSkills, todas com classId casado para não
+ * cair em 'classe_incorreta' no castSkill), zera cooldowns, restaura HP/MP ao
+ * máximo e troca o modelo visual quando muda.
+ *
+ * Exposto via window.debugSetClass em main.js — uso exclusivo de console para
+ * testar VFX de skills sem precisar upar. NÃO usar em fluxo de jogo real.
+ * @param {string} classId
+ * @returns {Promise<boolean>}
+ */
+export async function debugSetClass(classId) {
+    if (!_data) {
+        console.warn('[player][DEBUG] debugSetClass: player não inicializado.');
+        return false;
+    }
+
+    const meta = getJobMeta(classId);
+    if (!meta) {
+        console.warn('[player][DEBUG] debugSetClass: classe inexistente:', classId);
+        return false;
+    }
+
+    const skills = getAllSkillsForClass(classId);
+    if (skills.length === 0) {
+        console.warn(`[player][DEBUG] debugSetClass: nenhuma skill carregada para '${classId}'. skills.json já foi carregado?`);
+    }
+
+    const oldClass    = _data.class;
+    const oldModelUrl = _getClassModelUrl(oldClass);
+    const newModelUrl = _getClassModelUrl(classId);
+
+    // 1. Troca a classe
+    _data.class = classId;
+    _data.title = meta.title ?? '';
+
+    // 2. Ajusta o level para o mínimo exigido (classes avançadas: reqLevel 30/70)
+    if (typeof meta.reqLevel === 'number' && _data.level < meta.reqLevel) {
+        _data.level = meta.reqLevel;
+    }
+
+    // Recalcula stats base da nova classe
+    _data.baseStats = getBaseStats(classId, _data.level);
+
+    // 3. Recarrega as skills próprias da classe no hotbar (classId casado)
+    const skillIds = skills.map(s => s.id);
+    _data.learnedSkills  = [...skillIds];
+    _data.equippedSkills = [
+        skillIds[0] ?? null,
+        skillIds[1] ?? null,
+        skillIds[2] ?? null,
+        skillIds[3] ?? null,
+    ];
+    _data.cooldowns = {}; // zera cooldowns para poder disparar imediatamente
+
+    // 4. Restaura HP/MP ao máximo
+    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.hp = _data.maxHp;
+    _data.mp = _data.maxMp;
+
+    // Troca o modelo visual apenas se a URL do modelo mudou
+    if (newModelUrl !== oldModelUrl) {
+        if (_model) remove(_model);
+        await _loadPlayerVisual(classId);
+        _mesh.position.set(_data.position.x, _data.position.y, _data.position.z);
+        _mesh.rotation.y = _rotationY;
+        add(_model);
+    }
+
+    emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+    emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+    emit('jobChanged', { oldClass, newClass: classId, player: _data });
+
+    console.log(`[player][DEBUG] Classe = ${classId} (lv ${_data.level}). Skills equipadas: ${skillIds.slice(0, 4).join(', ') || '(nenhuma)'}`);
+    return true;
+}
+
+/**
  * Atualiza movimento, rotaÃ§Ã£o e cÃ¢mera. Chamado pelo game loop.
  * @param {number} delta
  * @param {Object} inputState
@@ -753,16 +839,44 @@ function _syncMovementAnimation() {
     }
 }
 
-function _playAttackAnimation() {
+/**
+ * Vira o mesh do player para um ponto (tx,tz) no plano XZ, usando a posição atual
+ * como origem. Ajusta apenas _mesh.rotation.y (não _rotationY), preservando a
+ * câmera — mesmo comportamento do giro de ataque melee original.
+ * @param {number} tx
+ * @param {number} tz
+ * @returns {void}
+ */
+function _facePoint(tx, tz) {
+    if (!_mesh || !_data) return;
+    const dx = tx - _data.position.x;
+    const dz = tz - _data.position.z;
+    if (Math.abs(dx) < 1e-4 && Math.abs(dz) < 1e-4) return;
+    _mesh.rotation.y = Math.atan2(dx, dz);
+}
 
-    
-    const _throwClip = _generalClips.get('Throw');
-    const _idleClip = _actions?.idle?.getClip?.();
+/**
+ * Escolhe o clip de animação de ataque. Classes ranged tentam um clip de disparo
+ * (shoot/aim/bow/arrow) se existir em general.glb; senão caem em 'Throw' (arremesso),
+ * que também serve para melee. Evita o arqueiro parecer "socar" ao atirar.
+ * @returns {string}
+ */
+function _pickAttackClipName() {
+    if (_data && isRangedClass(_data.class)) {
+        for (const name of _generalClips.keys()) {
+            if (/shoot|aim|bow|arrow/i.test(name)) return name;
+        }
+    }
+    return 'Throw';
+}
+
+function _playAttackAnimation() {
     if (!_mixer || !_data) return;
 
-    const clip = _generalClips.get('Throw');
+    const _clipName = _pickAttackClipName();
+    const clip = _generalClips.get(_clipName);
     if (!clip) {
-        console.warn('[player] Clip Throw não encontrado em general.glb');
+        console.warn(`[player] Clip de ataque '${_clipName}' não encontrado em general.glb`);
         return;
     }
 
