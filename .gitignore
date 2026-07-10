@@ -2,3 +2,13 @@
 # Backups locais antes de patches
 *.bkp_pre_*
 assets/models/Download*
+
+# Assets pesados purgados do historico (Sessao 30) - excedem limite do GitHub, nao usados pelo jogo
+*.zip
+assets/models/buildings/skf_house_wood/source/House_v_04.glb
+assets/models/buildings/skf_house_4/scene.bin
+
+# Arquivos de trabalho / rascunho
+*_numerado.txt
+diagnostico_*.txt
+leituras_*.txt
