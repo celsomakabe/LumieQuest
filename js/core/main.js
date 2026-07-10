@@ -25,6 +25,7 @@ import * as Cards     from '../systems/cards.js';
 import * as Pets      from '../systems/pets.js';
 import * as World     from '../world/world.js';
 import * as Particles from '../systems/particles.js';
+import * as VFX       from '../systems/vfx.js';
 let _dialogOpen = false;
 
 Events.on('dialogStarted', () => { _dialogOpen = true; });
@@ -138,6 +139,7 @@ function _loop(timestamp) {
     World.update(delta);
     // PartÃ­culas
     Particles.update(delta);
+    VFX.update(delta);
     // Render
     Scene.render(delta);
 
@@ -337,6 +339,7 @@ export async function init() {
     Assets.init();
     Scene.init(canvas);
     Particles.init(Scene.getScene());
+    VFX.init(Scene.getScene());
     // Ãudio apÃ³s cena (precisa da cÃ¢mera)
     await Audio.init(Scene.getCamera());    
 

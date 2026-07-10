@@ -2,7 +2,7 @@
 import { emit, on }    from '../core/events.js';
 import { playSFX }     from '../core/audio.js';
 import * as Classes    from './classes.js';
-import * as Particles  from './particles.js'; // R8 exceção: wiring VFX de skill
+import * as VFX        from './vfx.js'; // R8 exceção: wiring VFX de skill
 
 /** URLs dos SFX de combate */
 const SFX = {
@@ -434,19 +434,12 @@ function _ensureCombatEventHooks() {
   _bossCombatHooksRegistered = true;
   on('bossAbilityUsed', _onBossAbilityUsed);
 
-  // Wiring: VFX de skill via particles
+  // Wiring: VFX de skill via mesh-based effects
   on('skillCast', ({ success, skillType, casterPosition, targetPosition }) => {
     if (success !== true) return;
     const pos = skillType === 'buff' ? casterPosition : targetPosition;
     if (!pos) return;
-    const kind = 'damage';
-    for (let i = 0; i < 150; i++) {
-        Particles.emit(kind, {
-            x: pos.x + (Math.random() - 0.5) * 1.5,
-            y: (pos.y ?? 0) + Math.random() * 1.5,
-            z: pos.z + (Math.random() - 0.5) * 1.5,
-        });
-    }
+    VFX.playEffect(skillType, pos);
   });
 }
 

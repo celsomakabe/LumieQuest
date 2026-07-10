@@ -122,6 +122,7 @@ export function update(dt) {
     _ages[i] += dt;
     if (_ages[i] >= _lifetimes[i]) {
       _lifetimes[i] = 0;
+      _sizes[i] = 0;
       continue;
     }
     anyAlive = true;
@@ -161,6 +162,7 @@ export function update(dt) {
       _positions[idx + 1] -= dt * 15.0;
       if (_positions[idx + 1] < 0.0) {
         _lifetimes[i] = 0;
+        _sizes[i] = 0;
       }
     } else if (type === 8) {
       // weather_fireflies: flutua
