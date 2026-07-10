@@ -25,6 +25,7 @@ import * as Inventory from '../systems/inventory.js';
 import { generateSockets } from '../systems/cards.js';
 import { playSFX3D } from '../core/audio.js';
 import * as Models from '../core/models.js';
+import * as Particles from '../systems/particles.js';
 
 // ─── Estado interno ───────────────────────────────────────────────────────────
 // --- helpers de material para glTF/Group ---
@@ -66,6 +67,29 @@ const _drops = new Map();
 /** @type {number} */
 let _dropIdCounter = 0;
 
+// ─── Modelos 3D de drop ───────────────────────────────────────────────────────
+/** Chave de modelo -> caminho versionado (assets/models/items/). */
+const ITEM_MODEL_PATHS = {
+    coin:     'assets/models/items/coin.gltf',
+    sword_1h: 'assets/models/items/sword_1handed.gltf',
+    sword_2h: 'assets/models/items/sword_2handed.gltf',
+    bow:      'assets/models/items/bow_withString.gltf',
+    axe:      'assets/models/items/axe_1handed.gltf',
+    dagger:   'assets/models/items/dagger.gltf',
+    staff:    'assets/models/items/staff.gltf',
+    crossbow: 'assets/models/items/crossbow_1handed.gltf',
+    shield:   'assets/models/items/shield_round.gltf',
+    bottle_a: 'assets/models/items/bottle_A_green.gltf',
+    bottle_b: 'assets/models/items/bottle_B_brown.gltf',
+    chest:    'assets/models/items/chest.gltf',
+};
+
+/** Maior dimensao visual alvo de um drop (unidades). */
+const DROP_TARGET_SIZE = 0.5;
+
+/** @type {Map<string, { gltf: Object, scale: number }>} cache de modelos de drop pre-carregados */
+const _itemModelCache = new Map();
+
 /** @type {{x,y,z}} posição do player — atualizada em updateAll */
 let _playerPos = { x: 0, y: 0, z: 0 };
 let _isPlayerDead = false;
@@ -101,6 +125,9 @@ async function init() {
     on('playerDied',              _onPlayerDied);
     on('playerRespawned',         _onPlayerRespawned);
     on('mapUnloading',            _clearAllMonsters);
+
+    await _preloadItemModels();
+
     _initialized = true;
     console.log(`[monsters] Catálogo: ${Object.keys(_catalogue).length} tipos.`);
 }
@@ -338,6 +365,9 @@ function _clearAllMonsters() {
   _monsters.clear();
   for (const [id, drop] of _drops) {
     if (drop.mesh) sceneRemove(drop.mesh);
+    if (Array.isArray(drop.disposables)) {
+      for (const r of drop.disposables) r?.dispose?.();
+    }
   }
   _drops.clear();
 }
@@ -1296,7 +1326,7 @@ function _onEntityDied({ entity }) {
 
         const def = _catalogue[m.monsterId];
         _rollDrops(def, m.mesh.position);
-        _rollCardDrops(def);
+        _rollCardDrops(def, m.mesh.position);
         unregisterTarget(m);
 
         emit('monsterDied', {
@@ -1399,48 +1429,174 @@ function _respawn(m) {
  * @param {Object} drop
  * @returns {number}
  */
+/**
+ * Pre-carrega os modelos 3D de drop (assets/models/items/) e calcula uma escala
+ * normalizada por modelo (maior dimensao ~= DROP_TARGET_SIZE). Resiliente: se um
+ * modelo falhar, o drop daquele tipo cai no fallback (cubo). Chamado no init.
+ * @returns {Promise<void>}
+ */
+async function _preloadItemModels() {
+    for (const [key, path] of Object.entries(ITEM_MODEL_PATHS)) {
+        try {
+            const gltf = await Models.loadModel(path);
+            const size = new THREE.Box3().setFromObject(gltf.scene).getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z) || 1;
+            _itemModelCache.set(key, { gltf, scale: DROP_TARGET_SIZE / maxDim });
+        } catch (err) {
+            console.warn(`[monsters] Falha ao carregar modelo de drop '${key}' (${path}); usara fallback.`, err);
+        }
+    }
+    console.log(`[monsters] Modelos de drop: ${_itemModelCache.size}/${Object.keys(ITEM_MODEL_PATHS).length} carregados.`);
+}
+
+/** Hash estavel de string (para escolha consistente por itemId). @param {string} s @returns {number} */
+function _hashString(s) {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+    return Math.abs(h);
+}
+
+/**
+ * Resolve a chave de modelo/estilo do drop a partir do tipo/slot/id do item.
+ * Retorna uma chave de ITEM_MODEL_PATHS, ou 'card'/'gem' (geometria estilizada).
+ * @param {Object} itemDef
+ * @returns {string}
+ */
+function _resolveDropModelKey(itemDef) {
+    if (!itemDef) return 'chest';
+    const type = itemDef.type;
+    const hay = `${itemDef.id ?? ''} ${itemDef.name ?? ''}`.toLowerCase();
+
+    if (type === 'currency')   return 'coin';
+    if (type === 'consumable') return _hashString(String(itemDef.id ?? '')) % 2 === 0 ? 'bottle_a' : 'bottle_b';
+    if (type === 'card')       return 'card'; // estilizado (plano fino)
+    if (type === 'material')   return 'gem';  // estilizado (octaedro)
+
+    if (type === 'weapon') {
+        if (/espada|sword/.test(hay))                    return /2h|duas m|montante|greatsword|grande/.test(hay) ? 'sword_2h' : 'sword_1h';
+        if (/arco|bow/.test(hay))                        return 'bow';
+        if (/adaga|punhal|dagger/.test(hay))             return 'dagger';
+        if (/machado|axe/.test(hay))                     return 'axe';
+        if (/cajado|bordao|bastao|staff|wand|varinha/.test(hay)) return 'staff';
+        if (/besta|balestra|crossbow/.test(hay))         return 'crossbow';
+        return 'sword_1h'; // fallback de arma
+    }
+    if (type === 'armor') {
+        if (itemDef.slot === 'shield' || /escudo|shield|buckler/.test(hay)) return 'shield';
+        return 'chest';
+    }
+    return 'chest'; // pet_def / desconhecido
+}
+
+/**
+ * Constroi o objeto visual (sempre um Group, para bob/rotacao) de um drop.
+ * Modelos 3D vem do cache (recursos compartilhados: NAO dispor). Card/gem e
+ * fallback usam geometria propria (retornada em `disposables` para liberar).
+ * @param {Object} itemDef
+ * @returns {{ object: THREE.Object3D, disposables: Array<{dispose?:Function}> }}
+ */
+function _buildDropVisual(itemDef) {
+    const key = _resolveDropModelKey(itemDef);
+    const color = itemDef?.modelPlaceholder ?? '#ffffff';
+    const group = new THREE.Group();
+
+    // Estilizados (sem asset): carta = plano fino; material = gema (octaedro).
+    if (key === 'card' || key === 'gem') {
+        const geo = key === 'card'
+            ? new THREE.BoxGeometry(0.28, 0.4, 0.02)
+            : new THREE.OctahedronGeometry(0.22);
+        const mat = new THREE.MeshStandardMaterial({
+            color,
+            emissive: new THREE.Color(color),
+            emissiveIntensity: key === 'card' ? 0.35 : 0.5,
+            roughness: key === 'card' ? 0.6 : 0.25,
+            metalness: key === 'card' ? 0.1 : 0.3,
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.castShadow = false;
+        group.add(mesh);
+        return { object: group, disposables: [geo, mat] };
+    }
+
+    // Modelo 3D do cache (KayKit).
+    const cached = _itemModelCache.get(key);
+    if (cached) {
+        const clone = Models.cloneModel(cached.gltf);
+        if (clone) {
+            clone.scale.setScalar(cached.scale);
+            clone.traverse(c => { if (c.isMesh) { c.castShadow = false; c.receiveShadow = false; } });
+            // Centraliza o conteudo na origem do grupo (giro centrado, sem pivo torto).
+            const ctr = new THREE.Box3().setFromObject(clone).getCenter(new THREE.Vector3());
+            clone.position.set(-ctr.x, -ctr.y, -ctr.z);
+            group.add(clone);
+            return { object: group, disposables: [] }; // recursos compartilhados do cache
+        }
+    }
+
+    // Fallback: cubo colorido (comportamento antigo) se o modelo nao carregou.
+    const geo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+    const mat = new THREE.MeshLambertMaterial({ color });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.castShadow = false;
+    group.add(mesh);
+    return { object: group, disposables: [geo, mat] };
+}
+
+/**
+ * Cria um drop no chao (visual + registro + eventos + particula). Usado por
+ * _rollDrops (itens) e _rollCardDrops (cartas).
+ * @param {string} itemId
+ * @param {number} qty
+ * @param {{x:number,y:number,z:number}} position
+ * @param {{ refineLevel?: number, sockets?: (string|null)[] }|null} meta
+ * @returns {string} dropId
+ */
+function _spawnGroundDrop(itemId, qty, position, meta) {
+    const itemDef = _itemCatalogue[itemId];
+    const { object, disposables } = _buildDropVisual(itemDef);
+
+    object.position.set(
+        position.x + (Math.random() - 0.5) * 0.6,
+        position.y + 0.3,
+        position.z + (Math.random() - 0.5) * 0.6,
+    );
+    sceneAdd(object);
+
+    // Brilho no momento do drop (kind 'drop' ja existente no particles.js).
+    Particles.emit('drop', object.position);
+
+    const dropId = `drop_${_dropIdCounter++}`;
+    _drops.set(dropId, {
+        itemId,
+        qty,
+        mesh: object,
+        disposables,
+        spawnTime: performance.now(),
+        ...(meta?.refineLevel != null ? { refineLevel: meta.refineLevel } : {}),
+        ...(meta?.sockets?.length ? { sockets: [...meta.sockets] } : {})
+    });
+
+    emit('itemDropped', {
+        itemId,
+        qty,
+        name: itemDef?.name ?? itemId,
+        type: itemDef?.type ?? null,
+        position: object.position,
+        dropId,
+        ...(meta?.refineLevel != null ? { refineLevel: meta.refineLevel } : {}),
+        ...(meta?.sockets?.length ? { sockets: [...meta.sockets] } : {})
+    });
+    return dropId;
+}
+
 function _rollDrops(def, position) {
     if (!def || !Array.isArray(def.drops)) return;
 
     for (const drop of def.drops) {
         if (Math.random() >= drop.chance) continue;
-
         const qty = _resolveDropQty(drop);
         const meta = _buildDropItemMeta(drop.itemId);
-        const itemColor = _itemCatalogue[drop.itemId]?.modelPlaceholder ?? '#ffffff';
-
-        const mesh = new THREE.Mesh(
-            new THREE.BoxGeometry(0.3, 0.3, 0.3),
-            new THREE.MeshLambertMaterial({ color: itemColor }),
-        );
-
-        mesh.position.set(
-            position.x + (Math.random() - 0.5) * 0.6,
-            position.y + 0.3,
-            position.z + (Math.random() - 0.5) * 0.6,
-        );
-
-        mesh.castShadow = false;
-        sceneAdd(mesh);
-
-        const dropId = `drop_${_dropIdCounter++}`;
-        _drops.set(dropId, {
-            itemId: drop.itemId,
-            qty,
-            mesh,
-            spawnTime: performance.now(),
-            ...(meta?.refineLevel != null ? { refineLevel: meta.refineLevel } : {}),
-            ...(meta?.sockets?.length ? { sockets: [...meta.sockets] } : {})
-        });
-
-        emit('itemDropped', {
-            itemId: drop.itemId,
-            qty,
-            position: mesh.position,
-            dropId,
-            ...(meta?.refineLevel != null ? { refineLevel: meta.refineLevel } : {}),
-            ...(meta?.sockets?.length ? { sockets: [...meta.sockets] } : {})
-        });
+        _spawnGroundDrop(drop.itemId, qty, position, meta);
     }
 }
 
@@ -1476,8 +1632,8 @@ function _buildDropItemMeta(itemId) {
     return { sockets };
 }
 
-function _rollCardDrops(def) {
-    if (!def) return;
+function _rollCardDrops(def, position) {
+    if (!def || !position) return;
 
     const cardEntries = [];
     if (Array.isArray(def.cardDrops)) {
@@ -1490,10 +1646,8 @@ function _rollCardDrops(def) {
         if (!cardDrop?.cardId || typeof cardDrop.chance !== 'number') continue;
         if (Math.random() >= cardDrop.chance) continue;
 
-        const added = Inventory.addItem(cardDrop.cardId, 1);
-        if (added === false) {
-            emit('inventoryFull', { itemId: cardDrop.cardId });
-        }
+        // Carta agora cai no chao (visual estilizado); entra no inventario ao coletar.
+        _spawnGroundDrop(cardDrop.cardId, 1, position, null);
     }
 }
 
@@ -1501,9 +1655,12 @@ function _rollCardDrops(def) {
 function _removeDrop(dropId) {
     const drop = _drops.get(dropId);
     if (!drop) return;
-    drop.mesh.geometry?.dispose?.();
-    if (Array.isArray(drop.mesh.material)) { drop.mesh.material.forEach(mat => mat?.dispose?.()); } else { drop.mesh.material?.dispose?.(); }
     sceneRemove(drop.mesh);
+    // Dispoe apenas recursos proprios (card/gem/fallback). Modelos 3D usam
+    // geometry/material compartilhados com o cache de Models — nao dispor.
+    if (Array.isArray(drop.disposables)) {
+        for (const r of drop.disposables) r?.dispose?.();
+    }
     _drops.delete(dropId);
 }
 
@@ -1560,6 +1717,9 @@ function getMesh(id) { return _monsters?.get?.(id)?.mesh ?? null; }
 /** @param {string} id @returns {Object|null} */
 function getById(id) { return _monsters?.get?.(id) ?? null; }
 
+/** @param {string} dropId @returns {Object|null} drop ativo (com .mesh e .qty) ou null se coletado/removido */
+function getDropById(dropId) { return _drops?.get?.(dropId) ?? null; }
+
 export {
     init,
     spawnMonster,
@@ -1570,4 +1730,5 @@ export {
     updateAll,
     getMesh,
     getById,
+    getDropById,
 };

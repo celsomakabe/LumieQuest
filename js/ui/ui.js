@@ -780,6 +780,18 @@ if (code === 'Escape' && _dialogOpen) _closeDialog();
     Events.on('monsterSpawned', ({ id }) => _createMonsterHpBar(id));
     Events.on('monsterDied',    ({ id }) => _removeMonsterHpBar(id));
 
+    // Labels flutuantes de drops no chao ("{qty}x {nome}" / "{nome}").
+    Events.on('itemDropped', ({ dropId, name, qty, type }) => {
+        if (!dropId) return;
+        const label = qty > 1 ? `${qty}x ${name}` : `${name}`;
+        _createDropLabel(dropId, label, type);
+    });
+    Events.on('itemPicked', ({ dropId }) => { if (dropId) _removeDropLabel(dropId); });
+    Events.on('mapUnloading', () => {
+        _dropLabels.forEach(el => el.remove());
+        _dropLabels.clear();
+    });
+
     Events.on('petObtained',    () => { if (_petWindowOpen) _refreshPetWindowUI(); });
     Events.on('petSummoned',    () => { if (_petWindowOpen) _refreshPetWindowUI(); });
     Events.on('petUnsummoned',  () => { if (_petWindowOpen) _refreshPetWindowUI(); });
@@ -3296,5 +3308,84 @@ export function updateMonsterHpBars() {
             const pct = Math.max(0, Math.min(100, (monster.hp / monster.maxHp) * 100));
             fill.style.width = `${pct.toFixed(1)}%`;
         }
+    });
+}
+
+// ─── Labels flutuantes de drops ───────────────────────────────────────────────
+
+/** @type {Map<string, HTMLDivElement>} dropId -> elemento DOM do label */
+const _dropLabels = new Map();
+
+/** Cor do label por tipo de item (demais: branco). */
+const _DROP_LABEL_COLORS = { currency: '#ffd700', card: '#d98cff' };
+
+/**
+ * Cria o label flutuante de um drop.
+ * @param {string} dropId
+ * @param {string} text
+ * @param {string|null} type
+ */
+function _createDropLabel(dropId, text, type) {
+    if (_dropLabels.has(dropId)) return;
+    const el = document.createElement('div');
+    el.className = 'drop-label';
+    el.textContent = text;
+    el.style.cssText = `
+        position: fixed;
+        color: ${_DROP_LABEL_COLORS[type] ?? '#ffffff'};
+        font: bold 12px sans-serif;
+        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 5px rgba(0,0,0,0.9);
+        white-space: nowrap;
+        pointer-events: none;
+        z-index: 91;
+        transform: translate(-50%, -100%);
+        display: none;
+    `;
+    document.body.appendChild(el);
+    _dropLabels.set(dropId, el);
+}
+
+/**
+ * Remove o label de um drop (coletado/removido). Evita elemento orfao no DOM.
+ * @param {string} dropId
+ */
+function _removeDropLabel(dropId) {
+    const el = _dropLabels.get(dropId);
+    if (el) el.remove();
+    _dropLabels.delete(dropId);
+}
+
+/**
+ * Projeta os labels de drop (3D->2D) a cada frame, acompanhando o drop no chao.
+ * Remove o label se o drop nao existir mais (coleta/timeout/troca de mapa).
+ * @returns {void}
+ */
+export function updateDropLabels() {
+    if (_dropLabels.size === 0) return;
+
+    const camera = getCamera();
+    const renderer = getRenderer();
+    if (!camera || !renderer) return;
+
+    const canvas = renderer.domElement;
+
+    _dropLabels.forEach((el, dropId) => {
+        const drop = Monsters.getDropById(dropId);
+        if (!drop || !drop.mesh) {
+            el.remove();
+            _dropLabels.delete(dropId);
+            return;
+        }
+
+        const pos3D = new THREE.Vector3();
+        drop.mesh.getWorldPosition(pos3D);
+        pos3D.y += 0.55; // logo acima do modelo do drop
+        pos3D.project(camera);
+
+        if (pos3D.z > 1) { el.style.display = 'none'; return; }
+
+        el.style.display = 'block';
+        el.style.left = `${(pos3D.x * 0.5 + 0.5) * canvas.clientWidth}px`;
+        el.style.top  = `${(pos3D.y * -0.5 + 0.5) * canvas.clientHeight}px`;
     });
 }
