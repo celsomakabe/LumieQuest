@@ -1,4 +1,4 @@
-﻿{
+{
   "npcs": [
     {
       "id": "mayor",
@@ -16,14 +16,14 @@
         "root": "root",
         "nodes": {
           "root": {
-            "text": "SaudaÃ§Ãµes, aventureiro! Nossa vila precisa de ajuda.",
+            "text": "Saudações, aventureiro! Nossa vila precisa de ajuda.",
             "options": [
               {
-                "text": "O que estÃ¡ acontecendo?",
+                "text": "O que está acontecendo?",
                 "next": "problema"
               },
               {
-                "text": "[MissÃ£o] Aceitar caÃ§ada aos slimes",
+                "text": "[Missão] Aceitar caçada aos slimes",
                 "next": "aceitar_slimes",
                 "condition": {
                   "type": "questNotStarted",
@@ -35,7 +35,7 @@
                 }
               },
               {
-                "text": "[Entregar] JÃ¡ eliminei os slimes!",
+                "text": "[Entregar] Já eliminei os slimes!",
                 "next": "slimes_completo",
                 "condition": {
                   "type": "questCompletable",
@@ -47,7 +47,7 @@
                 }
               },
               {
-                "text": "Ainda estou caÃ§ando os slimes.",
+                "text": "Ainda estou caçando os slimes.",
                 "next": "end",
                 "condition": {
                   "type": "questActive",
@@ -55,7 +55,7 @@
                 }
               },
               {
-                "text": "[MissÃ£o] Preciso de um pacote entregue",
+                "text": "[Missão] Preciso de um pacote entregue",
                 "next": "aceitar_entrega",
                 "condition": {
                   "type": "questNotStarted",
@@ -67,7 +67,7 @@
                 }
               },
               {
-                "text": "AtÃ© logo.",
+                "text": "Até logo.",
                 "next": "end"
               }
             ]
@@ -91,7 +91,7 @@
             ]
           },
           "slimes_completo": {
-            "text": "FantÃ¡stico! A vila estÃ¡ mais segura graÃ§as a vocÃª. Aqui estÃ¡ sua recompensa, aventureiro!",
+            "text": "Fantástico! A vila está mais segura graças a você. Aqui está sua recompensa, aventureiro!",
             "options": [
               {
                 "text": "Obrigado, prefeito!",
@@ -100,14 +100,14 @@
             ]
           },
           "aceitar_entrega": {
-            "text": "Preciso que este pacote chegue ao ferreiro com urgÃªncia. VocÃª pode fazer isso?",
+            "text": "Preciso que este pacote chegue ao ferreiro com urgência. Você pode fazer isso?",
             "options": [
               {
                 "text": "Sim, levarei o pacote.",
                 "next": "end"
               },
               {
-                "text": "Agora nÃ£o posso.",
+                "text": "Agora não posso.",
                 "next": "end"
               }
             ]
@@ -135,7 +135,7 @@
             "text": "Oi! Ocupado com as forjas agora. Tem algo pra mim?",
             "options": [
               {
-                "text": "[Entregar] Aqui estÃ¡ o pacote do prefeito.",
+                "text": "[Entregar] Aqui está o pacote do prefeito.",
                 "next": "receber_pacote",
                 "condition": {
                   "type": "questCompletable",
@@ -154,13 +154,13 @@
                 }
               },
               {
-                "text": "SÃ³ vim dar uma olhada.",
+                "text": "Só vim dar uma olhada.",
                 "next": "end"
               }
             ]
           },
           "receber_pacote": {
-            "text": "Ah, finalmente chegou! Estava esperando por isso. Aqui estÃ¡ sua recompensa pelo trabalho.",
+            "text": "Ah, finalmente chegou! Estava esperando por isso. Aqui está sua recompensa pelo trabalho.",
             "options": [
               {
                 "text": "Disponha, ferreiro!",
@@ -174,34 +174,45 @@
     },
     {
       "id": "sage",
-      "name": "SÃ¡bio AnciÃ£o",
+      "name": "Sábio Ancião",
       "type": "quest",
       "position": {
         "x": -10,
         "y": 0,
         "z": -20
       },
-      "dialogues": {
-        "default": {
-          "text": "Jovem aventureiro... sinto uma energia especial em vocÃª. Talvez esteja pronto para o desafio do EspÃ­rito Arcano.",
-          "options": []
+      "dialogTree": {
+        "root": "root",
+        "nodes": {
+          "root": {
+            "text": "Jovem aventureiro... sinto uma energia especial em você. Talvez esteja pronto para o desafio do Espírito Arcano.",
+            "options": [
+              {
+                "text": "[Missão] Aceitar o desafio do Espírito Arcano",
+                "next": "end",
+                "condition": { "type": "questNotStarted", "questId": "quest_pet_espirito" },
+                "action": { "type": "offerQuest", "questId": "quest_pet_espirito" }
+              },
+              {
+                "text": "[Entregar] Completei o desafio!",
+                "next": "end",
+                "condition": { "type": "questCompletable", "questId": "quest_pet_espirito" },
+                "action": { "type": "completeQuest", "questId": "quest_pet_espirito" }
+              },
+              {
+                "text": "Preciso me preparar mais.",
+                "next": "end"
+              }
+            ]
+          }
         }
       },
-      "actions": [
-        {
-          "type": "offerQuest",
-          "questId": "quest_pet_espirito"
-        },
-        {
-          "type": "completeQuest",
-          "questId": "quest_pet_espirito"
-        }
-      ],
       "modelFile": "assets/models/npcs/rogue_hooded.glb"
     },
     {
       "id": "merchant",
       "name": "Comerciante Lyra",
+      "shop": ["pocao-pequena", "pocao-azul", "minerio", "minerio_enriquecido", "espada-iniciante"],
       "position": {
         "x": -20,
         "y": 0,
@@ -215,15 +226,20 @@
         "root": "greet",
         "nodes": {
           "greet": {
-            "text": "Boa tarde! Lyra's Mercadorias, o melhor preÃ§o da cidade â€” aliÃ¡s, o Ãºnico preÃ§o da cidade! O que vocÃª precisa?",
+            "text": "Boa tarde! Lyra's Mercadorias, o melhor preço da cidade — aliás, o único preço da cidade! O que você precisa?",
             "options": [
               {
-                "text": "O que vocÃª tem para vender?",
+                "text": "O que você tem para vender?",
                 "next": "wares"
               },
               {
-                "text": "Como estÃ£o os negÃ³cios?",
+                "text": "Como estão os negócios?",
                 "next": "business"
+              },
+              {
+                "text": "[Loja] Ver mercadorias",
+                "next": "end",
+                "action": { "type": "shop" }
               },
               {
                 "text": "Adeus.",
@@ -232,7 +248,7 @@
             ]
           },
           "wares": {
-            "text": "PoÃ§Ãµes de vida, ervas medicinais, pergaminhos... Tudo o que o aventureiro moderno precisa para sobreviver! Meu inventÃ¡rio completo abre em breve.",
+            "text": "Poções de vida, ervas medicinais, pergaminhos... Tudo o que o aventureiro moderno precisa para sobreviver! Meu inventário completo abre em breve.",
             "options": [
               {
                 "text": "Aguardo a abertura.",
@@ -245,7 +261,7 @@
             ]
           },
           "business": {
-            "text": "PÃ©ssimos, para ser honesta. Com monstros bloqueando as estradas, as caravanas pararam de chegar. Se isso continuar, vou Ã  falÃªncia.",
+            "text": "Péssimos, para ser honesta. Com monstros bloqueando as estradas, as caravanas pararam de chegar. Se isso continuar, vou à falência.",
             "options": [
               {
                 "text": "Espero que melhore.",
@@ -258,7 +274,7 @@
             ]
           },
           "thanks": {
-            "text": "Volte sempre! E se encontrar itens valiosos por aÃ­, eu compro â€” pagando bem!",
+            "text": "Volte sempre! E se encontrar itens valiosos por aí, eu compro — pagando bem!",
             "options": [
               {
                 "text": "Adeus.",
@@ -286,14 +302,14 @@
         "root": "greet",
         "nodes": {
           "greet": {
-            "text": "A luz de Odin guie seus passos, filho. Estou aqui para curar corpos e almas. VocÃª veio buscar conforto ou orientaÃ§Ã£o?",
+            "text": "A luz de Odin guie seus passos, filho. Estou aqui para curar corpos e almas. Você veio buscar conforto ou orientação?",
             "options": [
               {
                 "text": "Pode me curar?",
                 "next": "heal"
               },
               {
-                "text": "O que Ã© este lugar?",
+                "text": "O que é este lugar?",
                 "next": "lore"
               },
               {
@@ -303,7 +319,7 @@
             ]
           },
           "heal": {
-            "text": "A cura divina ainda nÃ£o me foi concedida neste plano... mas ore comigo e sua forÃ§a se renovarÃ¡. Em breve poderei fazer mais por vocÃª.",
+            "text": "A cura divina ainda não me foi concedida neste plano... mas ore comigo e sua força se renovará. Em breve poderei fazer mais por você.",
             "options": [
               {
                 "text": "Obrigado mesmo assim.",
@@ -316,7 +332,7 @@
             ]
           },
           "lore": {
-            "text": "Lumie foi construÃ­da sobre as ruÃ­nas de um antigo templo. Dizem que poder dorme sob a terra aqui. Talvez por isso os monstros circulam tanto.",
+            "text": "Lumie foi construída sobre as ruínas de um antigo templo. Dizem que poder dorme sob a terra aqui. Talvez por isso os monstros circulam tanto.",
             "options": [
               {
                 "text": "Interessante...",
@@ -329,7 +345,7 @@
             ]
           },
           "blessing": {
-            "text": "Que Odin proteja sua jornada. Leve esta bÃªnÃ§Ã£o: que cada passo seu seja firme e cada golpe, certeiro.",
+            "text": "Que Odin proteja sua jornada. Leve esta bênção: que cada passo seu seja firme e cada golpe, certeiro.",
             "options": [
               {
                 "text": "Adeus, Padre.",
@@ -357,10 +373,10 @@
         "root": "root",
         "nodes": {
           "root": {
-            "text": "Alto aÃ­! Ah, Ã© vocÃª. Preciso de alguÃ©m de confianÃ§a para uma tarefa.",
+            "text": "Alto aí! Ah, é você. Preciso de alguém de confiança para uma tarefa.",
             "options": [
               {
-                "text": "[MissÃ£o] Qual tarefa?",
+                "text": "[Missão] Qual tarefa?",
                 "next": "oferecer_exploracao",
                 "condition": {
                   "type": "questNotStarted",
@@ -372,7 +388,7 @@
                 }
               },
               {
-                "text": "[Entregar] JÃ¡ verifiquei a floresta, estÃ¡ tudo certo!",
+                "text": "[Entregar] Já verifiquei a floresta, está tudo certo!",
                 "next": "exploracao_completa",
                 "condition": {
                   "type": "questCompletable",
@@ -390,7 +406,7 @@
             ]
           },
           "oferecer_exploracao": {
-            "text": "Preciso que vocÃª verifique o ponto de observaÃ§Ã£o na floresta a nordeste, perto de (40, 40). Confirme que estÃ¡ tudo seguro.",
+            "text": "Preciso que você verifique o ponto de observação na floresta a nordeste, perto de (40, 40). Confirme que está tudo seguro.",
             "options": [
               {
                 "text": "Entendido. Vou verificar.",
@@ -399,10 +415,10 @@
             ]
           },
           "exploracao_completa": {
-            "text": "Excelente trabalho! O ponto estava seguro, como esperÃ¡vamos. A vila agradece sua coragem!",
+            "text": "Excelente trabalho! O ponto estava seguro, como esperávamos. A vila agradece sua coragem!",
             "options": [
               {
-                "text": "Sempre Ã s ordens, guarda.",
+                "text": "Sempre às ordens, guarda.",
                 "next": "end"
               }
             ]
@@ -427,7 +443,7 @@
         "root": "root",
         "nodes": {
           "root": {
-            "text": "SaudaÃ§Ãµes, guerreiro. Tenho uma missÃ£o para os dignos.",
+            "text": "Saudações, guerreiro. Tenho uma missão para os dignos.",
             "options": [
               {
                 "text": "Continue treinando, Cavaleiro.",
@@ -497,7 +513,7 @@
             ]
           },
           "aceitar_prova": {
-            "text": "Derrote o Orc Warrior nas ruÃ­nas e prove sua forÃ§a. Volte quando terminar.",
+            "text": "Derrote o Orc Warrior nas ruínas e prove sua força. Volte quando terminar.",
             "options": [
               {
                 "text": "Pode contar comigo.",
@@ -515,7 +531,7 @@
             ]
           },
           "completar_prova": {
-            "text": "VocÃª superou a prova. EstÃ¡ pronto para o juramento.",
+            "text": "Você superou a prova. Está pronto para o juramento.",
             "options": [
               {
                 "text": "Estou pronto.",
@@ -524,7 +540,7 @@
             ]
           },
           "confirmar_jobchange": {
-            "text": "Que a forÃ§a guie sua lÃ¢mina. VocÃª agora Ã© um Knight!",
+            "text": "Que a força guie sua lâmina. Você agora é um Knight!",
             "options": [
               {
                 "text": "Obrigado, Mestre.",
@@ -552,7 +568,7 @@
         "root": "root",
         "nodes": {
           "root": {
-            "text": "A magia exige dedicaÃ§Ã£o e sabedoria. Prove que vocÃª Ã© digno.",
+            "text": "A magia exige dedicação e sabedoria. Prove que você é digno.",
             "options": [
               {
                 "text": "Continue aprimorando sua magia, Wizard.",
@@ -631,7 +647,7 @@
             ]
           },
           "em_andamento": {
-            "text": "ReÃºna os cristais antes de retornar.",
+            "text": "Reúna os cristais antes de retornar.",
             "options": [
               {
                 "text": "Voltarei.",
@@ -640,7 +656,7 @@
             ]
           },
           "completar_prova": {
-            "text": "Os cristais vibram com poder. Sua dedicaÃ§Ã£o foi comprovada.",
+            "text": "Os cristais vibram com poder. Sua dedicação foi comprovada.",
             "options": [
               {
                 "text": "Estou pronto.",
@@ -649,7 +665,7 @@
             ]
           },
           "confirmar_jobchange": {
-            "text": "Que os arcanos guiem seus feitiÃ§os. VocÃª agora Ã© um Wizard!",
+            "text": "Que os arcanos guiem seus feitiços. Você agora é um Wizard!",
             "options": [
               {
                 "text": "Obrigado, Mestre.",
@@ -663,7 +679,7 @@
     },
     {
       "id": "mestre_hunter",
-      "name": "Mestre CaÃ§ador",
+      "name": "Mestre Caçador",
       "position": {
         "x": -30,
         "y": 0,
@@ -677,7 +693,7 @@
         "root": "root",
         "nodes": {
           "root": {
-            "text": "A floresta Ã© implacÃ¡vel. Apenas os precisos sobrevivem.",
+            "text": "A floresta é implacável. Apenas os precisos sobrevivem.",
             "options": [
               {
                 "text": "Continue aprimorando sua mira, Hunter.",
@@ -688,7 +704,7 @@
                 }
               },
               {
-                "text": "Aceitar a CaÃ§ada da Floresta",
+                "text": "Aceitar a Caçada da Floresta",
                 "next": "aceitar_prova",
                 "condition": {
                   "type": "questNotStarted",
@@ -700,7 +716,7 @@
                 }
               },
               {
-                "text": "Ainda estou caÃ§ando.",
+                "text": "Ainda estou caçando.",
                 "next": "em_andamento",
                 "condition": {
                   "type": "questActive",
@@ -756,7 +772,7 @@
             ]
           },
           "em_andamento": {
-            "text": "Continue caÃ§ando. Ainda nÃ£o Ã© suficiente.",
+            "text": "Continue caçando. Ainda não é suficiente.",
             "options": [
               {
                 "text": "Voltarei.",
@@ -765,7 +781,7 @@
             ]
           },
           "completar_prova": {
-            "text": "Impressionante. Sua precisÃ£o e resistÃªncia foram comprovadas.",
+            "text": "Impressionante. Sua precisão e resistência foram comprovadas.",
             "options": [
               {
                 "text": "Estou pronto.",
@@ -774,7 +790,7 @@
             ]
           },
           "confirmar_jobchange": {
-            "text": "Que seu arco nunca falhe. VocÃª agora Ã© um Hunter!",
+            "text": "Que seu arco nunca falhe. Você agora é um Hunter!",
             "options": [
               {
                 "text": "Obrigado, Mestre.",
@@ -802,7 +818,7 @@
         "root": "root",
         "nodes": {
           "root": {
-            "text": "As sombras falam de vocÃª. Ainda nÃ£o sei se merecem.",
+            "text": "As sombras falam de você. Ainda não sei se merecem.",
             "options": [
               {
                 "text": "Continue nas sombras, Mestre.",
@@ -825,7 +841,7 @@
                 }
               },
               {
-                "text": "Ainda estou completando a missÃ£o.",
+                "text": "Ainda estou completando a missão.",
                 "next": "em_andamento",
                 "condition": {
                   "type": "questActive",
@@ -872,16 +888,16 @@
             ]
           },
           "aceitar_prova": {
-            "text": "Colete 5 Venenos Raros e elimine o Assassino das Sombras. NÃ£o decepcione.",
+            "text": "Colete 5 Venenos Raros e elimine o Assassino das Sombras. Não decepcione.",
             "options": [
               {
-                "text": "SerÃ¡ feito.",
+                "text": "Será feito.",
                 "next": "end"
               }
             ]
           },
           "em_andamento": {
-            "text": "Ainda nÃ£o terminou. Volte quando completar.",
+            "text": "Ainda não terminou. Volte quando completar.",
             "options": [
               {
                 "text": "Voltarei.",
@@ -899,7 +915,7 @@
             ]
           },
           "confirmar_jobchange": {
-            "text": "DesapareÃ§a nas sombras e ressurja como Mestre. VocÃª agora Ã© Assassin Master!",
+            "text": "Desapareça nas sombras e ressurja como Mestre. Você agora é Assassin Master!",
             "options": [
               {
                 "text": "Obrigado, Mestre.",
@@ -913,7 +929,7 @@
     },
     {
       "id": "mestre_lord_knight",
-      "name": "GrÃ£o-Mestre do Lorde Cavaleiro",
+      "name": "Grão-Mestre do Lorde Cavaleiro",
       "position": {
         "x": -15,
         "y": 0,
@@ -927,7 +943,7 @@
         "root": "root",
         "nodes": {
           "root": {
-            "text": "A honra da ordem exige mais do que forÃ§a. Exige feitos dignos de uma lenda.",
+            "text": "A honra da ordem exige mais do que força. Exige feitos dignos de uma lenda.",
             "options": [
               {
                 "text": "Continue seu caminho, Lord Knight.",
@@ -938,7 +954,7 @@
                 }
               },
               {
-                "text": "Aceitar a ProvaÃ§Ã£o do Lorde Cavaleiro",
+                "text": "Aceitar a Provação do Lorde Cavaleiro",
                 "next": "aceitar_prova",
                 "condition": {
                   "type": "questNotStarted",
@@ -950,7 +966,7 @@
                 }
               },
               {
-                "text": "Ainda estou cumprindo a provaÃ§Ã£o.",
+                "text": "Ainda estou cumprindo a provação.",
                 "next": "em_andamento",
                 "condition": {
                   "type": "questActive",
@@ -958,7 +974,7 @@
                 }
               },
               {
-                "text": "Completei a provaÃ§Ã£o Ã©pica.",
+                "text": "Completei a provação épica.",
                 "next": "completar_prova",
                 "condition": {
                   "type": "questCompletable",
@@ -988,7 +1004,7 @@
             ]
           },
           "already_lord_knight": {
-            "text": "A honra da ordem agora vive em vocÃª, Lord Knight.",
+            "text": "A honra da ordem agora vive em você, Lord Knight.",
             "options": [
               {
                 "text": "Adeus.",
@@ -997,16 +1013,16 @@
             ]
           },
           "aceitar_prova": {
-            "text": "VÃ¡ atÃ© Eremita Kael e prove que sua lÃ¢mina serve Ã  ordem e ao destino.",
+            "text": "Vá até Eremita Kael e prove que sua lâmina serve à ordem e ao destino.",
             "options": [
               {
-                "text": "Aceito a provaÃ§Ã£o.",
+                "text": "Aceito a provação.",
                 "next": "end"
               }
             ]
           },
           "em_andamento": {
-            "text": "Sua jornada ainda nÃ£o terminou. Volte quando concluir cada etapa.",
+            "text": "Sua jornada ainda não terminou. Volte quando concluir cada etapa.",
             "options": [
               {
                 "text": "Voltarei.",
@@ -1015,7 +1031,7 @@
             ]
           },
           "completar_prova": {
-            "text": "VocÃª atravessou a provaÃ§Ã£o como um verdadeiro campeÃ£o da ordem.",
+            "text": "Você atravessou a provação como um verdadeiro campeão da ordem.",
             "options": [
               {
                 "text": "Estou pronto.",
@@ -1024,10 +1040,10 @@
             ]
           },
           "confirmar_jobchange": {
-            "text": "Erga sua espada e assuma seu destino. VocÃª agora Ã© um Lord Knight!",
+            "text": "Erga sua espada e assuma seu destino. Você agora é um Lord Knight!",
             "options": [
               {
-                "text": "Obrigado, GrÃ£o-Mestre.",
+                "text": "Obrigado, Grão-Mestre.",
                 "next": "end"
               }
             ]
@@ -1038,7 +1054,7 @@
     },
     {
       "id": "mestre_high_wizard",
-      "name": "GrÃ£o-Mestre do Grande Bruxo",
+      "name": "Grão-Mestre do Grande Bruxo",
       "position": {
         "x": 15,
         "y": 0,
@@ -1052,10 +1068,10 @@
         "root": "root",
         "nodes": {
           "root": {
-            "text": "O verdadeiro arcano nÃ£o se curva ao caos. Ele o domina.",
+            "text": "O verdadeiro arcano não se curva ao caos. Ele o domina.",
             "options": [
               {
-                "text": "Continue sua ascensÃ£o, High Wizard.",
+                "text": "Continue sua ascensão, High Wizard.",
                 "next": "already_high_wizard",
                 "condition": {
                   "type": "playerClassIs",
@@ -1083,7 +1099,7 @@
                 }
               },
               {
-                "text": "ConcluÃ­ o rito arcano.",
+                "text": "Concluí o rito arcano.",
                 "next": "completar_prova",
                 "condition": {
                   "type": "questCompletable",
@@ -1113,7 +1129,7 @@
             ]
           },
           "already_high_wizard": {
-            "text": "Os fluxos arcanos jÃ¡ reconhecem seu nome, High Wizard.",
+            "text": "Os fluxos arcanos já reconhecem seu nome, High Wizard.",
             "options": [
               {
                 "text": "Adeus.",
@@ -1122,7 +1138,7 @@
             ]
           },
           "aceitar_prova": {
-            "text": "Procure OrÃ¡culo Lyra. SÃ³ entÃ£o compreenderÃ¡ o que o poder realmente exige.",
+            "text": "Procure Oráculo Lyra. Só então compreenderá o que o poder realmente exige.",
             "options": [
               {
                 "text": "Seguirei o rito.",
@@ -1131,7 +1147,7 @@
             ]
           },
           "em_andamento": {
-            "text": "O conhecimento ainda nÃ£o foi totalmente conquistado.",
+            "text": "O conhecimento ainda não foi totalmente conquistado.",
             "options": [
               {
                 "text": "Voltarei.",
@@ -1140,7 +1156,7 @@
             ]
           },
           "completar_prova": {
-            "text": "Seu domÃ­nio do arcano ultrapassou o limite dos magos comuns.",
+            "text": "Seu domínio do arcano ultrapassou o limite dos magos comuns.",
             "options": [
               {
                 "text": "Estou pronto.",
@@ -1149,10 +1165,10 @@
             ]
           },
           "confirmar_jobchange": {
-            "text": "Que os cÃ©us e os elementos respondam ao seu chamado. VocÃª agora Ã© um High Wizard!",
+            "text": "Que os céus e os elementos respondam ao seu chamado. Você agora é um High Wizard!",
             "options": [
               {
-                "text": "Obrigado, GrÃ£o-Mestre.",
+                "text": "Obrigado, Grão-Mestre.",
                 "next": "end"
               }
             ]
@@ -1163,7 +1179,7 @@
     },
     {
       "id": "mestre_sniper",
-      "name": "GrÃ£o-Mestre do Atirador de Elite",
+      "name": "Grão-Mestre do Atirador de Elite",
       "position": {
         "x": -15,
         "y": 0,
@@ -1177,10 +1193,10 @@
         "root": "root",
         "nodes": {
           "root": {
-            "text": "Um verdadeiro caÃ§ador nÃ£o erra quando o destino depende de seu disparo.",
+            "text": "Um verdadeiro caçador não erra quando o destino depende de seu disparo.",
             "options": [
               {
-                "text": "Sua mira jÃ¡ Ã© lendÃ¡ria, Sniper.",
+                "text": "Sua mira já é lendária, Sniper.",
                 "next": "already_sniper",
                 "condition": {
                   "type": "playerClassIs",
@@ -1238,7 +1254,7 @@
             ]
           },
           "already_sniper": {
-            "text": "Cada flecha sua jÃ¡ encontra o alvo antes mesmo de ser disparada.",
+            "text": "Cada flecha sua já encontra o alvo antes mesmo de ser disparada.",
             "options": [
               {
                 "text": "Adeus.",
@@ -1247,7 +1263,7 @@
             ]
           },
           "aceitar_prova": {
-            "text": "Encontre Batedor Thorn. Ele testarÃ¡ sua disciplina e seus instintos.",
+            "text": "Encontre Batedor Thorn. Ele testará sua disciplina e seus instintos.",
             "options": [
               {
                 "text": "Aceito o julgamento.",
@@ -1256,7 +1272,7 @@
             ]
           },
           "em_andamento": {
-            "text": "A presa ainda nÃ£o caiu. Continue.",
+            "text": "A presa ainda não caiu. Continue.",
             "options": [
               {
                 "text": "Voltarei.",
@@ -1265,7 +1281,7 @@
             ]
           },
           "completar_prova": {
-            "text": "Sua precisÃ£o jÃ¡ nÃ£o pertence ao mundo comum.",
+            "text": "Sua precisão já não pertence ao mundo comum.",
             "options": [
               {
                 "text": "Estou pronto.",
@@ -1274,10 +1290,10 @@
             ]
           },
           "confirmar_jobchange": {
-            "text": "Respire, mire e transcenda. VocÃª agora Ã© um Sniper!",
+            "text": "Respire, mire e transcenda. Você agora é um Sniper!",
             "options": [
               {
-                "text": "Obrigado, GrÃ£o-Mestre.",
+                "text": "Obrigado, Grão-Mestre.",
                 "next": "end"
               }
             ]
@@ -1288,7 +1304,7 @@
     },
     {
       "id": "mestre_shadow_assassin",
-      "name": "GrÃ£o-Mestre do Assassino das Sombras",
+      "name": "Grão-Mestre do Assassino das Sombras",
       "position": {
         "x": 15,
         "y": 0,
@@ -1302,10 +1318,10 @@
         "root": "root",
         "nodes": {
           "root": {
-            "text": "As sombras nÃ£o acolhem os fracos. Elas os consomem.",
+            "text": "As sombras não acolhem os fracos. Elas os consomem.",
             "options": [
               {
-                "text": "As sombras jÃ¡ o reconhecem, Shadow Assassin.",
+                "text": "As sombras já o reconhecem, Shadow Assassin.",
                 "next": "already_shadow_assassin",
                 "condition": {
                   "type": "playerClassIs",
@@ -1313,7 +1329,7 @@
                 }
               },
               {
-                "text": "Aceitar o VÃ©u Final",
+                "text": "Aceitar o Véu Final",
                 "next": "aceitar_prova",
                 "condition": {
                   "type": "questNotStarted",
@@ -1325,7 +1341,7 @@
                 }
               },
               {
-                "text": "Ainda caminho pelo vÃ©u.",
+                "text": "Ainda caminho pelo véu.",
                 "next": "em_andamento",
                 "condition": {
                   "type": "questActive",
@@ -1333,7 +1349,7 @@
                 }
               },
               {
-                "text": "Completei o VÃ©u Final.",
+                "text": "Completei o Véu Final.",
                 "next": "completar_prova",
                 "condition": {
                   "type": "questCompletable",
@@ -1363,7 +1379,7 @@
             ]
           },
           "already_shadow_assassin": {
-            "text": "VocÃª jÃ¡ nÃ£o caminha entre as sombras. VocÃª Ã© uma delas.",
+            "text": "Você já não caminha entre as sombras. Você é uma delas.",
             "options": [
               {
                 "text": "Adeus.",
@@ -1372,16 +1388,16 @@
             ]
           },
           "aceitar_prova": {
-            "text": "Procure Informante Sable. Ele o conduzirÃ¡ pela etapa que separa o mortal da lenda.",
+            "text": "Procure Informante Sable. Ele o conduzirá pela etapa que separa o mortal da lenda.",
             "options": [
               {
-                "text": "Aceito o vÃ©u.",
+                "text": "Aceito o véu.",
                 "next": "end"
               }
             ]
           },
           "em_andamento": {
-            "text": "Ainda hÃ¡ sangue e silÃªncio entre vocÃª e seu destino.",
+            "text": "Ainda há sangue e silêncio entre você e seu destino.",
             "options": [
               {
                 "text": "Voltarei.",
@@ -1399,10 +1415,10 @@
             ]
           },
           "confirmar_jobchange": {
-            "text": "DesapareÃ§a do mundo antigo. VocÃª agora Ã© um Shadow Assassin!",
+            "text": "Desapareça do mundo antigo. Você agora é um Shadow Assassin!",
             "options": [
               {
-                "text": "Obrigado, GrÃ£o-Mestre.",
+                "text": "Obrigado, Grão-Mestre.",
                 "next": "end"
               }
             ]
@@ -1427,7 +1443,7 @@
         "root": "root",
         "nodes": {
           "root": {
-            "text": "A lÃ¢mina sÃ³ alcanÃ§a grandeza quando encontra propÃ³sito. Volte ao seu mestre e complete seu juramento.",
+            "text": "A lâmina só alcança grandeza quando encontra propósito. Volte ao seu mestre e complete seu juramento.",
             "options": [
               {
                 "text": "Entendi.",
@@ -1445,7 +1461,7 @@
     },
     {
       "id": "oraculo_lyra",
-      "name": "OrÃ¡culo Lyra",
+      "name": "Oráculo Lyra",
       "position": {
         "x": -25,
         "y": 0,
@@ -1459,7 +1475,7 @@
         "root": "root",
         "nodes": {
           "root": {
-            "text": "O poder absoluto exige visÃ£o absoluta. Leve esta compreensÃ£o de volta ao GrÃ£o-Mestre.",
+            "text": "O poder absoluto exige visão absoluta. Leve esta compreensão de volta ao Grão-Mestre.",
             "options": [
               {
                 "text": "Eu compreendo.",
@@ -1491,7 +1507,7 @@
         "root": "root",
         "nodes": {
           "root": {
-            "text": "Olhos atentos. RespiraÃ§Ã£o firme. Agora volte e conclua sua prova.",
+            "text": "Olhos atentos. Respiração firme. Agora volte e conclua sua prova.",
             "options": [
               {
                 "text": "Vou retornar.",
@@ -1523,7 +1539,7 @@
         "root": "root",
         "nodes": {
           "root": {
-            "text": "VocÃª ouviu o sussurro certo. Agora desapareÃ§a e retorne ao GrÃ£o-Mestre.",
+            "text": "Você ouviu o sussurro certo. Agora desapareça e retorne ao Grão-Mestre.",
             "options": [
               {
                 "text": "Entendido.",
@@ -1540,33 +1556,6 @@
       "modelFile": "assets/models/npcs/rogue.glb"
     },
     {
-      "id": "sage",
-      "name": "SÃ¡bio AnciÃ£o",
-      "type": "quest",
-      "position": {
-        "x": 15,
-        "y": 0,
-        "z": -10
-      },
-      "dialogues": {
-        "default": {
-          "text": "Jovem aventureiro... sinto uma energia especial em vocÃª. Talvez esteja pronto para o desafio do EspÃ­rito Arcano.",
-          "options": []
-        }
-      },
-      "actions": [
-        {
-          "type": "offerQuest",
-          "questId": "quest_pet_espirito"
-        },
-        {
-          "type": "completeQuest",
-          "questId": "quest_pet_espirito"
-        }
-      ],
-      "modelFile": "assets/models/npcs/rogue_hooded.glb"
-    },
-    {
       "id": "guard_north",
       "name": "Guarda Marcos",
       "type": "guard",
@@ -1576,7 +1565,7 @@
         "start": "root",
         "nodes": {
           "root": {
-            "text": "As cavernas ao norte são perigosas. Prepare-se bem.",
+            "text": "As cavernas ao norte s�o perigosas. Prepare-se bem.",
             "options": [
               { "text": "Entendido.", "next": null }
             ]

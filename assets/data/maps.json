@@ -3176,7 +3176,7 @@
                  },
                  {
                      "id":  "ruins_01",
-                     "name":  "RuÃ­nas de Glast Heim",
+                     "name":  "Ruínas de Glast Heim",
                      "terrainSize":  8000,
                      "terrainColor":  "#4a4a3a",
                      "terrainTexture":  "assets/textures/terrain/ruins_dirt.jpg",
@@ -3404,7 +3404,7 @@
                                                              "y":  0,
                                                              "z":  0
                                                          },
-                                            "label":  "RuÃ­nas de Glast Heim"
+                                            "label":  "Ruínas de Glast Heim"
                                         },
                                         {
                                             "targetMap":  "dungeon_secret",

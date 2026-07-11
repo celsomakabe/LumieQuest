@@ -151,6 +151,7 @@ export async function spawnFromConfig(config) {
       mesh,
       position:     new THREE.Vector3(def.position.x, def.position.y, def.position.z),
       dialogTree:   def.dialogTree,
+      shop:         def.shop ?? null,
       playerInRange: false,
       mixer,
       idleAction,
@@ -257,9 +258,17 @@ function _onKeyPressed({ code, action, key }) {
  * Executa a action de uma opção de diálogo.
  * @param {{ type: string, questId: string }} action
  */
-function _executeAction(action) {
+function _executeAction(action, npc) {
     if (!action) return;
     const { type, questId } = action;
+
+    if (type === 'shop') {
+        Events.emit('uiWindowToggle', {
+            id: 'shop',
+            vendorId: npc?.id ?? null,
+            stock: Array.isArray(npc?.shop) ? npc.shop : [],
+        });
+    }
 
     if (type === 'offerQuest') {
         import('../entities/player.js').then(PlayerMod => {
@@ -285,5 +294,5 @@ Events.on('dialogOptionSelected', ({ npcId, nodeId, optionIndex }) => {
     if (!node) return;
 
     const opt = node.options[optionIndex];
-    if (opt?.action) _executeAction(opt.action);
+    if (opt?.action) _executeAction(opt.action, npc);
 });

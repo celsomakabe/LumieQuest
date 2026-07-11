@@ -329,6 +329,26 @@ export function setGold(value) {
 
 export function getItemDef(itemId) { return _catalogue[itemId]; }
 
+/**
+ * Valor-base de um item para venda (sellPrice, com fallback em value). 0 se sem preco.
+ * @param {string} itemId
+ * @returns {number}
+ */
+export function getSellValue(itemId) {
+    const def = _catalogue[itemId];
+    if (!def) return 0;
+    return Number(def.sellPrice ?? def.value ?? 0);
+}
+
+/**
+ * Preco de compra derivado (loja): round(valor-base * 2.5). Regra central de preco.
+ * @param {string} itemId
+ * @returns {number}
+ */
+export function getBuyPrice(itemId) {
+    return Math.round(getSellValue(itemId) * 2.5);
+}
+
 export function setEquipRefineLevel(equipSlot, level) {
     if (!VALID_EQUIP_SLOTS.includes(equipSlot)) return false;
     if (!_equipment[equipSlot] || typeof _equipment[equipSlot] !== 'object') return false;

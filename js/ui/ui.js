@@ -35,6 +35,8 @@ const EQUIPMENT_SLOT_META = [
 let _inventoryWindowEl = null;
 let _equipmentWindowEl = null;
 let _refineWindowEl = null;
+let _shopWindowEl = null;
+let _shopStock = [];
 let _petWindowEl = null;
 let _selectedRefineTarget = null;
 let _selectedRefineMeta = null;
@@ -617,8 +619,10 @@ export function init() {
     Events.on('goldChanged', ({ total }) => {
         const gh = document.getElementById('ui-gold-hud');
         const gi = document.getElementById('ui-gold-inv');
+        const gs = document.getElementById('ui-shop-gold');
         if (gh) gh.textContent = '🪙 ' + total;
         if (gi) gi.textContent = total;
+        if (gs) gs.textContent = total;
     });
 
     Events.on('inventoryFull', ({ itemId }) => {
@@ -656,7 +660,13 @@ export function init() {
         _renderRefineList();
     });
 
-    Events.on('uiWindowToggle', ({ id }) => {
+    Events.on('uiWindowToggle', ({ id, stock }) => {
+        if (id === 'shop') {
+            Audio.playSFX('assets/audio/sfx/sfx_ui_click.ogg');
+            const opening = !_shopWindowEl || _shopWindowEl.style.display === 'none';
+            if (opening) { _openShopWindow(stock); } else { _closeShopWindow(); }
+            return;
+        }
         if (id === 'inventory') {
             const panel = document.getElementById('ui-inventory');
             if (!panel) return;
@@ -709,6 +719,7 @@ if (code === 'Escape' && _dialogOpen) _closeDialog();
         if (code === 'Escape' && _skillWindowOpen && !_dialogOpen) toggleSkillWindow();
         if (code === 'Escape' && _petWindowOpen && !_dialogOpen) togglePetWindow();
         if (code === 'Escape' && _refineWindowEl && _refineWindowEl.style.display !== 'none' && !_dialogOpen) _closeRefineWindow();
+        if (code === 'Escape' && _shopWindowEl && _shopWindowEl.style.display !== 'none' && !_dialogOpen) _closeShopWindow();
 
         if (action === 'questLog') {
             if (!_dialogOpen) toggleQuestLog();
@@ -2367,6 +2378,153 @@ function _closeRefineWindow() {
     _selectedRefineTarget = null;
     _selectedRefineMeta = null;
     Events.emit('uiWindowClosed', { id: 'refine' });
+}
+
+// ─── Loja (comprar / vender) ──────────────────────────────────────────────────
+
+/** Constroi a janela de loja (uma vez). */
+function _ensureShopWindow() {
+    if (_shopWindowEl) return;
+
+    const style = document.createElement('style');
+    style.id = 'lumie-shop-style';
+    style.textContent = `
+        #shop-window {
+            display:none; position:fixed; top:50%; left:50%;
+            transform:translate(-50%,-50%);
+            width:720px; max-width:95vw; max-height:86vh;
+            background:rgba(20,18,14,0.97); border:1px solid #5a4a2a;
+            border-radius:8px; padding:16px; z-index:240; color:#e8d8a0;
+            font-family:monospace; font-size:14px;
+            box-shadow:0 8px 32px rgba(0,0,0,0.7); user-select:none; overflow:hidden;
+        }
+        .shop-cols { display:grid; grid-template-columns:1fr 1fr; gap:14px; min-height:420px; }
+        .shop-col { background:#17110a; border:1px solid #4b3920; border-radius:6px; padding:12px; display:flex; flex-direction:column; min-height:0; }
+        .shop-col-title { font-size:13px; font-weight:bold; color:#ffd27a; margin-bottom:10px; }
+        .shop-list { overflow:auto; display:flex; flex-direction:column; gap:8px; min-height:0; padding-right:4px; }
+        .shop-item { display:flex; justify-content:space-between; align-items:center; gap:8px;
+            border:1px solid #4b3920; border-radius:6px; background:#21180d; padding:8px 10px; cursor:pointer;
+            transition:background 0.12s, border-color 0.12s; }
+        .shop-item:hover { background:#2a1e10; border-color:#8c6d34; }
+        .shop-item-left { display:flex; align-items:center; gap:8px; min-width:0; }
+        .shop-item-name { font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .shop-price { font-size:12px; font-weight:bold; color:#ffd700; white-space:nowrap; }
+        .shop-empty { color:#9f8b62; font-size:12px; padding:8px; }
+    `;
+    document.head.appendChild(style);
+
+    _shopWindowEl = document.createElement('div');
+    _shopWindowEl.id = 'shop-window';
+    _shopWindowEl.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;">
+            <span style="font-size:15px;font-weight:bold;">🛒 Loja</span>
+            <span style="font-size:13px;">🪙 <span id="ui-shop-gold">0</span></span>
+            <span id="ui-shop-close" style="cursor:pointer;font-size:18px;line-height:1;">✕</span>
+        </div>
+        <div class="shop-cols">
+            <div class="shop-col">
+                <div class="shop-col-title">COMPRAR</div>
+                <div id="shop-buy-list" class="shop-list"></div>
+            </div>
+            <div class="shop-col">
+                <div class="shop-col-title">VENDER</div>
+                <div id="shop-sell-list" class="shop-list"></div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(_shopWindowEl);
+    document.getElementById('ui-shop-close').addEventListener('click', () => _closeShopWindow());
+}
+
+/** Abre a loja com o estoque do vendedor. @param {string[]} stock */
+function _openShopWindow(stock) {
+    _ensureShopWindow();
+    _shopStock = Array.isArray(stock) ? stock : [];
+    _shopWindowEl.style.display = 'block';
+    _renderShop();
+    Events.emit('uiWindowOpened', { id: 'shop' });
+}
+
+function _closeShopWindow() {
+    if (!_shopWindowEl) return;
+    _shopWindowEl.style.display = 'none';
+    Events.emit('uiWindowClosed', { id: 'shop' });
+}
+
+/** Redesenha listas de comprar/vender e o ouro atual. */
+function _renderShop() {
+    if (!_shopWindowEl) return;
+    const goldEl = document.getElementById('ui-shop-gold');
+    if (goldEl) goldEl.textContent = Inventory.getGold();
+
+    // COMPRAR: estoque do vendedor (infinito), mostra buyPrice.
+    const buyEl = document.getElementById('shop-buy-list');
+    if (buyEl) {
+        buyEl.innerHTML = '';
+        if (_shopStock.length === 0) buyEl.innerHTML = '<div class="shop-empty">Sem mercadorias.</div>';
+        for (const itemId of _shopStock) {
+            const def = Inventory.getItemDef(itemId);
+            if (!def) continue;
+            const price = Inventory.getBuyPrice(itemId);
+            const row = document.createElement('div');
+            row.className = 'shop-item';
+            row.innerHTML = `<span class="shop-item-left"><span>${def.icon ?? '📦'}</span><span class="shop-item-name">${def.name ?? itemId}</span></span><span class="shop-price">🪙 ${price}</span>`;
+            row.addEventListener('click', () => _shopBuy(itemId));
+            buyEl.appendChild(row);
+        }
+    }
+
+    // VENDER: itens do inventario com valor de venda (ouro nao vendavel).
+    const sellEl = document.getElementById('shop-sell-list');
+    if (sellEl) {
+        sellEl.innerHTML = '';
+        const slots = Inventory.getSlots();
+        let any = false;
+        for (let i = 0; i < slots.length; i++) {
+            const slot = slots[i];
+            if (!slot) continue;
+            const def = Inventory.getItemDef(slot.itemId);
+            if (!def || def.type === 'currency') continue;
+            const value = Inventory.getSellValue(slot.itemId);
+            if (value <= 0) continue;
+            any = true;
+            const qtyTxt = (slot.qty ?? 1) > 1 ? ` x${slot.qty}` : '';
+            const row = document.createElement('div');
+            row.className = 'shop-item';
+            row.innerHTML = `<span class="shop-item-left"><span>${def.icon ?? '📦'}</span><span class="shop-item-name">${def.name ?? slot.itemId}${qtyTxt}</span></span><span class="shop-price">🪙 ${value}</span>`;
+            row.addEventListener('click', () => _shopSell(i));
+            sellEl.appendChild(row);
+        }
+        if (!any) sellEl.innerHTML = '<div class="shop-empty">Nada para vender.</div>';
+    }
+}
+
+/** Compra 1 unidade (se houver ouro e espaco). @param {string} itemId */
+function _shopBuy(itemId) {
+    const price = Inventory.getBuyPrice(itemId);
+    if (Inventory.getGold() < price) {
+        showNotification('Ouro insuficiente.', 'warning');
+        return;
+    }
+    const added = Inventory.addItem(itemId, 1);
+    if (added === false) return; // addItem ja emitiu 'inventoryFull'
+    Inventory.setGold(Inventory.getGold() - price);
+    Audio.playSFX('assets/audio/sfx/sfx_ui_click.ogg');
+    _renderShop();
+}
+
+/** Vende 1 unidade do slot do inventario. @param {number} slotIndex */
+function _shopSell(slotIndex) {
+    const slot = Inventory.getSlots()[slotIndex];
+    if (!slot) return;
+    const def = Inventory.getItemDef(slot.itemId);
+    if (!def || def.type === 'currency') return;
+    const value = Inventory.getSellValue(slot.itemId);
+    if (value <= 0) return;
+    Inventory.removeItem(slotIndex, 1);
+    Inventory.setGold(Inventory.getGold() + value);
+    Audio.playSFX('assets/audio/sfx/sfx_ui_click.ogg');
+    _renderShop();
 }
 
 /**
