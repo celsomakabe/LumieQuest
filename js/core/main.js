@@ -245,6 +245,39 @@ async function _onAssetsReady() {
             }
             return ok;
         };
+
+        // [DEBUG] Itens: dar item/set e listar catalogo (a bag auto-refresca via 'itemAdded').
+        window.debugGiveItem = (itemId, qty = 1) => {
+            const n = Number(qty) || 1;
+            const r = Inventory.addItem(itemId, n);
+            if (r === false) console.warn('[debugGiveItem] falhou (item desconhecido ou inventario cheio):', itemId);
+            else console.log('[debugGiveItem] +' + n + ' ' + itemId);
+            return r;
+        };
+        window.debugGiveSet = (setId) => {
+            const pieces = Object.values(Inventory.getCatalogue()).filter(i => i.setId === setId);
+            if (pieces.length === 0) { console.warn('[debugGiveSet] set sem pecas / id invalido:', setId); return 0; }
+            for (const p of pieces) Inventory.addItem(p.id, 1);
+            console.log('[debugGiveSet] ' + setId + ': +' + pieces.length + ' pecas ->', pieces.map(p => p.id).join(', '));
+            return pieces.length;
+        };
+        window.debugListItems = (filter) => {
+            let items = Object.values(Inventory.getCatalogue());
+            if (filter) {
+                const f = String(filter).toLowerCase();
+                items = items.filter(i =>
+                    String(i.type).toLowerCase() === f ||
+                    i.id.toLowerCase().includes(f) ||
+                    String(i.setId ?? '').toLowerCase().includes(f) ||
+                    (Array.isArray(i.classRestriction) ? i.classRestriction : [i.classRestriction])
+                        .some(c => String(c ?? '').toLowerCase() === f)
+                );
+            }
+            const rows = items.map(i => ({ id: i.id, name: i.name, type: i.type, slot: i.slot ?? '-', setId: i.setId ?? '-' }));
+            if (console.table) console.table(rows); else console.log(rows);
+            console.log('[debugListItems] ' + rows.length + ' itens' + (filter ? ' (filtro: ' + filter + ')' : ''));
+            return rows.map(r => r.id);
+        };
     }
     await Inventory.init(_saveData.player.inventory ?? null);
     await Quests.init(_saveData.player.quests ?? null);

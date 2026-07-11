@@ -1,9 +1,9 @@
 [
   {
     "id": "set_normal_swordman",
-    "name": "Conjunto Normal do Espadachim",
+    "name": "Conjunto do Espadachim",
     "tier": "normal",
-    "classRestriction": "swordman",
+    "classRestriction": ["swordman","knight","lord_knight"],
     "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
     "bonuses": {
       "2": { "str": 2, "vit": 1 },
@@ -13,9 +13,9 @@
   },
   {
     "id": "set_legendary_swordman",
-    "name": "Conjunto Lendário do Espadachim",
+    "name": "Conjunto do Cavaleiro",
     "tier": "legendary",
-    "classRestriction": "swordman",
+    "classRestriction": ["knight","lord_knight"],
     "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
     "bonuses": {
       "2": { "str": 3, "vit": 2 },
@@ -25,9 +25,9 @@
   },
   {
     "id": "set_divine_swordman",
-    "name": "Conjunto Divino do Espadachim",
+    "name": "Conjunto do Lorde Cavaleiro",
     "tier": "divine",
-    "classRestriction": "swordman",
+    "classRestriction": ["lord_knight"],
     "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
     "bonuses": {
       "2": { "str": 5, "vit": 3 },
@@ -37,9 +37,9 @@
   },
   {
     "id": "set_normal_mage",
-    "name": "Conjunto Normal do Mago",
+    "name": "Conjunto do Mago",
     "tier": "normal",
-    "classRestriction": "mage",
+    "classRestriction": ["mage","wizard","high_wizard"],
     "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
     "bonuses": {
       "2": { "int": 2, "dex": 1 },
@@ -49,9 +49,9 @@
   },
   {
     "id": "set_legendary_mage",
-    "name": "Conjunto Lendário do Mago",
+    "name": "Conjunto do Bruxo",
     "tier": "legendary",
-    "classRestriction": "mage",
+    "classRestriction": ["wizard","high_wizard"],
     "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
     "bonuses": {
       "2": { "int": 3, "dex": 2 },
@@ -61,9 +61,9 @@
   },
   {
     "id": "set_divine_mage",
-    "name": "Conjunto Divino do Mago",
+    "name": "Conjunto do Grande Bruxo",
     "tier": "divine",
-    "classRestriction": "mage",
+    "classRestriction": ["high_wizard"],
     "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
     "bonuses": {
       "2": { "int": 5, "dex": 3 },
@@ -73,9 +73,9 @@
   },
   {
     "id": "set_normal_archer",
-    "name": "Conjunto Normal do Arqueiro",
+    "name": "Conjunto do Arqueiro",
     "tier": "normal",
-    "classRestriction": "archer",
+    "classRestriction": ["archer","hunter","sniper"],
     "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
     "bonuses": {
       "2": { "dex": 2, "agi": 1 },
@@ -85,9 +85,9 @@
   },
   {
     "id": "set_legendary_archer",
-    "name": "Conjunto Lendário do Arqueiro",
+    "name": "Conjunto do Caçador",
     "tier": "legendary",
-    "classRestriction": "archer",
+    "classRestriction": ["hunter","sniper"],
     "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
     "bonuses": {
       "2": { "dex": 3, "agi": 2 },
@@ -97,9 +97,9 @@
   },
   {
     "id": "set_divine_archer",
-    "name": "Conjunto Divino do Arqueiro",
+    "name": "Conjunto do Atirador de Elite",
     "tier": "divine",
-    "classRestriction": "archer",
+    "classRestriction": ["sniper"],
     "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
     "bonuses": {
       "2": { "dex": 5, "agi": 3 },
@@ -109,9 +109,9 @@
   },
   {
     "id": "set_normal_assassin",
-    "name": "Conjunto Normal do Assassino",
+    "name": "Conjunto do Assassino",
     "tier": "normal",
-    "classRestriction": "assassin",
+    "classRestriction": ["assassin","assassin_master","shadow_assassin"],
     "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
     "bonuses": {
       "2": { "agi": 2, "luk": 1 },
@@ -121,9 +121,9 @@
   },
   {
     "id": "set_legendary_assassin",
-    "name": "Conjunto Lendário do Assassino",
+    "name": "Conjunto do Mestre Assassino",
     "tier": "legendary",
-    "classRestriction": "assassin",
+    "classRestriction": ["assassin_master","shadow_assassin"],
     "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
     "bonuses": {
       "2": { "agi": 3, "luk": 2 },
@@ -133,9 +133,9 @@
   },
   {
     "id": "set_divine_assassin",
-    "name": "Conjunto Divino do Assassino",
+    "name": "Conjunto do Assassino das Sombras",
     "tier": "divine",
-    "classRestriction": "assassin",
+    "classRestriction": ["shadow_assassin"],
     "pieceSlots": ["upper_headgear", "armor", "garment", "footgear"],
     "bonuses": {
       "2": { "agi": 5, "luk": 3 },

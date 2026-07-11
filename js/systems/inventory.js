@@ -6,6 +6,7 @@
 
 import { on, emit } from '../core/events.js';
 import { hasPet, addPet } from './pets.js';
+import { getClassLineage } from './classes.js';
 
 let _slots = new Array(30).fill(null);
 
@@ -31,6 +32,55 @@ const VALID_EQUIP_SLOTS = [
     'weapon', 'shield', 'upper_headgear', 'mid_headgear', 'lower_headgear',
     'armor', 'garment', 'footgear', 'accessory_left', 'accessory_right'
 ];
+
+// Classe atual do player, cacheada via event bus (R8 — sem import de player.js).
+// Registrado no escopo do modulo para captar o playerSpawned inicial.
+let _playerClass = null;
+on('playerSpawned', ({ class: cls } = {}) => { if (cls) _playerClass = cls; });
+on('jobChanged',    ({ newClass } = {}) => { if (newClass) _playerClass = newClass; });
+
+/**
+ * Indica se a classe atual do player pode equipar o item.
+ * classRestriction null/vazio = livre. Caso contrario, o item e equipavel se algum
+ * dos jobs listados estiver na LINHAGEM do player (heranca descendente: um evo veste
+ * o gear dos ancestrais; o contrario nao). Classe ainda desconhecida = nao bloqueia.
+ * @param {string} itemId
+ * @returns {boolean}
+ */
+export function canEquip(itemId) {
+    const def = _catalogue[itemId];
+    if (!def) return false;
+    const cr = def.classRestriction;
+    if (cr == null || (Array.isArray(cr) && cr.length === 0)) return true;
+    if (!_playerClass) return true;
+    const list = Array.isArray(cr) ? cr : [cr];
+    const lineage = getClassLineage(_playerClass); // inclui ancestrais + o proprio job
+    return list.some(c => lineage.includes(c));
+}
+
+/**
+ * Desequipa itens equipados que a classe atual nao pode usar (saves antigos), devolvendo
+ * ao inventario. Se o inventario estiver cheio, mantem equipado (nao perde o item).
+ * @returns {void}
+ */
+function _autoUnequipIllegal() {
+    for (const slot of VALID_EQUIP_SLOTS) {
+        const eq = _equipment[slot];
+        const itemId = eq?.itemId ?? (typeof eq === 'string' ? eq : null);
+        if (!itemId || canEquip(itemId)) continue;
+
+        const idx = addItem(itemId, 1);
+        if (idx === false) continue; // inventario cheio: nao desequipa para nao perder
+
+        if (_slots[idx]) {
+            _slots[idx].refineLevel = eq?.refineLevel ?? 0;
+            const sk = _cloneSockets(eq?.sockets ?? []);
+            if (sk.length > 0) _slots[idx].sockets = sk;
+        }
+        _equipment[slot] = null;
+        emit('equipmentAutoUnequipped', { itemId, equipmentSlot: slot });
+    }
+}
 
 function _buildCatalogue(itemsArray) {
     _catalogue = {};
@@ -64,6 +114,7 @@ export async function init(saveData) {
     };
     _gold = 0;
     if (saveData) { hydrate(saveData); }
+    _autoUnequipIllegal(); // saves antigos: remove itens equipados incompativeis com a classe
     _initialized = true;
 }
 
@@ -230,6 +281,11 @@ export function equipItem(slotIndex) {
     const equipSlot = def.slot;
     if (!def.slot || !VALID_EQUIP_SLOTS.includes(def.slot)) return false;
 
+    if (!canEquip(slot.itemId)) {
+        emit('equipBlocked', { itemId: slot.itemId, reason: 'class' });
+        return false;
+    }
+
     const itemId = slot.itemId;
     const refineLevel = slot.refineLevel ?? 0;
     const sockets = _cloneSockets(slot.sockets ?? []);
@@ -328,6 +384,9 @@ export function setGold(value) {
 }
 
 export function getItemDef(itemId) { return _catalogue[itemId]; }
+
+/** Retorna cópia rasa do catálogo de itens (debug/listagem). @returns {Object} */
+export function getCatalogue() { return { ..._catalogue }; }
 
 /**
  * Valor-base de um item para venda (sellPrice, com fallback em value). 0 se sem preco.

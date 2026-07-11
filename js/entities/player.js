@@ -230,7 +230,7 @@ export async function init(saveData = null) {
     _validateSpawnPosition();
 
     _validateSpawnPosition();
-    emit('playerSpawned', { position: _mesh.position.clone() });
+    emit('playerSpawned', { position: _mesh.position.clone(), class: _data.class });
     console.log('[player] Spawnou em', _mesh.position);
 }
 

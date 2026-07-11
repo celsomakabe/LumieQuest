@@ -629,6 +629,17 @@ export function init() {
         showNotification(`Inventário cheio! (${itemId})`, 'warning');
     });
 
+    Events.on('equipBlocked', ({ itemId }) => {
+        const nm = Inventory.getItemDef(itemId)?.name ?? itemId;
+        showNotification(`Sua classe não pode equipar: ${nm}`, 'warning');
+    });
+
+    Events.on('equipmentAutoUnequipped', ({ itemId }) => {
+        const nm = Inventory.getItemDef(itemId)?.name ?? itemId;
+        showNotification(`${nm} foi desequipado (classe incompatível).`, 'warning');
+        _refreshInventoryUI();
+    });
+
     Events.on('refineSuccess', ({ itemId, newLevel }) => {
         const def = Inventory.getItemDef(itemId);
         const name = def?.name ?? itemId;
@@ -1749,7 +1760,13 @@ function _refreshInventoryUI() {
                 cell.appendChild(qtyEl);
             }
 
-            cell.title = `${refinePrefix}${def?.name ?? slot.itemId}${slot.qty > 1 ? ` x${slot.qty}` : ''}`;
+            const blocked = !!(def?.slot && !Inventory.canEquip(slot.itemId));
+            if (blocked) cell.style.opacity = '0.4';
+            const crList = Array.isArray(def?.classRestriction)
+                ? def.classRestriction
+                : (def?.classRestriction ? [def.classRestriction] : []);
+            cell.title = `${refinePrefix}${def?.name ?? slot.itemId}${slot.qty > 1 ? ` x${slot.qty}` : ''}`
+                + (blocked ? `\n⚠ Sua classe não pode equipar (requer: ${crList.join(', ')})` : '');
 
             cell.addEventListener('contextmenu', e => {
                 e.preventDefault();
