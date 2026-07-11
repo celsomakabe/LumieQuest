@@ -1,5 +1,5 @@
 ﻿import * as THREE from 'three';
-import { getScene, getCamera, add, remove, updateLighting, setSkybox } from './scene.js';
+import { getScene, getCamera, add, remove, updateLighting, setSkybox, setFogDensity, setLinearFog, setExpFog } from './scene.js';
 import { spawnMonster, spawnGroup } from '../entities/monsters.js';
 import { spawnFromConfig } from '../entities/npcs.js';
 import * as Models from '../core/models.js';
@@ -16,6 +16,11 @@ let _terrainMesh = null;
 let _decorationGroup = null;
 let _instancedMeshes = [];
 let _instancedModelMeshes = [];
+let _enclosureObjects = [];
+let _enclosureLights = [];
+let _torchLight = null;
+let _caveAmbientLight = null;
+let _caveCeiling = null;
 let _mapObjects = [];
 let _exitNearTarget = null;
 let _npcsConfig = null;
@@ -27,6 +32,7 @@ let _currentPhase = 'day';
 let _lastEmittedPhase = null;
 
 const DAY_NIGHT_CYCLE_DURATION = 300;
+const DEFAULT_FOG_DENSITY = 0.0015;
 
 /**
  * Inicializa o mÃ³dulo de mundo e carrega maps.json.
@@ -55,6 +61,9 @@ export async function init() {
   };
 
   on('exitPointAction', _boundExitPointAction);
+
+  // Tuner ao vivo da iluminacao da caverna (so age no mapa com enclosure).
+  if (typeof window !== 'undefined') window.debugCaveLight = _debugCaveLight;
 }
 
 /**
@@ -92,6 +101,11 @@ export async function loadMap(mapId, fromMapId) {
   const skyboxUrls = nextMap.skybox ?? null;
   setSkybox(skyboxUrls);
   updateLighting('day', 1.0, nextMap.lighting ?? {});
+  // Fog por mapa: linear (near/far) para cavernas; exponencial (density) para o resto.
+  // Isso tambem evita vazar o fog da caverna para city_01/forest_01.
+  if (nextMap.fog?.far != null) setLinearFog(Number(nextMap.fog.near ?? 12), Number(nextMap.fog.far ?? 100));
+  else setExpFog(nextMap.fog?.density ?? DEFAULT_FOG_DENSITY);
+  _spawnEnclosure(nextMap);
   emit('weatherChanged', { weather: 'clear' });
 
   // Posicionar player no exit point que leva de volta ao mapa de origem
@@ -161,6 +175,7 @@ export function update(delta) {
   _updateWeather(delta);
 
   const playerPos = getPosition();
+  if (_torchLight) _torchLight.position.set(playerPos.x, (playerPos.y ?? 0) + 2.5, playerPos.z);
   const exitPoints = Array.isArray(_currentMapConfig.exitPoints) ? _currentMapConfig.exitPoints : [];
 
   let nearestExit = null;
@@ -216,6 +231,19 @@ for (const im of _instancedMeshes) {
     im.dispose?.();
   }
   _instancedModelMeshes = [];
+  // Enclosure de caverna (teto/parede proprios + luzes): dispor recursos proprios
+  // e remover luzes (sem dispose). Nao ha recursos de cache aqui.
+  for (const obj of _enclosureObjects) {
+    remove(obj);
+    obj.geometry?.dispose?.();
+    if (Array.isArray(obj.material)) { obj.material.forEach(m => m?.dispose?.()); } else { obj.material?.dispose?.(); }
+  }
+  _enclosureObjects = [];
+  for (const l of _enclosureLights) remove(l);
+  _enclosureLights = [];
+  _torchLight = null;
+  _caveAmbientLight = null;
+  _caveCeiling = null;
   _mapObjects = [];
   _decorationGroup = null;
   _terrainMesh = null;
@@ -224,6 +252,109 @@ for (const im of _instancedMeshes) {
   _currentWeather = 'clear';
   _currentPhase = 'day';
   _lastEmittedPhase = null;
+}
+
+/**
+ * Cria o "fechamento" de uma caverna (teto + parede + luzes) quando o mapa tem
+ * `enclosure` no maps.json. Teto e parede usam BackSide (visiveis por dentro; se a
+ * camera passar por cima do teto, ele some em vez de ocluir). As luzes incluem uma
+ * tocha que segue o player (atualizada em update()). Objetos proprios sao limpos em
+ * _clearCurrentMap (nao ha recursos de cache aqui).
+ * @param {Object} mapConfig
+ */
+function _spawnEnclosure(mapConfig) {
+  const cfg = mapConfig.enclosure;
+  if (!cfg) return;
+
+  const ceilingH = Number(cfg.ceilingHeight ?? 22);
+  const wallR    = Number(cfg.wallRadius ?? 110);
+  const wallH    = Number(cfg.wallHeight ?? 28);
+  const span     = wallR * 2 + 20;
+
+  // Teto: plano voltado para cima (normal +Y) com BackSide -> visivel de baixo,
+  // invisivel de cima (sem oclusao ao afastar a camera).
+  const ceilMat = new THREE.MeshStandardMaterial({
+    color: cfg.ceilingColor ?? '#241f2b',
+    emissive: new THREE.Color(cfg.ceilingColor ?? '#241f2b'), emissiveIntensity: 0.4,
+    side: THREE.BackSide, roughness: 1, metalness: 0,
+  });
+  const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(span, span), ceilMat);
+  ceiling.rotation.x = -Math.PI / 2;
+  ceiling.position.y = ceilingH;
+  ceiling.name = 'cave_ceiling';
+  add(ceiling);
+  _enclosureObjects.push(ceiling);
+  _caveCeiling = ceiling;
+
+  // Parede: cilindro aberto com BackSide -> fecha o horizonte por dentro.
+  const wallMat = new THREE.MeshStandardMaterial({
+    color: cfg.wallColor ?? '#2a2633',
+    emissive: new THREE.Color(cfg.wallColor ?? '#2a2633'), emissiveIntensity: 0.32,
+    side: THREE.BackSide, roughness: 1, metalness: 0,
+  });
+  const wall = new THREE.Mesh(new THREE.CylinderGeometry(wallR, wallR, wallH, 48, 1, true), wallMat);
+  wall.position.y = wallH / 2;
+  wall.name = 'cave_wall';
+  add(wall);
+  _enclosureObjects.push(wall);
+
+  // Luz ambiente dedicada da caverna: penumbra base garantida e DESACOPLADA do fog
+  // (o ambient de updateLighting so controla cor do fog/fundo; a luz util vem daqui).
+  const amb = new THREE.AmbientLight(new THREE.Color(cfg.ambientColor ?? '#8890a8'), Number(cfg.ambientIntensity ?? 1.1));
+  add(amb);
+  _enclosureLights.push(amb);
+  _caveAmbientLight = amb;
+
+  // Luzes fixas (cristais/tochas).
+  for (const L of (Array.isArray(cfg.lights) ? cfg.lights : [])) {
+    // decay 1 (nao o padrao 2): no modo de luz fisica do r169, decay 2 apaga a luz em poucas unidades.
+    const pl = new THREE.PointLight(new THREE.Color(L.color ?? '#ffaa66'), Number(L.intensity ?? 8), Number(L.range ?? 20), 1);
+    pl.position.set(Number(L.x ?? 0), Number(L.y ?? 3), Number(L.z ?? 0));
+    add(pl);
+    _enclosureLights.push(pl);
+  }
+
+  // Tocha do player (segue o player em update()). decay 1 -> halo utilizavel no modo fisico.
+  _torchLight = new THREE.PointLight(new THREE.Color(cfg.torchColor ?? '#ffbf80'), Number(cfg.torchIntensity ?? 30), Number(cfg.torchRange ?? 42), 1);
+  _torchLight.position.set(0, 2, 0);
+  add(_torchLight);
+  _enclosureLights.push(_torchLight);
+}
+
+/**
+ * [DEBUG] Tuner ao vivo da iluminacao da caverna (exposto em window.debugCaveLight).
+ * Sem argumentos: imprime e retorna os valores atuais. Com objeto: aplica na hora,
+ * sem reload. So age no mapa que tem enclosure (caverna).
+ * @param {{ ambient?:number, torchIntensity?:number, torchDistance?:number,
+ *           torchColor?:string, fogNear?:number, fogFar?:number, ceilingHeight?:number }} [opts]
+ * @returns {Object}
+ */
+function _debugCaveLight(opts) {
+  const fog = getScene()?.fog;
+  const snapshot = () => ({
+    ambient:        _caveAmbientLight?.intensity ?? null,
+    torchIntensity: _torchLight?.intensity ?? null,
+    torchDistance:  _torchLight?.distance ?? null,
+    torchColor:     _torchLight ? '#' + _torchLight.color.getHexString() : null,
+    fogNear:        (fog && 'near' in fog) ? fog.near : null,
+    fogFar:         (fog && 'far' in fog) ? fog.far : null,
+    ceilingHeight:  _caveCeiling?.position.y ?? null,
+  });
+
+  if (!opts) { const v = snapshot(); console.log('[debugCaveLight] atuais:', v); return v; }
+  if (!_torchLight) { console.warn('[debugCaveLight] so funciona no mapa da caverna.'); return snapshot(); }
+
+  if (opts.ambient        != null && _caveAmbientLight) _caveAmbientLight.intensity = Number(opts.ambient);
+  if (opts.torchIntensity != null) _torchLight.intensity = Number(opts.torchIntensity);
+  if (opts.torchDistance  != null) _torchLight.distance  = Number(opts.torchDistance);
+  if (opts.torchColor     != null) _torchLight.color.set(opts.torchColor);
+  if (opts.fogNear        != null && fog && 'near' in fog) fog.near = Number(opts.fogNear);
+  if (opts.fogFar         != null && fog && 'far' in fog)  fog.far  = Number(opts.fogFar);
+  if (opts.ceilingHeight  != null && _caveCeiling) _caveCeiling.position.y = Number(opts.ceilingHeight);
+
+  const v = snapshot();
+  console.log('[debugCaveLight] aplicado:', v);
+  return v;
 }
 
 function _createTerrain(mapConfig) {

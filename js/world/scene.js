@@ -350,6 +350,39 @@ export function setSkybox(urls) {
     }
   );
 }
+
+/**
+ * Ajusta a densidade do fog exponencial da cena (calibravel por mapa).
+ * @param {number} density
+ * @returns {void}
+ */
+export function setFogDensity(density) {
+  if (_scene?.fog && typeof density === 'number') {
+    _scene.fog.density = density;
+  }
+}
+
+/**
+ * Troca o fog da cena para LINEAR (near/far). Preserva a cor atual.
+ * @param {number} near @param {number} far
+ * @returns {void}
+ */
+export function setLinearFog(near, far) {
+  if (!_scene) return;
+  const color = _scene.fog?.color?.clone?.() ?? new THREE.Color(0x87CEEB);
+  _scene.fog = new THREE.Fog(color, near, far);
+}
+
+/**
+ * Troca o fog da cena para EXPONENCIAL (density). Preserva a cor atual.
+ * @param {number} density
+ * @returns {void}
+ */
+export function setExpFog(density) {
+  if (!_scene) return;
+  const color = _scene.fog?.color?.clone?.() ?? new THREE.Color(0x87CEEB);
+  _scene.fog = new THREE.FogExp2(color, density);
+}
 /**
  * Adiciona um Object3D Ã  cena.
  * @param {THREE.Object3D} obj - Objeto a adicionar

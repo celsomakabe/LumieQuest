@@ -3051,14 +3051,24 @@
                      "terrainSize":  800,
                      "terrainColor":  "#3a3a4a",
                      "terrainTexture":  "assets/textures/terrain/cave_rock.jpg",
-                     "skybox":  [
-                                    "assets/textures/skybox/px.png",
-                                    "assets/textures/skybox/nx.png",
-                                    "assets/textures/skybox/py.png",
-                                    "assets/textures/skybox/ny.png",
-                                    "assets/textures/skybox/pz.png",
-                                    "assets/textures/skybox/nz.png"
-                                ],
+                     "fog":  { "near": 18, "far": 100, "color": "#16141e" },
+                     "enclosure":  {
+                       "ambientColor": "#8890a8",
+                       "ambientIntensity": 1.1,
+                       "ceilingHeight": 22,
+                       "ceilingColor": "#38323f",
+                       "wallRadius": 110,
+                       "wallHeight": 28,
+                       "wallColor": "#423c4c",
+                       "torchColor": "#ffbf80",
+                       "torchIntensity": 30,
+                       "torchRange": 42,
+                       "lights": [
+                         { "x": 22, "z": 22, "color": "#66ccff", "intensity": 15, "range": 22 },
+                         { "x": -28, "z": 14, "color": "#ff8844", "intensity": 15, "range": 22 },
+                         { "x": 6, "z": -30, "color": "#88ffcc", "intensity": 15, "range": 22 }
+                       ]
+                     },
                      "monsterPool":  [
                                          {
                                              "monsterId":  "esqueleto",
@@ -3111,42 +3121,14 @@
                                             "label":  "Floresta de Payon"
                                         }
                                     ],
-                     "decoration":  [
-                                        {
-                                            "model":  "rock_sphere",
-                                            "path":  "",
-                                            "procedural":  true,
-                                            "count":  10,
-                                            "area":  {
-                                                         "xMin":  -35,
-                                                         "xMax":  35,
-                                                         "zMin":  -35,
-                                                         "zMax":  35
-                                                     },
-                                            "scaleRange":  [
-                                                               0.8,
-                                                               1.6
-                                                           ],
-                                            "rotateY":  true
-                                        },
-                                        {
-                                            "model":  "pillar_cylinder",
-                                            "path":  "",
-                                            "procedural":  true,
-                                            "count":  6,
-                                            "area":  {
-                                                         "xMin":  -30,
-                                                         "xMax":  30,
-                                                         "zMin":  -30,
-                                                         "zMax":  30
-                                                     },
-                                            "scaleRange":  [
-                                                               0.9,
-                                                               1.3
-                                                           ],
-                                            "rotateY":  true
-                                        }
-                                    ],
+                                          "decoration":  [
+                       { "model": "rock_sphere", "procedural": true, "count": 22, "area": { "xMin": -62, "xMax": 62, "zMin": -62, "zMax": 62 }, "scaleRange": [0.8, 1.8], "rotateY": true },
+                       { "model": "pillar_cylinder", "procedural": true, "count": 14, "area": { "xMin": -55, "xMax": 55, "zMin": -55, "zMax": 55 }, "scaleRange": [0.9, 1.6], "rotateY": true },
+                       { "model": "rock_sphere", "procedural": true, "count": 20, "area": { "xMin": -80, "xMax": 80, "zMin": 66, "zMax": 82 }, "scaleRange": [2.5, 4.5], "rotateY": true },
+                       { "model": "rock_sphere", "procedural": true, "count": 20, "area": { "xMin": -80, "xMax": 80, "zMin": -82, "zMax": -66 }, "scaleRange": [2.5, 4.5], "rotateY": true },
+                       { "model": "rock_sphere", "procedural": true, "count": 16, "area": { "xMin": 66, "xMax": 82, "zMin": -66, "zMax": 66 }, "scaleRange": [2.5, 4.5], "rotateY": true },
+                       { "model": "rock_sphere", "procedural": true, "count": 16, "area": { "xMin": -82, "xMax": -66, "zMin": -66, "zMax": 66 }, "scaleRange": [2.5, 4.5], "rotateY": true }
+                     ],
                      "audioProfile":  {
                                           "bgm":  "bgm_caves",
                                           "ambient":  [
@@ -3163,14 +3145,14 @@
                                         },
                      "lighting":  {
                                       "day":  {
-                                                  "ambient":  "#aaaabc",
-                                                  "directional":  "#bbbbdd",
-                                                  "intensity":  1.6
+                                                  "ambient":  "#16141e",
+                                                  "directional":  "#16141e",
+                                                  "intensity":  0.3
                                               },
                                       "night":  {
-                                                    "ambient":  "#aaaabc",
-                                                  "directional":  "#bbbbdd",
-                                                  "intensity":  1.5
+                                                    "ambient":  "#16141e",
+                                                  "directional":  "#16141e",
+                                                  "intensity":  0.3
                                                 }
                                   }
                  },
