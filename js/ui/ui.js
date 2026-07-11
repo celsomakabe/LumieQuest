@@ -44,6 +44,26 @@ function _offhandLabel() {
     return OFFHAND_LABELS[Player.getState?.()?.class] ?? 'Escudo';
 }
 
+/**
+ * Filtro da loja: item deve aparecer na coluna COMPRAR para a classe ATUAL.
+ * Le a classe direto de Player.getState() (autoritativo, sem cache). Itens sem
+ * classRestriction (consumiveis/materiais) sempre aparecem. Se a classe for
+ * desconhecida, esconde os itens restritos (deterministico — nao "mostra tudo").
+ * @param {string} itemId
+ * @returns {boolean}
+ */
+function _shopShowsForClass(itemId) {
+    const def = Inventory.getItemDef(itemId);
+    if (!def) return false;
+    const cr = def.classRestriction;
+    if (cr == null || (Array.isArray(cr) && cr.length === 0)) return true; // sem restricao
+    const cls = Player.getState?.()?.class;
+    if (!cls) return false; // classe desconhecida -> nao mostra restritos
+    const lineage = Classes.getClassLineage(cls);
+    const list = Array.isArray(cr) ? cr : [cr];
+    return list.some(c => lineage.includes(c));
+}
+
 let _inventoryWindowEl = null;
 let _equipmentWindowEl = null;
 let _refineWindowEl = null;
@@ -2494,6 +2514,9 @@ function _renderShop() {
         for (const itemId of _shopStock) {
             const def = Inventory.getItemDef(itemId);
             if (!def) continue;
+            // Filtro proprio da loja: linha da classe ATUAL (lida direto do player) +
+            // itens sem restricao. Nao usa canEquip (cujo fallback permissivo mostraria tudo).
+            if (!_shopShowsForClass(itemId)) continue;
             const price = Inventory.getBuyPrice(itemId);
             const row = document.createElement('div');
             row.className = 'shop-item';

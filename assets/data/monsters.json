@@ -14,6 +14,9 @@
       "speed": 1.5,
       "modelPlaceholder": "#44cc44",
       "drops": [
+        { "itemId": "upper_headgear_common_swordman", "chance": 0.05 },
+        { "itemId": "garment_common_assassin", "chance": 0.05 },
+        { "itemId": "shield_common_archer", "chance": 0.05 },
         {
           "itemId": "pocao-pequena",
           "chance": 0.3
@@ -63,6 +66,9 @@
       "speed": 1.8,
       "modelPlaceholder": "#88aa33",
       "drops": [
+        { "itemId": "upper_headgear_common_archer", "chance": 0.05 },
+        { "itemId": "footgear_common_mage", "chance": 0.05 },
+        { "itemId": "accessory_left_common_swordman", "chance": 0.05 },
         {
           "itemId": "espada-enferrujada",
           "chance": 0.08
@@ -100,6 +106,9 @@
       "speed": 2.2,
       "modelPlaceholder": "#777777",
       "drops": [
+        { "itemId": "upper_headgear_common_mage", "chance": 0.05 },
+        { "itemId": "footgear_common_swordman", "chance": 0.05 },
+        { "itemId": "shield_common_assassin", "chance": 0.05 },
         {
           "itemId": "couro",
           "chance": 0.45
@@ -137,6 +146,9 @@
       "speed": 1.9,
       "modelPlaceholder": "#553311",
       "drops": [
+        { "itemId": "upper_headgear_common_assassin", "chance": 0.05 },
+        { "itemId": "footgear_common_archer", "chance": 0.05 },
+        { "itemId": "accessory_left_common_mage", "chance": 0.05 },
         {
           "itemId": "casco-rigido",
           "chance": 0.4
@@ -170,6 +182,9 @@
       "speed": 1.7,
       "modelPlaceholder": "#dddddd",
       "drops": [
+        { "itemId": "armor_common_swordman", "chance": 0.05 },
+        { "itemId": "footgear_common_assassin", "chance": 0.05 },
+        { "itemId": "accessory_left_common_archer", "chance": 0.05 },
         {
           "itemId": "osso-antigo",
           "chance": 0.5
@@ -203,6 +218,9 @@
       "speed": 1.2,
       "modelPlaceholder": "#8b7765",
       "drops": [
+        { "itemId": "garment_common_swordman", "chance": 0.05 },
+        { "itemId": "weapon_common_assassin", "chance": 0.05 },
+        { "itemId": "accessory_right_common_archer", "chance": 0.05 },
         {
           "itemId": "nucleo-elemental",
           "chance": 0.18
@@ -236,6 +254,9 @@
       "speed": 2,
       "modelPlaceholder": "#aa33ff",
       "drops": [
+        { "itemId": "armor_common_mage", "chance": 0.05 },
+        { "itemId": "weapon_common_swordman", "chance": 0.05 },
+        { "itemId": "accessory_left_common_assassin", "chance": 0.05 },
         {
           "itemId": "po-magico",
           "chance": 0.35
@@ -273,6 +294,8 @@
       "speed": 2.1,
       "modelPlaceholder": "#5c4b3b",
       "drops": [
+        { "itemId": "garment_common_archer", "chance": 0.05 },
+        { "itemId": "shield_common_mage", "chance": 0.05 },
         {
           "itemId": "garra-afiada",
           "chance": 0.3
@@ -306,6 +329,11 @@
       "speed": 1.8,
       "modelPlaceholder": "#4f7d2a",
       "drops": [
+        { "itemId": "upper_headgear_rare_mage", "chance": 0.015 },
+        { "itemId": "garment_rare_swordman", "chance": 0.015 },
+        { "itemId": "footgear_rare_assassin", "chance": 0.015 },
+        { "itemId": "shield_rare_archer", "chance": 0.015 },
+        { "itemId": "accessory_right_rare_mage", "chance": 0.015 },
         {
           "itemId": "machado-orc",
           "chance": 0.07
@@ -339,6 +367,11 @@
       "speed": 2.3,
       "modelPlaceholder": "#222222",
       "drops": [
+        { "itemId": "upper_headgear_rare_swordman", "chance": 0.015 },
+        { "itemId": "armor_rare_assassin", "chance": 0.015 },
+        { "itemId": "footgear_rare_archer", "chance": 0.015 },
+        { "itemId": "shield_rare_mage", "chance": 0.015 },
+        { "itemId": "accessory_right_rare_swordman", "chance": 0.015 },
         {
           "itemId": "adaga-sombria",
           "chance": 0.06
@@ -376,6 +409,9 @@
       "speed": 1,
       "modelPlaceholder": "#6f8f6f",
       "drops": [
+        { "itemId": "armor_common_archer", "chance": 0.05 },
+        { "itemId": "weapon_common_mage", "chance": 0.05 },
+        { "itemId": "accessory_right_common_swordman", "chance": 0.05 },
         {
           "itemId": "pano-velho",
           "chance": 0.45
@@ -409,6 +445,9 @@
       "speed": 1.6,
       "modelPlaceholder": "#cfcfcf",
       "drops": [
+        { "itemId": "armor_common_assassin", "chance": 0.05 },
+        { "itemId": "weapon_common_archer", "chance": 0.05 },
+        { "itemId": "accessory_right_common_mage", "chance": 0.05 },
         {
           "itemId": "arco-curto",
           "chance": 0.08
@@ -442,6 +481,10 @@
       "speed": 1.1,
       "modelPlaceholder": "#7b6a58",
       "drops": [
+        { "itemId": "armor_rare_archer", "chance": 0.015 },
+        { "itemId": "footgear_rare_mage", "chance": 0.015 },
+        { "itemId": "shield_rare_swordman", "chance": 0.015 },
+        { "itemId": "accessory_left_rare_assassin", "chance": 0.015 },
         {
           "itemId": "nucleo-elemental",
           "chance": 0.25
@@ -475,6 +518,11 @@
       "speed": 1.9,
       "modelPlaceholder": "#aa2222",
       "drops": [
+        { "itemId": "upper_headgear_rare_archer", "chance": 0.015 },
+        { "itemId": "garment_rare_mage", "chance": 0.015 },
+        { "itemId": "weapon_rare_swordman", "chance": 0.015 },
+        { "itemId": "shield_rare_assassin", "chance": 0.015 },
+        { "itemId": "accessory_right_rare_archer", "chance": 0.015 },
         {
           "itemId": "essencia-demoniaca",
           "chance": 0.18
@@ -508,6 +556,10 @@
       "speed": 2.2,
       "modelPlaceholder": "#4d3a2f",
       "drops": [
+        { "itemId": "armor_rare_mage", "chance": 0.015 },
+        { "itemId": "footgear_rare_swordman", "chance": 0.015 },
+        { "itemId": "weapon_rare_assassin", "chance": 0.015 },
+        { "itemId": "accessory_left_rare_archer", "chance": 0.015 },
         {
           "itemId": "garra-afiada",
           "chance": 0.4
@@ -545,6 +597,10 @@
       "speed": 2,
       "modelPlaceholder": "#33aa88",
       "drops": [
+        { "itemId": "armor_rare_swordman", "chance": 0.015 },
+        { "itemId": "garment_rare_assassin", "chance": 0.015 },
+        { "itemId": "weapon_rare_archer", "chance": 0.015 },
+        { "itemId": "accessory_left_rare_mage", "chance": 0.015 },
         {
           "itemId": "escama-draconica",
           "chance": 0.22
@@ -578,6 +634,9 @@
       "speed": 2.1,
       "modelPlaceholder": "#99ccff",
       "drops": [
+        { "itemId": "garment_common_mage", "chance": 0.05 },
+        { "itemId": "shield_common_swordman", "chance": 0.05 },
+        { "itemId": "accessory_right_common_assassin", "chance": 0.05 },
         {
           "itemId": "ectoplasma",
           "chance": 0.28
@@ -611,6 +670,11 @@
       "speed": 2.1,
       "modelPlaceholder": "#8844cc",
       "drops": [
+        { "itemId": "upper_headgear_rare_assassin", "chance": 0.015 },
+        { "itemId": "garment_rare_archer", "chance": 0.015 },
+        { "itemId": "weapon_rare_mage", "chance": 0.015 },
+        { "itemId": "accessory_left_rare_swordman", "chance": 0.015 },
+        { "itemId": "accessory_right_rare_assassin", "chance": 0.015 },
         {
           "itemId": "essencia-demoniaca",
           "chance": 0.22

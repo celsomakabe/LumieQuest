@@ -212,7 +212,7 @@
     {
       "id": "merchant",
       "name": "Comerciante Lyra",
-      "shop": ["pocao-pequena", "pocao-azul", "minerio", "minerio_enriquecido", "espada-iniciante"],
+      "shop": ["pocao-pequena", "pocao-azul", "minerio", "minerio_enriquecido", "espada-iniciante", "upper_headgear_common_swordman", "upper_headgear_common_mage", "upper_headgear_common_archer", "upper_headgear_common_assassin", "armor_common_swordman", "armor_common_mage", "armor_common_archer", "armor_common_assassin", "garment_common_swordman", "garment_common_mage", "garment_common_archer", "garment_common_assassin", "footgear_common_swordman", "footgear_common_mage", "footgear_common_archer", "footgear_common_assassin", "weapon_common_swordman", "weapon_common_mage", "weapon_common_archer", "weapon_common_assassin", "shield_common_swordman", "shield_common_mage", "shield_common_archer", "shield_common_assassin", "accessory_left_common_swordman", "accessory_left_common_mage", "accessory_left_common_archer", "accessory_left_common_assassin", "accessory_right_common_swordman", "accessory_right_common_mage", "accessory_right_common_archer", "accessory_right_common_assassin"],
       "position": {
         "x": -20,
         "y": 0,
