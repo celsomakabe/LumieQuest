@@ -1707,14 +1707,14 @@ function _refreshInventoryUI() {
 
         if (slot) {
             const def = Inventory.getItemDef(slot.itemId);
-            const icon =
+            const icon = def?.icon ?? (
                 def?.type === 'weapon'     ? '⚔️' :
                 def?.type === 'armor'      ? '🛡️' :
                 def?.type === 'accessory'  ? '💍' :
                 def?.type === 'card'       ? '🃏' :
                 def?.type === 'consumable' ? '🧪' :
                 def?.type === 'material'   ? '⛏️' :
-                '📦';
+                '📦');
 
             const refineLevel = slot.refineLevel ?? 0;
             const refinePrefix = refineLevel > 0 ? `+${refineLevel} ` : '';
@@ -1731,7 +1731,7 @@ function _refreshInventoryUI() {
                 cell.style.boxShadow = 'inset 0 0 0 1px rgba(255,255,255,0.06)';
             }
 
-            if (def?.stackable && slot.qty > 1) {
+            if ((def?.stack ?? 1) > 1 && slot.qty > 1) {
                 const qtyEl = document.createElement('span');
                 qtyEl.style.cssText = 'position:absolute;bottom:1px;right:3px;font-size:9px;color:#ffd700;';
                 qtyEl.textContent = slot.qty;

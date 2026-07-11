@@ -2,6 +2,7 @@
   "items": [
     {
       "id": "pocao-pequena",
+      "icon": "🧪",
       "name": "Poção Pequena",
       "type": "consumable",
       "stack": 99,
@@ -12,6 +13,7 @@
     },
     {
       "id": "pocao-azul",
+      "icon": "🔵",
       "name": "Poção Azul",
       "type": "consumable",
       "stack": 99,
@@ -22,6 +24,7 @@
     },
     {
       "id": "espada-iniciante",
+      "icon": "⚔️",
       "name": "Espada Iniciante",
       "type": "weapon",
       "slot": "weapon",
@@ -33,6 +36,7 @@
     },
     {
       "id": "machado-iniciante",
+      "icon": "🪓",
       "name": "Machado Iniciante",
       "type": "weapon",
       "slot": "weapon",
@@ -44,6 +48,7 @@
     },
     {
       "id": "arco-iniciante",
+      "icon": "🏹",
       "name": "Arco Iniciante",
       "type": "weapon",
       "slot": "weapon",
@@ -55,6 +60,7 @@
     },
     {
       "id": "adaga-iniciante",
+      "icon": "🔪",
       "name": "Adaga Iniciante",
       "type": "weapon",
       "slot": "weapon",
@@ -66,6 +72,7 @@
     },
     {
       "id": "armadura-cloth",
+      "icon": "🥋",
       "name": "Armadura de Pano",
       "type": "armor",
       "slot": "armor",
@@ -77,6 +84,7 @@
     },
     {
       "id": "ouro",
+      "icon": "🪙",
       "name": "Ouro",
       "type": "currency",
       "stack": 999999,
@@ -87,6 +95,7 @@
     },
     {
       "id": "cristal-arcano",
+      "icon": "🔮",
       "name": "Cristal Arcano",
       "type": "material",
       "stack": 99,
@@ -97,6 +106,7 @@
     },
     {
       "id": "veneno-raro",
+      "icon": "☠️",
       "name": "Veneno Raro",
       "type": "material",
       "stack": 99,
@@ -107,6 +117,7 @@
     },
     {
       "id": "fragment_lord_knight",
+      "icon": "🧩",
       "name": "Fragmento do Cavaleiro Corrompido",
       "type": "material",
       "stack": 99,
@@ -117,6 +128,7 @@
     },
     {
       "id": "fragment_high_wizard",
+      "icon": "🧩",
       "name": "Fragmento Arcano Corrompido",
       "type": "material",
       "stack": 99,
@@ -127,6 +139,7 @@
     },
     {
       "id": "fragment_sniper",
+      "icon": "🧩",
       "name": "Pena do Atirador Fantasma",
       "type": "material",
       "stack": 99,
@@ -137,6 +150,7 @@
     },
     {
       "id": "fragment_shadow_assassin",
+      "icon": "🧩",
       "name": "Essência das Sombras",
       "type": "material",
       "stack": 99,
@@ -148,6 +162,7 @@
 
     {
       "id": "upper_headgear_normal_swordman",
+      "icon": "🪖",
       "name": "Elmo Normal do Espadachim",
       "type": "armor",
       "slot": "upper_headgear",
@@ -160,6 +175,7 @@
     },
     {
       "id": "armor_normal_swordman",
+      "icon": "🥋",
       "name": "Armadura Normal do Espadachim",
       "type": "armor",
       "slot": "armor",
@@ -172,6 +188,7 @@
     },
     {
       "id": "garment_normal_swordman",
+      "icon": "🧥",
       "name": "Capa Normal do Espadachim",
       "type": "armor",
       "slot": "garment",
@@ -184,6 +201,7 @@
     },
     {
       "id": "footgear_normal_swordman",
+      "icon": "🥾",
       "name": "Botas Normais do Espadachim",
       "type": "armor",
       "slot": "footgear",
@@ -197,6 +215,7 @@
 
     {
       "id": "upper_headgear_legendary_swordman",
+      "icon": "🪖",
       "name": "Elmo Lendário do Espadachim",
       "type": "armor",
       "slot": "upper_headgear",
@@ -209,6 +228,7 @@
     },
     {
       "id": "armor_legendary_swordman",
+      "icon": "🥋",
       "name": "Armadura Lendária do Espadachim",
       "type": "armor",
       "slot": "armor",
@@ -221,6 +241,7 @@
     },
     {
       "id": "garment_legendary_swordman",
+      "icon": "🧥",
       "name": "Capa Lendária do Espadachim",
       "type": "armor",
       "slot": "garment",
@@ -233,6 +254,7 @@
     },
     {
       "id": "footgear_legendary_swordman",
+      "icon": "🥾",
       "name": "Botas Lendárias do Espadachim",
       "type": "armor",
       "slot": "footgear",
@@ -246,6 +268,7 @@
 
     {
       "id": "upper_headgear_divine_swordman",
+      "icon": "🪖",
       "name": "Elmo Divino do Espadachim",
       "type": "armor",
       "slot": "upper_headgear",
@@ -258,6 +281,7 @@
     },
     {
       "id": "armor_divine_swordman",
+      "icon": "🥋",
       "name": "Armadura Divina do Espadachim",
       "type": "armor",
       "slot": "armor",
@@ -270,6 +294,7 @@
     },
     {
       "id": "garment_divine_swordman",
+      "icon": "🧥",
       "name": "Capa Divina do Espadachim",
       "type": "armor",
       "slot": "garment",
@@ -282,6 +307,7 @@
     },
     {
       "id": "footgear_divine_swordman",
+      "icon": "🥾",
       "name": "Botas Divinas do Espadachim",
       "type": "armor",
       "slot": "footgear",
@@ -295,6 +321,7 @@
 
     {
       "id": "upper_headgear_normal_mage",
+      "icon": "🪖",
       "name": "Chapéu Normal do Mago",
       "type": "armor",
       "slot": "upper_headgear",
@@ -307,6 +334,7 @@
     },
     {
       "id": "armor_normal_mage",
+      "icon": "🥋",
       "name": "Túnica Normal do Mago",
       "type": "armor",
       "slot": "armor",
@@ -319,6 +347,7 @@
     },
     {
       "id": "garment_normal_mage",
+      "icon": "🧥",
       "name": "Manto Normal do Mago",
       "type": "armor",
       "slot": "garment",
@@ -331,6 +360,7 @@
     },
     {
       "id": "footgear_normal_mage",
+      "icon": "🥾",
       "name": "Sapatos Normais do Mago",
       "type": "armor",
       "slot": "footgear",
@@ -344,6 +374,7 @@
 
     {
       "id": "upper_headgear_legendary_mage",
+      "icon": "🪖",
       "name": "Chapéu Lendário do Mago",
       "type": "armor",
       "slot": "upper_headgear",
@@ -356,6 +387,7 @@
     },
     {
       "id": "armor_legendary_mage",
+      "icon": "🥋",
       "name": "Túnica Lendária do Mago",
       "type": "armor",
       "slot": "armor",
@@ -368,6 +400,7 @@
     },
     {
       "id": "garment_legendary_mage",
+      "icon": "🧥",
       "name": "Manto Lendário do Mago",
       "type": "armor",
       "slot": "garment",
@@ -380,6 +413,7 @@
     },
     {
       "id": "footgear_legendary_mage",
+      "icon": "🥾",
       "name": "Sapatos Lendários do Mago",
       "type": "armor",
       "slot": "footgear",
@@ -393,6 +427,7 @@
 
     {
       "id": "upper_headgear_divine_mage",
+      "icon": "🪖",
       "name": "Chapéu Divino do Mago",
       "type": "armor",
       "slot": "upper_headgear",
@@ -405,6 +440,7 @@
     },
     {
       "id": "armor_divine_mage",
+      "icon": "🥋",
       "name": "Túnica Divina do Mago",
       "type": "armor",
       "slot": "armor",
@@ -417,6 +453,7 @@
     },
     {
       "id": "garment_divine_mage",
+      "icon": "🧥",
       "name": "Manto Divino do Mago",
       "type": "armor",
       "slot": "garment",
@@ -429,6 +466,7 @@
     },
     {
       "id": "footgear_divine_mage",
+      "icon": "🥾",
       "name": "Sapatos Divinos do Mago",
       "type": "armor",
       "slot": "footgear",
@@ -442,6 +480,7 @@
 
     {
       "id": "upper_headgear_normal_archer",
+      "icon": "🪖",
       "name": "Capuz Normal do Arqueiro",
       "type": "armor",
       "slot": "upper_headgear",
@@ -454,6 +493,7 @@
     },
     {
       "id": "armor_normal_archer",
+      "icon": "🥋",
       "name": "Armadura Normal do Arqueiro",
       "type": "armor",
       "slot": "armor",
@@ -466,6 +506,7 @@
     },
     {
       "id": "garment_normal_archer",
+      "icon": "🧥",
       "name": "Capa Normal do Arqueiro",
       "type": "armor",
       "slot": "garment",
@@ -478,6 +519,7 @@
     },
     {
       "id": "footgear_normal_archer",
+      "icon": "🥾",
       "name": "Botas Normais do Arqueiro",
       "type": "armor",
       "slot": "footgear",
@@ -491,6 +533,7 @@
 
     {
       "id": "upper_headgear_legendary_archer",
+      "icon": "🪖",
       "name": "Capuz Lendário do Arqueiro",
       "type": "armor",
       "slot": "upper_headgear",
@@ -503,6 +546,7 @@
     },
     {
       "id": "armor_legendary_archer",
+      "icon": "🥋",
       "name": "Armadura Lendária do Arqueiro",
       "type": "armor",
       "slot": "armor",
@@ -515,6 +559,7 @@
     },
     {
       "id": "garment_legendary_archer",
+      "icon": "🧥",
       "name": "Capa Lendária do Arqueiro",
       "type": "armor",
       "slot": "garment",
@@ -527,6 +572,7 @@
     },
     {
       "id": "footgear_legendary_archer",
+      "icon": "🥾",
       "name": "Botas Lendárias do Arqueiro",
       "type": "armor",
       "slot": "footgear",
@@ -540,6 +586,7 @@
 
     {
       "id": "upper_headgear_divine_archer",
+      "icon": "🪖",
       "name": "Capuz Divino do Arqueiro",
       "type": "armor",
       "slot": "upper_headgear",
@@ -552,6 +599,7 @@
     },
     {
       "id": "armor_divine_archer",
+      "icon": "🥋",
       "name": "Armadura Divina do Arqueiro",
       "type": "armor",
       "slot": "armor",
@@ -564,6 +612,7 @@
     },
     {
       "id": "garment_divine_archer",
+      "icon": "🧥",
       "name": "Capa Divina do Arqueiro",
       "type": "armor",
       "slot": "garment",
@@ -576,6 +625,7 @@
     },
     {
       "id": "footgear_divine_archer",
+      "icon": "🥾",
       "name": "Botas Divinas do Arqueiro",
       "type": "armor",
       "slot": "footgear",
@@ -589,6 +639,7 @@
 
     {
       "id": "upper_headgear_normal_assassin",
+      "icon": "🪖",
       "name": "Máscara Normal do Assassino",
       "type": "armor",
       "slot": "upper_headgear",
@@ -601,6 +652,7 @@
     },
     {
       "id": "armor_normal_assassin",
+      "icon": "🥋",
       "name": "Armadura Normal do Assassino",
       "type": "armor",
       "slot": "armor",
@@ -613,6 +665,7 @@
     },
     {
       "id": "garment_normal_assassin",
+      "icon": "🧥",
       "name": "Manto Normal do Assassino",
       "type": "armor",
       "slot": "garment",
@@ -625,6 +678,7 @@
     },
     {
       "id": "footgear_normal_assassin",
+      "icon": "🥾",
       "name": "Botas Normais do Assassino",
       "type": "armor",
       "slot": "footgear",
@@ -638,6 +692,7 @@
 
     {
       "id": "upper_headgear_legendary_assassin",
+      "icon": "🪖",
       "name": "Máscara Lendária do Assassino",
       "type": "armor",
       "slot": "upper_headgear",
@@ -650,6 +705,7 @@
     },
     {
       "id": "armor_legendary_assassin",
+      "icon": "🥋",
       "name": "Armadura Lendária do Assassino",
       "type": "armor",
       "slot": "armor",
@@ -662,6 +718,7 @@
     },
     {
       "id": "garment_legendary_assassin",
+      "icon": "🧥",
       "name": "Manto Lendário do Assassino",
       "type": "armor",
       "slot": "garment",
@@ -674,6 +731,7 @@
     },
     {
       "id": "footgear_legendary_assassin",
+      "icon": "🥾",
       "name": "Botas Lendárias do Assassino",
       "type": "armor",
       "slot": "footgear",
@@ -687,6 +745,7 @@
 
     {
       "id": "upper_headgear_divine_assassin",
+      "icon": "🪖",
       "name": "Máscara Divina do Assassino",
       "type": "armor",
       "slot": "upper_headgear",
@@ -699,6 +758,7 @@
     },
     {
       "id": "armor_divine_assassin",
+      "icon": "🥋",
       "name": "Armadura Divina do Assassino",
       "type": "armor",
       "slot": "armor",
@@ -711,6 +771,7 @@
     },
     {
       "id": "garment_divine_assassin",
+      "icon": "🧥",
       "name": "Manto Divino do Assassino",
       "type": "armor",
       "slot": "garment",
@@ -723,6 +784,7 @@
     },
     {
       "id": "footgear_divine_assassin",
+      "icon": "🥾",
       "name": "Botas Divinas do Assassino",
       "type": "armor",
       "slot": "footgear",
@@ -738,7 +800,7 @@
       "name": "Minério de Refino",
       "type": "material",
       "description": "Minério usado para refinar equipamentos.",
-      "icon": "ore",
+      "icon": "⛏️",
       "stackable": true,
       "stack": 99,
       "value": 50
@@ -748,7 +810,7 @@
       "name": "Minério Enriquecido",
       "type": "material",
       "description": "Aumenta a chance de sucesso do refino em 15%.",
-      "icon": "ore_enriched",
+      "icon": "💠",
       "stackable": true,
       "stack": 99,
       "value": 200
@@ -758,7 +820,7 @@
       "name": "Minério Protetor",
       "type": "material",
       "description": "Impede que o item quebre em caso de falha.",
-      "icon": "ore_protector",
+      "icon": "🔰",
       "stackable": true,
       "stack": 99,
       "value": 500
@@ -768,13 +830,14 @@
       "name": "Minério Abençoado",
       "type": "material",
       "description": "Impede qualquer penalidade em caso de falha.",
-      "icon": "ore_blessed",
+      "icon": "🌟",
       "stackable": true,
       "stack": 99,
       "value": 1000
     },
         {
       "id": "card_slime",
+      "icon": "🃏",
       "name": "Carta de Slime",
       "type": "card",
       "slot": "any",
@@ -786,6 +849,7 @@
     },
     {
       "id": "card_slime_lucky",
+      "icon": "🃏",
       "name": "Carta de Slime Sortudo",
       "type": "card",
       "slot": "any",
@@ -797,6 +861,7 @@
     },
     {
       "id": "card_goblin",
+      "icon": "🃏",
       "name": "Carta de Goblin",
       "type": "card",
       "slot": "any",
@@ -811,6 +876,7 @@
     },
     {
       "id": "card_lobo",
+      "icon": "🃏",
       "name": "Carta de Lobo",
       "type": "card",
       "slot": "any",
@@ -822,6 +888,7 @@
     },
     {
       "id": "card_besouro",
+      "icon": "🃏",
       "name": "Carta de Besouro",
       "type": "card",
       "slot": "any",
@@ -833,6 +900,7 @@
     },
     {
       "id": "card_esqueleto",
+      "icon": "🃏",
       "name": "Carta de Esqueleto",
       "type": "card",
       "slot": "any",
@@ -844,6 +912,7 @@
     },
     {
       "id": "card_golem",
+      "icon": "🃏",
       "name": "Carta de Golem Pequeno",
       "type": "card",
       "slot": "any",
@@ -855,6 +924,7 @@
     },
     {
       "id": "card_fada",
+      "icon": "🃏",
       "name": "Carta de Fada Corrompida",
       "type": "card",
       "slot": "any",
@@ -869,6 +939,7 @@
     },
     {
       "id": "card_lobisomem",
+      "icon": "🃏",
       "name": "Carta de Lobisomem",
       "type": "card",
       "slot": "any",
@@ -880,6 +951,7 @@
     },
     {
       "id": "card_orc",
+      "icon": "🃏",
       "name": "Carta de Orc Warrior",
       "type": "card",
       "slot": "any",
@@ -891,6 +963,7 @@
     },
     {
       "id": "card_assassin",
+      "icon": "🃏",
       "name": "Carta de Assassin Shadow",
       "type": "card",
       "slot": "any",
@@ -905,6 +978,7 @@
     },
     {
       "id": "card_lord_knight",
+      "icon": "🃏",
       "name": "Carta do Lord Knight",
       "type": "card",
       "slot": "any",
@@ -919,6 +993,7 @@
     },
     {
       "id": "card_high_wizard",
+      "icon": "🃏",
       "name": "Carta do High Wizard",
       "type": "card",
       "slot": "any",
@@ -933,6 +1008,7 @@
     },
     {
       "id": "card_sniper",
+      "icon": "🃏",
       "name": "Carta do Sniper",
       "type": "card",
       "slot": "any",
@@ -947,6 +1023,7 @@
     },
     {
       "id": "card_shadow_assassin",
+      "icon": "🃏",
       "name": "Carta do Shadow Assassin",
       "type": "card",
       "slot": "any",
@@ -961,6 +1038,7 @@
     },
     {
       "id": "pet_bolinha",
+      "icon": "🟡",
       "name": "Bolinha",
       "type": "pet_def",
       "description": "Um slime domesticado e amigável.",
@@ -976,6 +1054,7 @@
     },
     {
       "id": "pet_lobinho",
+      "icon": "🐺",
       "name": "Lobinho",
       "type": "pet_def",
       "description": "Um filhote de lobo feroz e leal.",
@@ -991,6 +1070,7 @@
     },
     {
       "id": "pet_sininho",
+      "icon": "🔔",
       "name": "Sininho",
       "type": "pet_def",
       "description": "Uma pequena fada brilhante e travessa.",
@@ -1006,6 +1086,7 @@
     },
     {
       "id": "pet_pedrao",
+      "icon": "🪨",
       "name": "Pedrão",
       "type": "pet_def",
       "description": "Um golem miniatura resistente e protetor.",
@@ -1021,6 +1102,7 @@
     },
     {
       "id": "pet_espirito_arcano",
+      "icon": "🔮",
       "name": "Espírito Arcano",
       "type": "pet_def",
       "description": "Um espírito ancestral de poder misterioso.",
@@ -1036,6 +1118,7 @@
     },
     {
       "id": "pet_fenix_sombria",
+      "icon": "🔥",
       "name": "Fênix Sombria",
       "type": "pet_def",
       "description": "Uma fênix das sombras, rara e poderosa.",
@@ -1051,6 +1134,7 @@
     },
     {
       "id": "ovo_pet",
+      "icon": "🥚",
       "name": "Ovo Misterioso",
       "type": "consumable",
       "description": "Um ovo que contém um pet. Use para descobrir qual!",
@@ -1060,12 +1144,171 @@
     },
     {
       "id": "ovo_fenix",
+      "icon": "🔥",
       "name": "Ovo Sombrio",
       "type": "consumable",
       "description": "Um ovo envolvido em chamas negras. Contém algo poderoso.",
       "stackable": false,
       "stack": 1,
       "useEffect": "hatchFenix"
+    },
+    {
+      "id": "couro",
+      "name": "Couro",
+      "type": "material",
+      "stack": 99,
+      "effect": null,
+      "classRestriction": null,
+      "sellPrice": 30,
+      "modelPlaceholder": "#a06a3a",
+      "icon": "🟫"
+    },
+    {
+      "id": "casco-rigido",
+      "name": "Casco Rígido",
+      "type": "material",
+      "stack": 99,
+      "effect": null,
+      "classRestriction": null,
+      "sellPrice": 35,
+      "modelPlaceholder": "#6b7a5a",
+      "icon": "🐚"
+    },
+    {
+      "id": "osso-antigo",
+      "name": "Osso Antigo",
+      "type": "material",
+      "stack": 99,
+      "effect": null,
+      "classRestriction": null,
+      "sellPrice": 40,
+      "modelPlaceholder": "#e8e0c8",
+      "icon": "🦴"
+    },
+    {
+      "id": "nucleo-elemental",
+      "name": "Núcleo Elemental",
+      "type": "material",
+      "stack": 99,
+      "effect": null,
+      "classRestriction": null,
+      "sellPrice": 80,
+      "modelPlaceholder": "#55ccff",
+      "icon": "🌀"
+    },
+    {
+      "id": "po-magico",
+      "name": "Pó Mágico",
+      "type": "material",
+      "stack": 99,
+      "effect": null,
+      "classRestriction": null,
+      "sellPrice": 50,
+      "modelPlaceholder": "#cc88ff",
+      "icon": "✨"
+    },
+    {
+      "id": "garra-afiada",
+      "name": "Garra Afiada",
+      "type": "material",
+      "stack": 99,
+      "effect": null,
+      "classRestriction": null,
+      "sellPrice": 60,
+      "modelPlaceholder": "#ccaa88",
+      "icon": "🐾"
+    },
+    {
+      "id": "pano-velho",
+      "name": "Pano Velho",
+      "type": "material",
+      "stack": 99,
+      "effect": null,
+      "classRestriction": null,
+      "sellPrice": 28,
+      "modelPlaceholder": "#998877",
+      "icon": "🧵"
+    },
+    {
+      "id": "essencia-demoniaca",
+      "name": "Essência Demoníaca",
+      "type": "material",
+      "stack": 99,
+      "effect": null,
+      "classRestriction": null,
+      "sellPrice": 95,
+      "modelPlaceholder": "#aa2244",
+      "icon": "😈"
+    },
+    {
+      "id": "escama-draconica",
+      "name": "Escama Dracônica",
+      "type": "material",
+      "stack": 99,
+      "effect": null,
+      "classRestriction": null,
+      "sellPrice": 120,
+      "modelPlaceholder": "#33aa66",
+      "icon": "🐉"
+    },
+    {
+      "id": "ectoplasma",
+      "name": "Ectoplasma",
+      "type": "material",
+      "stack": 99,
+      "effect": null,
+      "classRestriction": null,
+      "sellPrice": 55,
+      "modelPlaceholder": "#aaffee",
+      "icon": "👻"
+    },
+    {
+      "id": "espada-enferrujada",
+      "name": "Espada Enferrujada",
+      "type": "weapon",
+      "slot": "weapon",
+      "stack": 1,
+      "effect": { "type": "weapon_bonus", "str": 2 },
+      "classRestriction": ["swordman"],
+      "sellPrice": 40,
+      "modelPlaceholder": "#8a6a4a",
+      "icon": "⚔️"
+    },
+    {
+      "id": "machado-orc",
+      "name": "Machado Orc",
+      "type": "weapon",
+      "slot": "weapon",
+      "stack": 1,
+      "effect": { "type": "weapon_bonus", "str": 4 },
+      "classRestriction": ["swordman"],
+      "sellPrice": 75,
+      "modelPlaceholder": "#6b4a2a",
+      "icon": "🪓"
+    },
+    {
+      "id": "adaga-sombria",
+      "name": "Adaga Sombria",
+      "type": "weapon",
+      "slot": "weapon",
+      "stack": 1,
+      "effect": { "type": "weapon_bonus", "agi": 3, "str": 1 },
+      "classRestriction": ["assassin"],
+      "sellPrice": 70,
+      "modelPlaceholder": "#3a2a4a",
+      "icon": "🔪"
+    },
+    {
+      "id": "arco-curto",
+      "name": "Arco Curto",
+      "type": "weapon",
+      "slot": "weapon",
+      "stack": 1,
+      "effect": { "type": "weapon_bonus", "dex": 2 },
+      "classRestriction": ["archer"],
+      "sellPrice": 55,
+      "modelPlaceholder": "#7a5a3a",
+      "icon": "🏹"
     }
   ]
  }
