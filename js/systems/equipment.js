@@ -7,7 +7,7 @@ import { emit, on } from '../core/events.js';
 import * as Inventory from './inventory.js';
 import * as Classes from './classes.js';
 
-const SET_PIECE_SLOTS = ['upper_headgear', 'armor', 'garment', 'footgear'];
+const SET_PIECE_SLOTS = ['upper_headgear', 'armor', 'garment', 'footgear', 'weapon', 'shield', 'accessory_left', 'accessory_right'];
 
 /** @type {Array<Object>} */
 let _setsCatalogue = [];
@@ -230,10 +230,13 @@ export function getActiveSetBonuses(_player) {
         .filter(setInfo => setInfo.pieceCount >= 1)
         .map(setInfo => {
             const setDef = getSetDef(setInfo.setId);
-            const thresholdKey = String(Math.min(setInfo.pieceCount, 4));
-            const activeBonus = setInfo.pieceCount >= 2
-                ? (setDef?.bonuses?.[thresholdKey] ?? null)
-                : null;
+            // Maior patamar de bonus cujo numero de pecas <= pecas equipadas.
+            // Suporta qualquer conjunto de chaves (2/3/4/8...) sem cap fixo.
+            const thresholds = Object.keys(setDef?.bonuses ?? {})
+                .map(Number)
+                .filter(n => n <= setInfo.pieceCount)
+                .sort((a, b) => b - a);
+            const activeBonus = thresholds.length ? (setDef.bonuses[String(thresholds[0])] ?? null) : null;
 
             if (activeBonus) {
                 _addBaseStats(totalStats, activeBonus);

@@ -32,6 +32,18 @@ const EQUIPMENT_SLOT_META = [
     { slot: 'accessory_right', label: 'Aces. D', icon: '💍', title: 'Acessório Direito' }
 ];
 
+// Off-hand polivalente: mesmo slot 'shield', rotulo conforme a classe do player.
+const OFFHAND_LABELS = {
+    swordman: 'Escudo', knight: 'Escudo', lord_knight: 'Escudo',
+    mage: 'Grimório', wizard: 'Grimório', high_wizard: 'Grimório',
+    archer: 'Aljava', hunter: 'Aljava', sniper: 'Aljava',
+    assassin: 'Manopla', assassin_master: 'Manopla', shadow_assassin: 'Manopla',
+};
+/** Rotulo do off-hand (slot shield) conforme a classe atual. @returns {string} */
+function _offhandLabel() {
+    return OFFHAND_LABELS[Player.getState?.()?.class] ?? 'Escudo';
+}
+
 let _inventoryWindowEl = null;
 let _equipmentWindowEl = null;
 let _refineWindowEl = null;
@@ -1811,7 +1823,7 @@ function _refreshInventoryUI() {
             el.innerHTML = `<span style="font-size:18px;">${icon}</span><br><span style="font-size:9px;color:${refineColor};">${refinePrefix}${def?.name ?? itemId}</span>`;
             el.style.borderColor = '#c8a84a';
         } else {
-            el.textContent = meta?.label ?? slotName;
+            el.textContent = meta?.slot === 'shield' ? _offhandLabel() : (meta?.label ?? slotName);
             el.style.borderColor = '#5a4a2a';
         }
     });
@@ -1841,7 +1853,7 @@ function _refreshEquipmentWindowUI() {
                 display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;
                 color:#ffd27a;font-size:12px;
             `;
-            header.innerHTML = `<span>${meta.title}</span><span>${itemId ? (Inventory.getItemDef(itemId)?.name ?? itemId) : 'Vazio'}</span>`;
+            header.innerHTML = `<span>${meta.slot === 'shield' ? _offhandLabel() : meta.title}</span><span>${itemId ? (Inventory.getItemDef(itemId)?.name ?? itemId) : 'Vazio'}</span>`;
             row.appendChild(header);
 
             const socketLine = document.createElement('div');
@@ -1908,7 +1920,7 @@ function _refreshEquipmentWindowUI() {
             el.innerHTML = `<span style="font-size:18px;">${icon}</span><br><span style="font-size:9px;color:${refineColor};">${refinePrefix}${def?.name ?? itemId}</span>`;
             el.style.borderColor = '#c8a84a';
         } else {
-            el.textContent = meta?.label ?? slotName;
+            el.textContent = meta?.slot === 'shield' ? _offhandLabel() : (meta?.label ?? slotName);
             el.style.borderColor = '#5a4a2a';
         }
     });
