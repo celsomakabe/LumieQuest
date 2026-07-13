@@ -118,6 +118,8 @@ export function init() {
     on('refineFail', bust);
     // Job change pode zerar peças por classRestriction.
     on('jobChanged', bust);
+    // Alocação/reset de pontos de status (Etapa C) — a UI/preview lê stats finais.
+    on('statPointsChanged', bust);
     return true;
 }
 
@@ -154,9 +156,12 @@ export function getFinalStats(entity) {
         };
     }
 
+    // allocatedStats (Etapa C): pontos distribuídos, guardados SEPARADOS do base da classe.
+    // Entram aqui UMA vez (o base cru fica no baseStats; o gear no cache). Sem dupla contagem.
+    const alloc = entity?.allocatedStats ?? {};
     const bonus = _getPlayerBonus();
     const out = {};
-    for (const k of STAT_KEYS) out[k] = Number(base[k] || 0) + Number(bonus[k] || 0);
+    for (const k of STAT_KEYS) out[k] = Number(base[k] || 0) + Number(alloc[k] || 0) + Number(bonus[k] || 0);
     return out;
 }
 

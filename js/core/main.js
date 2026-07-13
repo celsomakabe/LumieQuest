@@ -350,6 +350,36 @@ async function _onAssetsReady() {
 
             return { instanceType: inst.type, finalS, breakdown: bd };
         };
+        // [DEBUG] Distribuição de pontos de status (Etapa C).
+        window.debugGiveStatPoints = (n = 10) => {
+            const inst = Player.getInstance?.();
+            if (!inst) { console.warn('[debugGiveStatPoints] player nao inicializado'); return; }
+            inst.statPoints = (inst.statPoints || 0) + (Number(n) || 0);
+            console.log('[debugGiveStatPoints] +' + n + ' -> statPoints =', inst.statPoints);
+            return inst.statPoints;
+        };
+        window.debugAllocate = (stat, qty = 1) => {
+            const ok = Player.allocateStat?.(stat, qty);
+            console.log('[debugAllocate] ' + stat + ' x' + qty + ' =>', ok);
+            if (!ok) console.warn('  (stat invalido, qty<=0 ou pontos insuficientes)');
+            window.debugStatPoints?.();
+            return ok;
+        };
+        window.debugStatPoints = () => {
+            const inst = Player.getInstance?.();
+            if (!inst) { console.warn('[debugStatPoints] player nao inicializado'); return null; }
+            const eff = Player.getEffectiveBaseStats?.() ?? {};
+            const finalS = Stats.getFinalStats(inst);
+            console.log('[debugStatPoints] statPoints disponiveis =', inst.statPoints ?? 0);
+            console.table(['str', 'agi', 'vit', 'int', 'dex', 'luk'].map(k => ({
+                stat: k,
+                base_classe: inst.baseStats?.[k] ?? 0,
+                alocado: inst.allocatedStats?.[k] ?? 0,
+                base_efetivo: eff[k] ?? 0,
+                final_com_gear: finalS[k] ?? 0,
+            })));
+            return { statPoints: inst.statPoints, allocatedStats: inst.allocatedStats, effective: eff, final: finalS };
+        };
     }
     await Inventory.init(_saveData.player.inventory ?? null);
     await Quests.init(_saveData.player.quests ?? null);
@@ -389,6 +419,10 @@ async function _onAssetsReady() {
 
     Events.on('inventoryRestoreMpRequest', ({ amount }) => {
         Player.restoreMp(amount);
+    });
+    Events.on('inventoryResetStatsRequest', () => {
+        const ok = Player.resetStats();
+        UI.showNotification?.(ok ? 'Pontos de status resetados!' : 'Nada para resetar.', ok ? 'success' : 'warning');
     });
     Events.on('jobChangeUnlocked', ({ questId }) => {
         Player.unlockJobChangeQuest(questId);

@@ -13,7 +13,7 @@ const STORAGE_KEY = 'lumiequest_save';
  * v2 — PROMPT 3: adiciona bloco "player"
  * @type {number}
  */
-const CURRENT_SAVE_VERSION = 10;
+const CURRENT_SAVE_VERSION = 11;
 
 /** @type {Record<number, (data: Object) => Object>} */
 const MIGRATIONS = {
@@ -158,6 +158,18 @@ const MIGRATIONS = {
         if (!data.player) data.player = {};
         if (!data.player.currentMap || data.player.currentMap === 'city01') {
             data.player.currentMap = 'city_01';
+        }
+        return data;
+    },
+    /**
+     * v10 → v11: adiciona player.allocatedStats zerado (Etapa C — distribuição de pontos
+     * de status). Saves antigos não perdem nada: os pontos que já haviam acumulado em
+     * statPoints continuam lá, agora gastáveis via allocateStat.
+     */
+    11: (data) => {
+        if (!data.player) data.player = {};
+        if (!data.player.allocatedStats || typeof data.player.allocatedStats !== 'object') {
+            data.player.allocatedStats = { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 };
         }
         return data;
     },

@@ -266,6 +266,8 @@ export function useItem(slotIndex) {
             emit('inventoryHealRequest', { amount: def.effect.amount });
         } else if (def.effect.type === 'restore_mp') {
             emit('inventoryRestoreMpRequest', { amount: def.effect.amount });
+        } else if (def.effect.type === 'reset_stats') {
+            emit('inventoryResetStatsRequest', {});
         }
     }
     removeItem(slotIndex, 1);

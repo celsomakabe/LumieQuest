@@ -492,6 +492,105 @@ export function consumeMp(amount) {
     _data.mp = Math.max(0, _data.mp - Math.abs(amount));
     emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
 }
+
+// ─── Distribuição de pontos de status (Etapa C) ────────────────────────────────
+
+/** @type {string[]} */
+const _STAT_KEYS = ['str', 'agi', 'vit', 'int', 'dex', 'luk'];
+
+/**
+ * Base efetivo = base da classe (baseStats) + pontos alocados (allocatedStats). É este
+ * valor que alimenta HP/MP (_calcMaxHp/_calcMaxMp) — os stats finais de combate somam o
+ * allocatedStats em stats.js (getFinalStats), então cada fonte entra UMA vez só.
+ * @returns {{str:number,agi:number,vit:number,int:number,dex:number,luk:number}}
+ */
+function _effStats() {
+    const b = _data?.baseStats ?? {};
+    const a = _data?.allocatedStats ?? {};
+    const out = {};
+    for (const k of _STAT_KEYS) out[k] = Number(b[k] || 0) + Number(a[k] || 0);
+    return out;
+}
+
+/** Base efetivo público (classe + alocado) — usado pela tela do personagem. @returns {Object} */
+export function getEffectiveBaseStats() {
+    return _effStats();
+}
+
+/** @returns {Object} cópia de allocatedStats (pontos distribuídos por atributo). */
+export function getAllocatedStats() {
+    return { ...(_data?.allocatedStats ?? {}) };
+}
+
+/** @returns {number} pontos de status disponíveis para distribuir. */
+export function getStatPoints() {
+    return _data?.statPoints ?? 0;
+}
+
+/**
+ * Recalcula maxHp/maxMp com o base EFETIVO e faz clamp de hp/mp ao novo teto.
+ * @returns {void}
+ */
+function _recalcMaxHpMp() {
+    if (!_data) return;
+    _data.maxHp = _calcMaxHp(_data.class, _data.level, _effStats(), _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxMp = _calcMaxMp(_data.class, _data.level, _effStats(), _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.hp = Math.min(_data.hp, _data.maxHp);
+    _data.mp = Math.min(_data.mp, _data.maxMp);
+    emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
+    emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
+}
+
+/**
+ * Aloca pontos de status (custo FIXO 1:1). Gasta statPoints e sobe o atributo em
+ * allocatedStats (separado do base da classe). Recalcula HP/MP e emite statPointsChanged
+ * (a UI e o cache de stats finais reagem).
+ * @param {'str'|'agi'|'vit'|'int'|'dex'|'luk'} stat
+ * @param {number} [qty=1]
+ * @returns {boolean} false se stat inválido, qty<=0 ou pontos insuficientes.
+ */
+export function allocateStat(stat, qty = 1) {
+    if (!_data) return false;
+    if (!_STAT_KEYS.includes(stat)) return false;
+    const n = Math.floor(Number(qty) || 0);
+    if (n <= 0) return false;
+    if ((_data.statPoints ?? 0) < n) return false;
+
+    if (!_data.allocatedStats) _data.allocatedStats = { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 };
+    _data.allocatedStats[stat] = (_data.allocatedStats[stat] || 0) + n;
+    _data.statPoints -= n;
+
+    _recalcMaxHpMp();
+    emit('statPointsChanged', {
+        statPoints: _data.statPoints,
+        allocatedStats: { ..._data.allocatedStats },
+        stat, qty: n,
+    });
+    return true;
+}
+
+/**
+ * Reseta a distribuição: devolve TODOS os pontos alocados para statPoints e zera
+ * allocatedStats (volta ao base da classe). Recalcula HP/MP.
+ * @returns {boolean} false se não havia nada alocado.
+ */
+export function resetStats() {
+    if (!_data) return false;
+    const alloc = _data.allocatedStats ?? {};
+    const total = _STAT_KEYS.reduce((sum, k) => sum + (Number(alloc[k]) || 0), 0);
+    if (total <= 0) return false;
+
+    _data.statPoints = (_data.statPoints || 0) + total;
+    _data.allocatedStats = { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 };
+
+    _recalcMaxHpMp();
+    emit('statPointsChanged', {
+        statPoints: _data.statPoints,
+        allocatedStats: { ..._data.allocatedStats },
+        reset: true, refunded: total,
+    });
+    return true;
+}
 export function addExp(amount) {
     if (!_data) return;
 
@@ -514,8 +613,8 @@ export function addExp(amount) {
         // Pre-Renewal: floor((BaseLv-1)/5) + 3 statPoints por level
         _data.statPoints += Math.floor((_data.level - 1) / 5) + 3;
 
-        _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
-        _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+        _data.maxHp = _calcMaxHp(_data.class, _data.level, _effStats(), _setBonusCache, _cardBonusCache, _petBonusCache);
+        _data.maxMp = _calcMaxMp(_data.class, _data.level, _effStats(), _setBonusCache, _cardBonusCache, _petBonusCache);
         _data.hp = _data.maxHp;
         _data.mp = _data.maxMp;
         emit('levelUp', { newLevel: _data.level });
@@ -586,8 +685,8 @@ export async function applyJobChange(newJobId) {
         });
     }
 
-    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
-    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxHp = _calcMaxHp(_data.class, _data.level, _effStats(), _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxMp = _calcMaxMp(_data.class, _data.level, _effStats(), _setBonusCache, _cardBonusCache, _petBonusCache);
     _data.hp = _data.maxHp;
     _data.mp = _data.maxMp;
     emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
@@ -670,8 +769,8 @@ export async function debugSetClass(classId) {
     _data.cooldowns = {}; // zera cooldowns para poder disparar imediatamente
 
     // 4. Restaura HP/MP ao máximo
-    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
-    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxHp = _calcMaxHp(_data.class, _data.level, _effStats(), _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxMp = _calcMaxMp(_data.class, _data.level, _effStats(), _setBonusCache, _cardBonusCache, _petBonusCache);
     _data.hp = _data.maxHp;
     _data.mp = _data.maxMp;
 
@@ -1156,6 +1255,10 @@ function _buildData(saveData) {
         maxMp:         saveData?.maxMp         ?? _calcMaxMp(job, level, stats, _setBonusCache, _cardBonusCache, _petBonusCache),
         baseStats:     saveData?.baseStats     ?? stats,
         statPoints:    saveData?.statPoints    ?? 0,
+        // Pontos distribuídos, SEPARADOS do base da classe (permite reset limpo). Sempre
+        // com as 6 chaves. base efetivo = baseStats + allocatedStats (ver _effStats()).
+        allocatedStats: { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0,
+            ...(saveData?.allocatedStats && typeof saveData.allocatedStats === 'object' ? saveData.allocatedStats : {}) },
         skillPoints:   saveData?.skillPoints   ?? 0,
         learnedSkills: saveData?.learnedSkills ?? [],
         position:      saveData?.position      ?? { x: 0, y: 0, z: 0 },
@@ -1202,8 +1305,8 @@ function _onSetBonusChanged(payload) {
     const hpRatio = _data.maxHp > 0 ? (_data.hp / _data.maxHp) : 1;
     const mpRatio = _data.maxMp > 0 ? (_data.mp / _data.maxMp) : 1;
 
-    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
-    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxHp = _calcMaxHp(_data.class, _data.level, _effStats(), _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxMp = _calcMaxMp(_data.class, _data.level, _effStats(), _setBonusCache, _cardBonusCache, _petBonusCache);
 
     _data.hp = Math.max(1, Math.min(_data.maxHp, Math.floor(_data.maxHp * hpRatio)));
     _data.mp = Math.max(0, Math.min(_data.maxMp, Math.floor(_data.maxMp * mpRatio)));
@@ -1235,8 +1338,8 @@ function _onCardBonusChanged(_payload) {
     const hpRatio = _data.maxHp > 0 ? (_data.hp / _data.maxHp) : 1;
     const mpRatio = _data.maxMp > 0 ? (_data.mp / _data.maxMp) : 1;
 
-    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
-    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxHp = _calcMaxHp(_data.class, _data.level, _effStats(), _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxMp = _calcMaxMp(_data.class, _data.level, _effStats(), _setBonusCache, _cardBonusCache, _petBonusCache);
 
     _data.hp = Math.max(1, Math.min(_data.maxHp, Math.floor(_data.maxHp * hpRatio)));
     _data.mp = Math.max(0, Math.min(_data.maxMp, Math.floor(_data.maxMp * mpRatio)));
@@ -1266,8 +1369,8 @@ function _onPetBonusChanged(_payload) {
     const hpRatio = _data.maxHp > 0 ? (_data.hp / _data.maxHp) : 1;
     const mpRatio = _data.maxMp > 0 ? (_data.mp / _data.maxMp) : 1;
 
-    _data.maxHp = _calcMaxHp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
-    _data.maxMp = _calcMaxMp(_data.class, _data.level, _data.baseStats, _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxHp = _calcMaxHp(_data.class, _data.level, _effStats(), _setBonusCache, _cardBonusCache, _petBonusCache);
+    _data.maxMp = _calcMaxMp(_data.class, _data.level, _effStats(), _setBonusCache, _cardBonusCache, _petBonusCache);
 
     _data.hp = Math.max(1, Math.min(_data.maxHp, Math.floor(_data.maxHp * hpRatio)));
     _data.mp = Math.max(0, Math.min(_data.maxMp, Math.floor(_data.maxMp * mpRatio)));

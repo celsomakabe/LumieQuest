@@ -2765,6 +2765,17 @@
       "classRestriction": ["assassin","assassin_master","shadow_assassin"],
       "sellPrice": 240,
       "modelPlaceholder": "#5a9bd4"
+    },
+    {
+      "id": "reset_stats_potion",
+      "icon": "🌀",
+      "name": "Elixir do Recomeço",
+      "type": "consumable",
+      "stack": 99,
+      "effect": { "type": "reset_stats" },
+      "classRestriction": null,
+      "sellPrice": 200,
+      "modelPlaceholder": "#cc66ff"
     }
   ]
  }
