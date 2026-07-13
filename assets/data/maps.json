@@ -3053,13 +3053,14 @@
                      "terrainTexture":  "assets/textures/terrain/cave_rock.jpg",
                      "fog":  { "near": 18, "far": 100, "color": "#16141e" },
                      "enclosure":  {
-                       "ambientColor": "#8890a8",
-                       "ambientIntensity": 1.1,
+                       "ambientColor": "#aeb6cc",
+                       "ambientIntensity": 3.0,
                        "ceilingHeight": 22,
-                       "ceilingColor": "#38323f",
+                       "ceilingColor": "#4a4552",
                        "wallRadius": 110,
                        "wallHeight": 28,
-                       "wallColor": "#423c4c",
+                       "wallColor": "#6b6474",
+                       "wallTexture": "assets/textures/terrain/cave_rock.jpg",
                        "torchColor": "#ffbf80",
                        "torchIntensity": 30,
                        "torchRange": 42,
@@ -3122,12 +3123,12 @@
                                         }
                                     ],
                                           "decoration":  [
-                       { "model": "rock_sphere", "procedural": true, "count": 22, "area": { "xMin": -62, "xMax": 62, "zMin": -62, "zMax": 62 }, "scaleRange": [0.8, 1.8], "rotateY": true },
+                       { "model": "rock_single_A", "instanced": true, "path": "assets/models/nature/rock_single_A.gltf", "count": 22, "area": { "xMin": -62, "xMax": 62, "zMin": -62, "zMax": 62 }, "scaleRange": [1.2, 2.6], "rotateY": true },
                        { "model": "pillar_cylinder", "procedural": true, "count": 14, "area": { "xMin": -55, "xMax": 55, "zMin": -55, "zMax": 55 }, "scaleRange": [0.9, 1.6], "rotateY": true },
-                       { "model": "rock_sphere", "procedural": true, "count": 20, "area": { "xMin": -80, "xMax": 80, "zMin": 66, "zMax": 82 }, "scaleRange": [2.5, 4.5], "rotateY": true },
-                       { "model": "rock_sphere", "procedural": true, "count": 20, "area": { "xMin": -80, "xMax": 80, "zMin": -82, "zMax": -66 }, "scaleRange": [2.5, 4.5], "rotateY": true },
-                       { "model": "rock_sphere", "procedural": true, "count": 16, "area": { "xMin": 66, "xMax": 82, "zMin": -66, "zMax": 66 }, "scaleRange": [2.5, 4.5], "rotateY": true },
-                       { "model": "rock_sphere", "procedural": true, "count": 16, "area": { "xMin": -82, "xMax": -66, "zMin": -66, "zMax": 66 }, "scaleRange": [2.5, 4.5], "rotateY": true }
+                       { "model": "rock_single_B", "instanced": true, "path": "assets/models/nature/rock_single_B.gltf", "count": 20, "area": { "xMin": -80, "xMax": 80, "zMin": 66, "zMax": 82 }, "scaleRange": [3.0, 5.5], "rotateY": true },
+                       { "model": "rock_single_C", "instanced": true, "path": "assets/models/nature/rock_single_C.gltf", "count": 20, "area": { "xMin": -80, "xMax": 80, "zMin": -82, "zMax": -66 }, "scaleRange": [3.0, 5.5], "rotateY": true },
+                       { "model": "rock_single_A", "instanced": true, "path": "assets/models/nature/rock_single_A.gltf", "count": 16, "area": { "xMin": 66, "xMax": 82, "zMin": -66, "zMax": 66 }, "scaleRange": [3.0, 5.5], "rotateY": true },
+                       { "model": "rock_single_B", "instanced": true, "path": "assets/models/nature/rock_single_B.gltf", "count": 16, "area": { "xMin": -82, "xMax": -66, "zMin": -66, "zMax": 66 }, "scaleRange": [3.0, 5.5], "rotateY": true }
                      ],
                      "audioProfile":  {
                                           "bgm":  "bgm_caves",
@@ -3145,14 +3146,14 @@
                                         },
                      "lighting":  {
                                       "day":  {
-                                                  "ambient":  "#16141e",
-                                                  "directional":  "#16141e",
-                                                  "intensity":  0.3
+                                                  "ambient":  "#262a36",
+                                                  "directional":  "#2a2f3d",
+                                                  "intensity":  0.5
                                               },
                                       "night":  {
-                                                    "ambient":  "#16141e",
-                                                  "directional":  "#16141e",
-                                                  "intensity":  0.3
+                                                    "ambient":  "#262a36",
+                                                  "directional":  "#2a2f3d",
+                                                  "intensity":  0.5
                                                 }
                                   }
                  },

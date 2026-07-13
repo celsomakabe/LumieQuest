@@ -304,6 +304,21 @@ function _spawnEnclosure(mapConfig) {
     emissive: new THREE.Color(cfg.wallColor ?? '#2a2633'), emissiveIntensity: 0.32,
     side: THREE.BackSide, roughness: 1, metalness: 0,
   });
+  // Textura de rocha na parede (opcional via cfg.wallTexture): tira o "cor sólida".
+  if (cfg.wallTexture) {
+    const wLoader = new THREE.TextureLoader();
+    wLoader.load(cfg.wallTexture, (tex) => {
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      // Tiles ao redor da circunferência e ao longo da altura (mantém proporção da rocha).
+      tex.repeat.set(Math.max(1, Math.round((wallR * 2 * Math.PI) / 14)), Math.max(1, Math.round(wallH / 8)));
+      tex.anisotropy = 8;
+      wallMat.map = tex;
+      wallMat.color.set('#ffffff');     // deixa a textura aparecer sem escurecer
+      wallMat.emissiveIntensity = 0.10; // menos glow uniforme quando há textura
+      wallMat.needsUpdate = true;
+    }, undefined, () => { /* mantém cor sólida se a textura falhar */ });
+  }
   const wall = new THREE.Mesh(new THREE.CylinderGeometry(wallR, wallR, wallH, 48, 1, true), wallMat);
   wall.position.y = wallH / 2;
   wall.name = 'cave_wall';
