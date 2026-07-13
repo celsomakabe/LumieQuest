@@ -187,7 +187,16 @@ export function getEquippedSetCount(setId) {
  * }}
  */
 export function getActiveSetBonuses(_player) {
-    const equipment = Inventory.getEquipment();
+    return getActiveSetBonusesFor(Inventory.getEquipment());
+}
+
+/**
+ * Igual a getActiveSetBonuses, mas para um mapa de equipamento QUALQUER (não só o vivo).
+ * Usado pelo preview de poder da tela do personagem (equipar hipotético sem alterar estado).
+ * @param {Object} equipment - mapa slot -> {itemId, refineLevel, sockets}|null
+ * @returns {{ sets:Array, totalStats:Object, hpPctBonus:number, mpPctBonus:number }}
+ */
+export function getActiveSetBonusesFor(equipment) {
     const grouped = {};
     const totalStats = _createEmptyStats();
     let hpPctBonus = 0;
@@ -274,6 +283,11 @@ export function init() {
     });
 
     on('itemUnequipped', () => {
+        _recalculateAndEmit();
+    });
+
+    // Auto-desequipe (troca de classe/load): recalcula o set-bonus para HP/MP refletirem.
+    on('equipmentAutoUnequipped', () => {
         _recalculateAndEmit();
     });
 

@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import { getCamera, getRenderer } from '../world/scene.js';
 import * as Refine from '../systems/refine.js';
 import * as Recipes from '../systems/recipes.js';
+import * as Stats from '../systems/stats.js';
 import * as Audio  from '../core/audio.js';
 import * as Inventory from '../systems/inventory.js';
 import * as Equipment from '../systems/equipment.js';
@@ -74,6 +75,7 @@ let _petWindowEl = null;
 let _selectedRefineTarget = null;
 let _selectedRefineMeta = null;
 let _refineActiveTab = 'refine'; // 'refine' (atual) | 'forge' (Forja de sets)
+let _charBasePower = 0; // poder atual (base do preview de hover na tela do personagem)
 let _socketPopupEl = null;
 let _socketPopupTarget = null;
 
@@ -379,6 +381,7 @@ export function toggleEquipmentWindow() {
 
     if (opening) {
         _refreshEquipmentWindowUI();
+        _refreshCharacterUI();
         Events.emit('uiWindowOpened', { id: 'equipment' });
     } else {
         _closeSocketPopup();
@@ -597,10 +600,14 @@ export function init() {
     `;
 
     equipmentPanel.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-            <span style="font-size:15px;font-weight:bold;">🛡️ Equipamentos</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;">
+            <span style="font-size:15px;font-weight:bold;">👤 Personagem</span>
+            <span style="font-size:13px;color:#ffd27a;">⚡ Poder: <span id="char-power" style="font-weight:bold;">0</span></span>
             <span id="ui-equip-close" style="cursor:pointer;font-size:18px;line-height:1;">✕</span>
         </div>
+
+        <div style="font-size:11px;color:#a08040;margin-bottom:6px;">ATRIBUTOS <span id="char-points" style="color:#7de3ff;"></span></div>
+        <div id="char-build" style="margin-bottom:14px;"></div>
 
         <div style="font-size:11px;color:#a08040;margin-bottom:6px;">EQUIPAMENTO</div>
         <div id="ui-eq-grid" style="display:grid;grid-template-columns:repeat(5,72px);gap:6px;margin-bottom:14px;">
@@ -615,7 +622,13 @@ export function init() {
         <div style="font-size:13px;color:#c8a84a;margin-bottom:8px;">Sets Ativos</div>
         <div id="ui-active-sets" style="display:flex;flex-direction:column;gap:10px;"></div>
 
-        <div style="margin-top:8px;font-size:10px;color:#706050;">C = fechar</div>
+        <div style="font-size:13px;color:#c8a84a;margin:12px 0 8px;">Evolução</div>
+        <div id="char-evolution"></div>
+
+        <div style="font-size:13px;color:#c8a84a;margin:12px 0 8px;">Pet</div>
+        <div id="char-pet"></div>
+
+        <div style="margin-top:8px;font-size:10px;color:#706050;">C = abrir/fechar Personagem</div>
     `;
 
     document.body.appendChild(equipmentPanel);
@@ -664,6 +677,10 @@ export function init() {
     Events.on('inventoryFull', ({ itemId, source }) => {
         showNotification(`Inventário cheio! (${itemId})${source ? ` [${source}]` : ''}`, 'warning');
     });
+
+    // Tela do Personagem: mantém poder/build/sets/pet vivos ao mudar gear/carta/pet/pontos.
+    ['setBonusChanged', 'cardBonusChanged', 'petBonusChanged', 'statPointsChanged', 'levelUp', 'jobChanged']
+        .forEach(ev => Events.on(ev, () => _refreshCharacterScreen()));
 
     Events.on('equipBlocked', ({ itemId }) => {
         const nm = Inventory.getItemDef(itemId)?.name ?? itemId;
@@ -1826,6 +1843,19 @@ function _refreshInventoryUI() {
                     _refreshInventoryUI();
                 }
             });
+
+            // Preview de poder ao passar o mouse num equipável (só se a tela do Personagem
+            // estiver aberta). Simulação pura via stats.js — não altera estado.
+            const equipSlot = def?.slot;
+            if (equipSlot && !blocked && EQUIPMENT_SLOT_META.some(m => m.slot === equipSlot)) {
+                cell.addEventListener('mouseenter', () => {
+                    if (!_equipmentWindowEl || _equipmentWindowEl.style.display === 'none') return;
+                    const inst = Player.getInstance?.();
+                    if (!inst) return;
+                    _setCharPower(_charBasePower, Stats.previewPowerForEquip(inst, equipSlot, slot.itemId, slot.refineLevel ?? 0));
+                });
+                cell.addEventListener('mouseleave', () => _setCharPower(_charBasePower));
+            }
         }
 
         grid?.appendChild(cell);
@@ -2005,6 +2035,140 @@ function _refreshEquipmentWindowUI() {
             </div>
         `;
     }).join('');
+}
+
+// ─── Tela do Personagem (Etapa D) — poder, build, alocação, evolução, pet ──────
+
+/** Mapa da próxima classe na linhagem (base→evo1→evo2). */
+const _NEXT_JOB = {
+    swordman: 'knight', knight: 'lord_knight',
+    mage: 'wizard', wizard: 'high_wizard',
+    archer: 'hunter', hunter: 'sniper',
+    assassin: 'assassin_master', assassin_master: 'shadow_assassin',
+};
+
+/** Atualiza o número do Poder. Com preview: mostra "base → hipotético" colorido. */
+function _setCharPower(basePower, previewPower) {
+    const el = document.getElementById('char-power');
+    if (!el) return;
+    if (previewPower != null && previewPower !== basePower) {
+        const up = previewPower > basePower;
+        el.innerHTML = `${basePower} <span style="color:${up ? '#7CFC6A' : '#ff7676'};">→ ${previewPower}</span>`;
+    } else {
+        el.textContent = String(basePower);
+    }
+}
+
+/** Rerenderiza a tela do personagem inteira (equipamento + extras) se estiver aberta. */
+function _refreshCharacterScreen() {
+    if (!_equipmentWindowEl || _equipmentWindowEl.style.display === 'none') return;
+    _refreshEquipmentWindowUI();
+    _refreshCharacterUI();
+}
+
+/** Renderiza poder, atributos (com botões +), evolução e pet. */
+function _refreshCharacterUI() {
+    if (!_equipmentWindowEl) return;
+    const inst = Player.getInstance?.();
+    if (!inst) return;
+
+    const bd = Stats.getPowerBreakdown(inst);
+    _charBasePower = bd.power;
+    _setCharPower(bd.power);
+
+    const points = Player.getStatPoints?.() ?? 0;
+    const ptsEl = document.getElementById('char-points');
+    if (ptsEl) ptsEl.textContent = points > 0 ? `— ${points} ponto(s) disponível(is)` : '';
+
+    const buildEl = document.getElementById('char-build');
+    if (buildEl) {
+        const KEYS = ['str', 'agi', 'vit', 'int', 'dex', 'luk'];
+        const baseStats = inst.baseStats || {};
+        const alloc = inst.allocatedStats || {};
+        const final = bd.finalStats;
+        const alocTotal = KEYS.reduce((s, k) => s + (alloc[k] || 0), 0);
+        const elixirIdx = Inventory.getSlots().findIndex(s => s?.itemId === 'reset_stats_potion');
+        const canReset = elixirIdx >= 0 && alocTotal > 0;
+
+        const rows = KEYS.map(k => {
+            const b = baseStats[k] || 0, a = alloc[k] || 0, f = final[k] || 0, gear = f - b - a;
+            const allocTxt = a ? ` <span style="color:#7de3ff;">+${a}</span>` : '';
+            const gearTxt = gear ? ` <span style="color:#8fd6a0;">${gear >= 0 ? '+' : ''}${gear} gear</span>` : '';
+            const plus = points > 0
+                ? `<button class="char-plus" data-stat="${k}" title="Alocar 1 ponto em ${k.toUpperCase()}" style="width:24px;height:22px;border:1px solid #7c6432;background:#3a2a10;color:#fff4cc;border-radius:4px;cursor:pointer;font-weight:bold;">+</button>`
+                : '';
+            return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:12px;">
+                <span style="width:34px;color:#ffd27a;font-weight:bold;">${k.toUpperCase()}</span>
+                <span style="flex:1;">${b}${allocTxt}${gearTxt} = <b style="color:#fff;">${f}</b></span>
+                ${plus}
+            </div>`;
+        }).join('');
+
+        const resetBtn = `<button id="char-reset" ${canReset ? '' : 'disabled'} title="${elixirIdx < 0 ? 'Sem Elixir do Recomeço' : (alocTotal <= 0 ? 'Nada alocado' : 'Devolve os pontos alocados')}" style="margin-top:8px;padding:6px 12px;border:1px solid #7c6432;background:${canReset ? '#6b4a16' : '#2a2010'};color:#f1dfb0;border-radius:6px;cursor:${canReset ? 'pointer' : 'not-allowed'};opacity:${canReset ? 1 : 0.45};font-size:12px;">🌀 Resetar (Elixir do Recomeço)</button>`;
+
+        buildEl.innerHTML = rows + resetBtn;
+
+        buildEl.querySelectorAll('.char-plus').forEach(btn => {
+            const stat = btn.dataset.stat;
+            btn.addEventListener('click', () => {
+                if (Player.allocateStat?.(stat, 1)) { Audio.playSFX('assets/audio/sfx/sfx_ui_click.ogg'); _refreshCharacterScreen(); }
+            });
+            btn.addEventListener('mouseenter', () => _setCharPower(_charBasePower, Stats.previewPowerForStat(inst, stat, 1)));
+            btn.addEventListener('mouseleave', () => _setCharPower(_charBasePower));
+        });
+
+        if (canReset) {
+            document.getElementById('char-reset')?.addEventListener('click', () => {
+                Inventory.useItem(elixirIdx); // dispara inventoryResetStatsRequest → Player.resetStats()
+                _refreshCharacterScreen();
+            });
+        }
+    }
+
+    _renderCharEvolution(inst);
+    _renderCharPet();
+}
+
+/** Seção de evolução: mostra o próximo job e se pode / o que falta. */
+function _renderCharEvolution(inst) {
+    const el = document.getElementById('char-evolution');
+    if (!el) return;
+    const next = _NEXT_JOB[inst.class];
+    if (!next) {
+        el.innerHTML = `<div style="padding:8px 10px;border:1px solid #4e3b1f;border-radius:6px;background:#21180d;color:#a89368;font-size:12px;">Classe máxima atingida.</div>`;
+        return;
+    }
+    const meta = Classes.getJobMeta?.(next);
+    const check = Classes.canJobChange?.(inst, next) ?? { canChange: false, reason: '?' };
+    const title = meta?.title ?? next;
+    if (check.canChange) {
+        el.innerHTML = `<div style="padding:8px 10px;border:1px solid #3f6b3f;border-radius:6px;background:#17210d;color:#a5d6a7;font-size:12px;">✅ Pronto para evoluir para <b>${title}</b> — fale com o mestre da classe.</div>`;
+    } else {
+        const falta = {
+            nivel_insuficiente: `nível ${meta?.reqLevel ?? '?'}`,
+            quest_nao_completa: `concluir a prova${meta?.reqQuest ? ` (${meta.reqQuest})` : ''}`,
+            classe_incorreta: 'classe anterior',
+        }[check.reason] ?? check.reason;
+        el.innerHTML = `<div style="padding:8px 10px;border:1px solid #6b3f3f;border-radius:6px;background:#210d0d;color:#ef9a9a;font-size:12px;">Evoluir para <b>${title}</b> — falta: ${falta}.</div>`;
+    }
+}
+
+/** Slot do pet ativo (reaproveita pets.js; não duplica o sistema). */
+function _renderCharPet() {
+    const el = document.getElementById('char-pet');
+    if (!el) return;
+    const pet = Pets.getSummonedPet?.();
+    const openBtn = `<button id="char-pet-open" style="margin-top:6px;padding:5px 10px;border:1px solid #7c6432;background:#2a2010;color:#f1dfb0;border-radius:6px;cursor:pointer;font-size:11px;">Gerenciar Pets (P)</button>`;
+    if (!pet) {
+        el.innerHTML = `<div style="padding:8px 10px;border:1px solid #4e3b1f;border-radius:6px;background:#21180d;color:#a89368;font-size:12px;">Nenhum pet invocado.<br>${openBtn}</div>`;
+    } else {
+        el.innerHTML = `<div style="padding:8px 10px;border:1px solid #5a4a2a;border-radius:6px;background:#21180d;">
+            <div style="color:#ffd27a;font-weight:bold;font-size:13px;">${pet.def?.name ?? pet.petId} • Nv.${pet.level}</div>
+            <div style="font-size:11px;color:#9f8e68;margin-top:2px;">${_formatPetBonusesLine(pet.bonuses)}</div>
+            ${openBtn}
+        </div>`;
+    }
+    document.getElementById('char-pet-open')?.addEventListener('click', () => togglePetWindow());
 }
 
 function _ensureRefineWindow() {

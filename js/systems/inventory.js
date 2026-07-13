@@ -37,7 +37,13 @@ const VALID_EQUIP_SLOTS = [
 // Registrado no escopo do modulo para captar o playerSpawned inicial.
 let _playerClass = null;
 on('playerSpawned', ({ class: cls } = {}) => { if (cls) _playerClass = cls; });
-on('jobChanged',    ({ newClass } = {}) => { if (newClass) _playerClass = newClass; });
+on('jobChanged',    ({ newClass } = {}) => {
+    if (newClass) _playerClass = newClass;
+    // Troca de classe em RUNTIME (job change legítimo E debugSetClass): revalida TODO o
+    // gear com canEquip — mesma lógica do load, sem duplicar. A herança vale (knight
+    // mantém o gear de swordman); só desequipa o que a nova classe realmente não pode usar.
+    _autoUnequipIllegal();
+});
 
 /**
  * Indica se a classe atual do player pode equipar o item.
