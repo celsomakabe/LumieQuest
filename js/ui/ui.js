@@ -8,6 +8,7 @@ import * as Events from '../core/events.js';
 import * as THREE from 'three';
 import { getCamera, getRenderer } from '../world/scene.js';
 import * as Refine from '../systems/refine.js';
+import * as Recipes from '../systems/recipes.js';
 import * as Audio  from '../core/audio.js';
 import * as Inventory from '../systems/inventory.js';
 import * as Equipment from '../systems/equipment.js';
@@ -72,6 +73,7 @@ let _shopStock = [];
 let _petWindowEl = null;
 let _selectedRefineTarget = null;
 let _selectedRefineMeta = null;
+let _refineActiveTab = 'refine'; // 'refine' (atual) | 'forge' (Forja de sets)
 let _socketPopupEl = null;
 let _socketPopupTarget = null;
 
@@ -2149,6 +2151,99 @@ function _ensureRefineWindow() {
         .refine-btn.primary:hover {
             background:#845a1a;
         }
+        .refine-tabs {
+            display:flex;
+            gap:6px;
+            margin-bottom:12px;
+        }
+        .refine-tab {
+            border:1px solid #4b3920;
+            background:#21180d;
+            color:#c8a84a;
+            border-radius:6px 6px 0 0;
+            padding:8px 16px;
+            cursor:pointer;
+            font-family:inherit;
+            font-size:12px;
+            font-weight:bold;
+        }
+        .refine-tab:hover { background:#2a1e10; }
+        .refine-tab.active {
+            background:#6b4a16;
+            border-color:#c8a84a;
+            color:#fff4cc;
+        }
+        .forge-list {
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+            max-height:520px;
+            overflow:auto;
+            padding-right:4px;
+        }
+        .forge-card {
+            border:1px solid #4b3920;
+            border-radius:6px;
+            background:#17110a;
+            padding:12px;
+        }
+        .forge-card-head {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            margin-bottom:6px;
+        }
+        .forge-icon { font-size:18px; }
+        .forge-name { font-size:14px; font-weight:bold; color:#ffd27a; flex:1; }
+        .forge-tier {
+            font-size:10px;
+            font-weight:bold;
+            border-radius:999px;
+            padding:2px 8px;
+            color:#111;
+        }
+        .forge-tier-normal { background:#c0c0c0; }
+        .forge-tier-legendary { background:#d4af37; }
+        .forge-tier-divine { background:#9b59b6; color:#fff; }
+        .forge-stats {
+            font-size:11px;
+            color:#9fd39f;
+            margin-bottom:8px;
+        }
+        .forge-mats {
+            display:flex;
+            flex-wrap:wrap;
+            gap:6px;
+            margin-bottom:10px;
+        }
+        .forge-mat {
+            font-size:11px;
+            border:1px solid #4b3920;
+            border-radius:6px;
+            padding:3px 7px;
+            background:#21180d;
+        }
+        .forge-mat.ok { color:#a5d6a7; border-color:#3f6b3f; }
+        .forge-mat.bad { color:#ef9a9a; border-color:#6b3f3f; }
+        .forge-actions { display:flex; }
+        .forge-btn {
+            border:1px solid #7c6432;
+            background:#2a2010;
+            color:#f1dfb0;
+            border-radius:6px;
+            padding:8px 16px;
+            cursor:pointer;
+            font-family:inherit;
+            font-size:12px;
+            font-weight:bold;
+        }
+        .forge-btn.primary {
+            background:#6b4a16;
+            border-color:#c8a84a;
+            color:#fff4cc;
+        }
+        .forge-btn.primary:hover { background:#845a1a; }
+        .forge-btn:disabled { opacity:0.45; cursor:not-allowed; }
     `;
     document.head.appendChild(style);
 
@@ -2156,22 +2251,34 @@ function _ensureRefineWindow() {
     _refineWindowEl.id = 'refine-window';
     _refineWindowEl.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-            <span style="font-size:15px;font-weight:bold;">🔨 Refino de Equipamento</span>
+            <span style="font-size:15px;font-weight:bold;">🔨 Ferreiro Bram</span>
             <span id="ui-refine-close" style="cursor:pointer;font-size:18px;line-height:1;">✕</span>
         </div>
 
-        <div class="refine-layout">
-            <div class="refine-list-wrap">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                    <div style="font-size:12px;color:#c8a84a;">ITENS REFINÁVEIS</div>
-                    <div style="font-size:11px;color:#8f7a4f;">Selecione um item</div>
-                </div>
-                <div id="refine-list" class="refine-list"></div>
-            </div>
+        <div class="refine-tabs">
+            <button id="refine-tabbtn-refine" class="refine-tab active">🔧 Refino</button>
+            <button id="refine-tabbtn-forge" class="refine-tab">⚒️ Forja</button>
+        </div>
 
-            <div class="refine-detail">
-                <div id="refine-detail"></div>
+        <div id="refine-tab-refine">
+            <div class="refine-layout">
+                <div class="refine-list-wrap">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <div style="font-size:12px;color:#c8a84a;">ITENS REFINÁVEIS</div>
+                        <div style="font-size:11px;color:#8f7a4f;">Selecione um item</div>
+                    </div>
+                    <div id="refine-list" class="refine-list"></div>
+                </div>
+
+                <div class="refine-detail">
+                    <div id="refine-detail"></div>
+                </div>
             </div>
+        </div>
+
+        <div id="refine-tab-forge" style="display:none;">
+            <div style="font-size:12px;color:#c8a84a;margin-bottom:10px;">RECEITAS DE SET DA SUA CLASSE</div>
+            <div id="forge-list" class="forge-list"></div>
         </div>
     `;
     document.body.appendChild(_refineWindowEl);
@@ -2179,6 +2286,93 @@ function _ensureRefineWindow() {
     document.getElementById('ui-refine-close').addEventListener('click', () => {
         _closeRefineWindow();
     });
+    document.getElementById('refine-tabbtn-refine').addEventListener('click', () => _setRefineTab('refine'));
+    document.getElementById('refine-tabbtn-forge').addEventListener('click', () => _setRefineTab('forge'));
+}
+
+/**
+ * Alterna entre as abas REFINO (atual) e FORJA (craft de sets) do painel do ferreiro.
+ * @param {'refine'|'forge'} tab
+ */
+function _setRefineTab(tab) {
+    _refineActiveTab = tab;
+    const refinePane = document.getElementById('refine-tab-refine');
+    const forgePane = document.getElementById('refine-tab-forge');
+    const refineBtn = document.getElementById('refine-tabbtn-refine');
+    const forgeBtn = document.getElementById('refine-tabbtn-forge');
+    if (refinePane) refinePane.style.display = tab === 'refine' ? 'block' : 'none';
+    if (forgePane) forgePane.style.display = tab === 'forge' ? 'block' : 'none';
+    refineBtn?.classList.toggle('active', tab === 'refine');
+    forgeBtn?.classList.toggle('active', tab === 'forge');
+    if (tab === 'refine') _renderRefineList();
+    else _renderForgeList();
+}
+
+/** Rótulo PT-BR do tier de um set. @param {string} tier @returns {string} */
+function _forgeTierLabel(tier) {
+    return { normal: 'Normal', legendary: 'Lendário', divine: 'Divino' }[tier] ?? tier;
+}
+
+/** Mensagem de falha de forja por motivo. @param {string} reason @returns {string} */
+function _forgeFailMsg(reason) {
+    return {
+        classe: 'Sua classe não pode forjar esta peça.',
+        materiais: 'Materiais insuficientes.',
+        ouro: 'Ouro insuficiente.',
+        'inventario-cheio': 'Inventário cheio.',
+    }[reason] ?? 'Não foi possível forjar.';
+}
+
+/** Renderiza a lista de receitas de set craftáveis pela classe atual do player. */
+function _renderForgeList() {
+    const listEl = document.getElementById('forge-list');
+    if (!listEl) return;
+
+    const cls = Player.getState?.()?.class;
+    const recipes = Recipes.getRecipesForClass(cls);
+
+    if (!recipes.length) {
+        listEl.innerHTML = '<div class="shop-empty">Nenhuma receita disponível para sua classe.</div>';
+        return;
+    }
+
+    listEl.innerHTML = '';
+    for (const recipe of recipes) {
+        const def = Inventory.getItemDef(recipe.result);
+        const state = Recipes.getCraftState(recipe);
+
+        const matsHtml = state.materials.map(m =>
+            `<span class="forge-mat ${m.ok ? 'ok' : 'bad'}">${m.icon} ${m.name} ${m.have}/${m.need}</span>`
+        ).join('');
+        const goldHtml = `<span class="forge-mat ${state.gold.ok ? 'ok' : 'bad'}">🪙 ${state.gold.have}/${state.gold.need}</span>`;
+
+        const card = document.createElement('div');
+        card.className = 'forge-card';
+        card.innerHTML = `
+            <div class="forge-card-head">
+                <span class="forge-icon">${def?.icon ?? '📦'}</span>
+                <span class="forge-name">${def?.name ?? recipe.result}</span>
+                <span class="forge-tier forge-tier-${recipe.tier}">${_forgeTierLabel(recipe.tier)}</span>
+            </div>
+            <div class="forge-stats">${_formatStatsLine(def?.stats)}</div>
+            <div class="forge-mats">${matsHtml}${goldHtml}</div>
+            <div class="forge-actions">
+                <button class="forge-btn ${state.canCraft ? 'primary' : ''}" ${state.canCraft ? '' : 'disabled'}>Forjar</button>
+            </div>
+        `;
+        card.querySelector('.forge-btn')?.addEventListener('click', () => {
+            const result = Recipes.craft(recipe.id);
+            if (result.ok) {
+                showNotification(`Forjado: ${def?.name ?? result.itemId}!`, 'success');
+                _flashRefineWindow('success');
+            } else {
+                showNotification(_forgeFailMsg(result.reason), 'warning');
+                _flashRefineWindow('fail');
+            }
+            _renderForgeList();
+        });
+        listEl.appendChild(card);
+    }
 }
 
 function _flashRefineWindow(type) {
@@ -2417,7 +2611,7 @@ function _renderRefineList() {
 function _openRefineWindow() {
     _ensureRefineWindow();
     _refineWindowEl.style.display = 'block';
-    _renderRefineList();
+    _setRefineTab(_refineActiveTab);
     Events.emit('uiWindowOpened', { id: 'refine' });
 }
 

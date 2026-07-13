@@ -1,0 +1,2660 @@
+{
+  "recipes": [
+    {
+      "id": "recipe_upper_headgear_normal_swordman",
+      "result": "upper_headgear_normal_swordman",
+      "setId": "set_normal_swordman",
+      "tier": "normal",
+      "gold": 800,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 4
+        },
+        {
+          "itemId": "couro",
+          "qty": 10
+        },
+        {
+          "itemId": "casco-rigido",
+          "qty": 8
+        },
+        {
+          "itemId": "osso-antigo",
+          "qty": 6
+        }
+      ]
+    },
+    {
+      "id": "recipe_armor_normal_swordman",
+      "result": "armor_normal_swordman",
+      "setId": "set_normal_swordman",
+      "tier": "normal",
+      "gold": 1000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 5
+        },
+        {
+          "itemId": "couro",
+          "qty": 13
+        },
+        {
+          "itemId": "casco-rigido",
+          "qty": 10
+        },
+        {
+          "itemId": "osso-antigo",
+          "qty": 8
+        }
+      ]
+    },
+    {
+      "id": "recipe_garment_normal_swordman",
+      "result": "garment_normal_swordman",
+      "setId": "set_normal_swordman",
+      "tier": "normal",
+      "gold": 800,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 4
+        },
+        {
+          "itemId": "couro",
+          "qty": 10
+        },
+        {
+          "itemId": "casco-rigido",
+          "qty": 8
+        },
+        {
+          "itemId": "osso-antigo",
+          "qty": 6
+        }
+      ]
+    },
+    {
+      "id": "recipe_footgear_normal_swordman",
+      "result": "footgear_normal_swordman",
+      "setId": "set_normal_swordman",
+      "tier": "normal",
+      "gold": 700,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 4
+        },
+        {
+          "itemId": "couro",
+          "qty": 9
+        },
+        {
+          "itemId": "casco-rigido",
+          "qty": 7
+        },
+        {
+          "itemId": "osso-antigo",
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "id": "recipe_weapon_normal_swordman",
+      "result": "weapon_normal_swordman",
+      "setId": "set_normal_swordman",
+      "tier": "normal",
+      "gold": 1200,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 6
+        },
+        {
+          "itemId": "couro",
+          "qty": 15
+        },
+        {
+          "itemId": "casco-rigido",
+          "qty": 12
+        },
+        {
+          "itemId": "osso-antigo",
+          "qty": 9
+        }
+      ]
+    },
+    {
+      "id": "recipe_shield_normal_swordman",
+      "result": "shield_normal_swordman",
+      "setId": "set_normal_swordman",
+      "tier": "normal",
+      "gold": 900,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 4
+        },
+        {
+          "itemId": "couro",
+          "qty": 11
+        },
+        {
+          "itemId": "casco-rigido",
+          "qty": 9
+        },
+        {
+          "itemId": "osso-antigo",
+          "qty": 7
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_left_normal_swordman",
+      "result": "accessory_left_normal_swordman",
+      "setId": "set_normal_swordman",
+      "tier": "normal",
+      "gold": 600,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 3
+        },
+        {
+          "itemId": "couro",
+          "qty": 8
+        },
+        {
+          "itemId": "casco-rigido",
+          "qty": 6
+        },
+        {
+          "itemId": "osso-antigo",
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_right_normal_swordman",
+      "result": "accessory_right_normal_swordman",
+      "setId": "set_normal_swordman",
+      "tier": "normal",
+      "gold": 600,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 3
+        },
+        {
+          "itemId": "couro",
+          "qty": 8
+        },
+        {
+          "itemId": "casco-rigido",
+          "qty": 6
+        },
+        {
+          "itemId": "osso-antigo",
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "id": "recipe_upper_headgear_legendary_swordman",
+      "result": "upper_headgear_legendary_swordman",
+      "setId": "set_legendary_swordman",
+      "tier": "legendary",
+      "gold": 4000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 8
+        },
+        {
+          "itemId": "couro",
+          "qty": 14
+        },
+        {
+          "itemId": "casco-rigido",
+          "qty": 10
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 5
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 4
+        }
+      ]
+    },
+    {
+      "id": "recipe_armor_legendary_swordman",
+      "result": "armor_legendary_swordman",
+      "setId": "set_legendary_swordman",
+      "tier": "legendary",
+      "gold": 5200,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 10
+        },
+        {
+          "itemId": "couro",
+          "qty": 18
+        },
+        {
+          "itemId": "casco-rigido",
+          "qty": 13
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 7
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "id": "recipe_garment_legendary_swordman",
+      "result": "garment_legendary_swordman",
+      "setId": "set_legendary_swordman",
+      "tier": "legendary",
+      "gold": 4000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 8
+        },
+        {
+          "itemId": "couro",
+          "qty": 14
+        },
+        {
+          "itemId": "casco-rigido",
+          "qty": 10
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 5
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 4
+        }
+      ]
+    },
+    {
+      "id": "recipe_footgear_legendary_swordman",
+      "result": "footgear_legendary_swordman",
+      "setId": "set_legendary_swordman",
+      "tier": "legendary",
+      "gold": 3600,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 7
+        },
+        {
+          "itemId": "couro",
+          "qty": 13
+        },
+        {
+          "itemId": "casco-rigido",
+          "qty": 9
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 5
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 4
+        }
+      ]
+    },
+    {
+      "id": "recipe_weapon_legendary_swordman",
+      "result": "weapon_legendary_swordman",
+      "setId": "set_legendary_swordman",
+      "tier": "legendary",
+      "gold": 6000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 12
+        },
+        {
+          "itemId": "couro",
+          "qty": 21
+        },
+        {
+          "itemId": "casco-rigido",
+          "qty": 15
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 8
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 6
+        }
+      ]
+    },
+    {
+      "id": "recipe_shield_legendary_swordman",
+      "result": "shield_legendary_swordman",
+      "setId": "set_legendary_swordman",
+      "tier": "legendary",
+      "gold": 4400,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 9
+        },
+        {
+          "itemId": "couro",
+          "qty": 15
+        },
+        {
+          "itemId": "casco-rigido",
+          "qty": 11
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 6
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 4
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_left_legendary_swordman",
+      "result": "accessory_left_legendary_swordman",
+      "setId": "set_legendary_swordman",
+      "tier": "legendary",
+      "gold": 3200,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 6
+        },
+        {
+          "itemId": "couro",
+          "qty": 11
+        },
+        {
+          "itemId": "casco-rigido",
+          "qty": 8
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 4
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_right_legendary_swordman",
+      "result": "accessory_right_legendary_swordman",
+      "setId": "set_legendary_swordman",
+      "tier": "legendary",
+      "gold": 3200,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 6
+        },
+        {
+          "itemId": "couro",
+          "qty": 11
+        },
+        {
+          "itemId": "casco-rigido",
+          "qty": 8
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 4
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "id": "recipe_upper_headgear_divine_swordman",
+      "result": "upper_headgear_divine_swordman",
+      "setId": "set_divine_swordman",
+      "tier": "divine",
+      "gold": 20000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 15
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 14
+        },
+        {
+          "itemId": "couro",
+          "qty": 12
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 8
+        },
+        {
+          "itemId": "fragment_lord_knight",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_armor_divine_swordman",
+      "result": "armor_divine_swordman",
+      "setId": "set_divine_swordman",
+      "tier": "divine",
+      "gold": 26000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 20
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 18
+        },
+        {
+          "itemId": "couro",
+          "qty": 16
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 10
+        },
+        {
+          "itemId": "fragment_lord_knight",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "id": "recipe_garment_divine_swordman",
+      "result": "garment_divine_swordman",
+      "setId": "set_divine_swordman",
+      "tier": "divine",
+      "gold": 20000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 15
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 14
+        },
+        {
+          "itemId": "couro",
+          "qty": 12
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 8
+        },
+        {
+          "itemId": "fragment_lord_knight",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_footgear_divine_swordman",
+      "result": "footgear_divine_swordman",
+      "setId": "set_divine_swordman",
+      "tier": "divine",
+      "gold": 18000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 14
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 13
+        },
+        {
+          "itemId": "couro",
+          "qty": 11
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 7
+        },
+        {
+          "itemId": "fragment_lord_knight",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_weapon_divine_swordman",
+      "result": "weapon_divine_swordman",
+      "setId": "set_divine_swordman",
+      "tier": "divine",
+      "gold": 30000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 23
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 21
+        },
+        {
+          "itemId": "couro",
+          "qty": 18
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 12
+        },
+        {
+          "itemId": "fragment_lord_knight",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "id": "recipe_shield_divine_swordman",
+      "result": "shield_divine_swordman",
+      "setId": "set_divine_swordman",
+      "tier": "divine",
+      "gold": 22000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 17
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 15
+        },
+        {
+          "itemId": "couro",
+          "qty": 13
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 9
+        },
+        {
+          "itemId": "fragment_lord_knight",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_left_divine_swordman",
+      "result": "accessory_left_divine_swordman",
+      "setId": "set_divine_swordman",
+      "tier": "divine",
+      "gold": 16000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 12
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 11
+        },
+        {
+          "itemId": "couro",
+          "qty": 10
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 6
+        },
+        {
+          "itemId": "fragment_lord_knight",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_right_divine_swordman",
+      "result": "accessory_right_divine_swordman",
+      "setId": "set_divine_swordman",
+      "tier": "divine",
+      "gold": 16000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 12
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 11
+        },
+        {
+          "itemId": "couro",
+          "qty": 10
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 6
+        },
+        {
+          "itemId": "fragment_lord_knight",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_upper_headgear_normal_mage",
+      "result": "upper_headgear_normal_mage",
+      "setId": "set_normal_mage",
+      "tier": "normal",
+      "gold": 800,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 4
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 10
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 8
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 6
+        }
+      ]
+    },
+    {
+      "id": "recipe_armor_normal_mage",
+      "result": "armor_normal_mage",
+      "setId": "set_normal_mage",
+      "tier": "normal",
+      "gold": 1000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 5
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 13
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 10
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 8
+        }
+      ]
+    },
+    {
+      "id": "recipe_garment_normal_mage",
+      "result": "garment_normal_mage",
+      "setId": "set_normal_mage",
+      "tier": "normal",
+      "gold": 800,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 4
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 10
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 8
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 6
+        }
+      ]
+    },
+    {
+      "id": "recipe_footgear_normal_mage",
+      "result": "footgear_normal_mage",
+      "setId": "set_normal_mage",
+      "tier": "normal",
+      "gold": 700,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 4
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 9
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 7
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "id": "recipe_weapon_normal_mage",
+      "result": "weapon_normal_mage",
+      "setId": "set_normal_mage",
+      "tier": "normal",
+      "gold": 1200,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 6
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 15
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 12
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 9
+        }
+      ]
+    },
+    {
+      "id": "recipe_shield_normal_mage",
+      "result": "shield_normal_mage",
+      "setId": "set_normal_mage",
+      "tier": "normal",
+      "gold": 900,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 4
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 11
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 9
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 7
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_left_normal_mage",
+      "result": "accessory_left_normal_mage",
+      "setId": "set_normal_mage",
+      "tier": "normal",
+      "gold": 600,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 3
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 8
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 6
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_right_normal_mage",
+      "result": "accessory_right_normal_mage",
+      "setId": "set_normal_mage",
+      "tier": "normal",
+      "gold": 600,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 3
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 8
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 6
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "id": "recipe_upper_headgear_legendary_mage",
+      "result": "upper_headgear_legendary_mage",
+      "setId": "set_legendary_mage",
+      "tier": "legendary",
+      "gold": 4000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 8
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 14
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 10
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 5
+        },
+        {
+          "itemId": "cristal-arcano",
+          "qty": 4
+        }
+      ]
+    },
+    {
+      "id": "recipe_armor_legendary_mage",
+      "result": "armor_legendary_mage",
+      "setId": "set_legendary_mage",
+      "tier": "legendary",
+      "gold": 5200,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 10
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 18
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 13
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 7
+        },
+        {
+          "itemId": "cristal-arcano",
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "id": "recipe_garment_legendary_mage",
+      "result": "garment_legendary_mage",
+      "setId": "set_legendary_mage",
+      "tier": "legendary",
+      "gold": 4000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 8
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 14
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 10
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 5
+        },
+        {
+          "itemId": "cristal-arcano",
+          "qty": 4
+        }
+      ]
+    },
+    {
+      "id": "recipe_footgear_legendary_mage",
+      "result": "footgear_legendary_mage",
+      "setId": "set_legendary_mage",
+      "tier": "legendary",
+      "gold": 3600,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 7
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 13
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 9
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 5
+        },
+        {
+          "itemId": "cristal-arcano",
+          "qty": 4
+        }
+      ]
+    },
+    {
+      "id": "recipe_weapon_legendary_mage",
+      "result": "weapon_legendary_mage",
+      "setId": "set_legendary_mage",
+      "tier": "legendary",
+      "gold": 6000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 12
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 21
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 15
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 8
+        },
+        {
+          "itemId": "cristal-arcano",
+          "qty": 6
+        }
+      ]
+    },
+    {
+      "id": "recipe_shield_legendary_mage",
+      "result": "shield_legendary_mage",
+      "setId": "set_legendary_mage",
+      "tier": "legendary",
+      "gold": 4400,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 9
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 15
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 11
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 6
+        },
+        {
+          "itemId": "cristal-arcano",
+          "qty": 4
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_left_legendary_mage",
+      "result": "accessory_left_legendary_mage",
+      "setId": "set_legendary_mage",
+      "tier": "legendary",
+      "gold": 3200,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 6
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 11
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 8
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 4
+        },
+        {
+          "itemId": "cristal-arcano",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_right_legendary_mage",
+      "result": "accessory_right_legendary_mage",
+      "setId": "set_legendary_mage",
+      "tier": "legendary",
+      "gold": 3200,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 6
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 11
+        },
+        {
+          "itemId": "nucleo-elemental",
+          "qty": 8
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 4
+        },
+        {
+          "itemId": "cristal-arcano",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "id": "recipe_upper_headgear_divine_mage",
+      "result": "upper_headgear_divine_mage",
+      "setId": "set_divine_mage",
+      "tier": "divine",
+      "gold": 20000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 15
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 14
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 12
+        },
+        {
+          "itemId": "cristal-arcano",
+          "qty": 8
+        },
+        {
+          "itemId": "fragment_high_wizard",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_armor_divine_mage",
+      "result": "armor_divine_mage",
+      "setId": "set_divine_mage",
+      "tier": "divine",
+      "gold": 26000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 20
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 18
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 16
+        },
+        {
+          "itemId": "cristal-arcano",
+          "qty": 10
+        },
+        {
+          "itemId": "fragment_high_wizard",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "id": "recipe_garment_divine_mage",
+      "result": "garment_divine_mage",
+      "setId": "set_divine_mage",
+      "tier": "divine",
+      "gold": 20000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 15
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 14
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 12
+        },
+        {
+          "itemId": "cristal-arcano",
+          "qty": 8
+        },
+        {
+          "itemId": "fragment_high_wizard",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_footgear_divine_mage",
+      "result": "footgear_divine_mage",
+      "setId": "set_divine_mage",
+      "tier": "divine",
+      "gold": 18000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 14
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 13
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 11
+        },
+        {
+          "itemId": "cristal-arcano",
+          "qty": 7
+        },
+        {
+          "itemId": "fragment_high_wizard",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_weapon_divine_mage",
+      "result": "weapon_divine_mage",
+      "setId": "set_divine_mage",
+      "tier": "divine",
+      "gold": 30000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 23
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 21
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 18
+        },
+        {
+          "itemId": "cristal-arcano",
+          "qty": 12
+        },
+        {
+          "itemId": "fragment_high_wizard",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "id": "recipe_shield_divine_mage",
+      "result": "shield_divine_mage",
+      "setId": "set_divine_mage",
+      "tier": "divine",
+      "gold": 22000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 17
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 15
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 13
+        },
+        {
+          "itemId": "cristal-arcano",
+          "qty": 9
+        },
+        {
+          "itemId": "fragment_high_wizard",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_left_divine_mage",
+      "result": "accessory_left_divine_mage",
+      "setId": "set_divine_mage",
+      "tier": "divine",
+      "gold": 16000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 12
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 11
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 10
+        },
+        {
+          "itemId": "cristal-arcano",
+          "qty": 6
+        },
+        {
+          "itemId": "fragment_high_wizard",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_right_divine_mage",
+      "result": "accessory_right_divine_mage",
+      "setId": "set_divine_mage",
+      "tier": "divine",
+      "gold": 16000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 12
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 11
+        },
+        {
+          "itemId": "po-magico",
+          "qty": 10
+        },
+        {
+          "itemId": "cristal-arcano",
+          "qty": 6
+        },
+        {
+          "itemId": "fragment_high_wizard",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_upper_headgear_normal_archer",
+      "result": "upper_headgear_normal_archer",
+      "setId": "set_normal_archer",
+      "tier": "normal",
+      "gold": 800,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 4
+        },
+        {
+          "itemId": "couro",
+          "qty": 10
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 8
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 6
+        }
+      ]
+    },
+    {
+      "id": "recipe_armor_normal_archer",
+      "result": "armor_normal_archer",
+      "setId": "set_normal_archer",
+      "tier": "normal",
+      "gold": 1000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 5
+        },
+        {
+          "itemId": "couro",
+          "qty": 13
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 10
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 8
+        }
+      ]
+    },
+    {
+      "id": "recipe_garment_normal_archer",
+      "result": "garment_normal_archer",
+      "setId": "set_normal_archer",
+      "tier": "normal",
+      "gold": 800,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 4
+        },
+        {
+          "itemId": "couro",
+          "qty": 10
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 8
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 6
+        }
+      ]
+    },
+    {
+      "id": "recipe_footgear_normal_archer",
+      "result": "footgear_normal_archer",
+      "setId": "set_normal_archer",
+      "tier": "normal",
+      "gold": 700,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 4
+        },
+        {
+          "itemId": "couro",
+          "qty": 9
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 7
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "id": "recipe_weapon_normal_archer",
+      "result": "weapon_normal_archer",
+      "setId": "set_normal_archer",
+      "tier": "normal",
+      "gold": 1200,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 6
+        },
+        {
+          "itemId": "couro",
+          "qty": 15
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 12
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 9
+        }
+      ]
+    },
+    {
+      "id": "recipe_shield_normal_archer",
+      "result": "shield_normal_archer",
+      "setId": "set_normal_archer",
+      "tier": "normal",
+      "gold": 900,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 4
+        },
+        {
+          "itemId": "couro",
+          "qty": 11
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 9
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 7
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_left_normal_archer",
+      "result": "accessory_left_normal_archer",
+      "setId": "set_normal_archer",
+      "tier": "normal",
+      "gold": 600,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 3
+        },
+        {
+          "itemId": "couro",
+          "qty": 8
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 6
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_right_normal_archer",
+      "result": "accessory_right_normal_archer",
+      "setId": "set_normal_archer",
+      "tier": "normal",
+      "gold": 600,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 3
+        },
+        {
+          "itemId": "couro",
+          "qty": 8
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 6
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "id": "recipe_upper_headgear_legendary_archer",
+      "result": "upper_headgear_legendary_archer",
+      "setId": "set_legendary_archer",
+      "tier": "legendary",
+      "gold": 4000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 8
+        },
+        {
+          "itemId": "couro",
+          "qty": 14
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 10
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 5
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 4
+        }
+      ]
+    },
+    {
+      "id": "recipe_armor_legendary_archer",
+      "result": "armor_legendary_archer",
+      "setId": "set_legendary_archer",
+      "tier": "legendary",
+      "gold": 5200,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 10
+        },
+        {
+          "itemId": "couro",
+          "qty": 18
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 13
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 7
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "id": "recipe_garment_legendary_archer",
+      "result": "garment_legendary_archer",
+      "setId": "set_legendary_archer",
+      "tier": "legendary",
+      "gold": 4000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 8
+        },
+        {
+          "itemId": "couro",
+          "qty": 14
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 10
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 5
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 4
+        }
+      ]
+    },
+    {
+      "id": "recipe_footgear_legendary_archer",
+      "result": "footgear_legendary_archer",
+      "setId": "set_legendary_archer",
+      "tier": "legendary",
+      "gold": 3600,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 7
+        },
+        {
+          "itemId": "couro",
+          "qty": 13
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 9
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 5
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 4
+        }
+      ]
+    },
+    {
+      "id": "recipe_weapon_legendary_archer",
+      "result": "weapon_legendary_archer",
+      "setId": "set_legendary_archer",
+      "tier": "legendary",
+      "gold": 6000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 12
+        },
+        {
+          "itemId": "couro",
+          "qty": 21
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 15
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 8
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 6
+        }
+      ]
+    },
+    {
+      "id": "recipe_shield_legendary_archer",
+      "result": "shield_legendary_archer",
+      "setId": "set_legendary_archer",
+      "tier": "legendary",
+      "gold": 4400,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 9
+        },
+        {
+          "itemId": "couro",
+          "qty": 15
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 11
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 6
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 4
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_left_legendary_archer",
+      "result": "accessory_left_legendary_archer",
+      "setId": "set_legendary_archer",
+      "tier": "legendary",
+      "gold": 3200,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 6
+        },
+        {
+          "itemId": "couro",
+          "qty": 11
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 8
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 4
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_right_legendary_archer",
+      "result": "accessory_right_legendary_archer",
+      "setId": "set_legendary_archer",
+      "tier": "legendary",
+      "gold": 3200,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 6
+        },
+        {
+          "itemId": "couro",
+          "qty": 11
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 8
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 4
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "id": "recipe_upper_headgear_divine_archer",
+      "result": "upper_headgear_divine_archer",
+      "setId": "set_divine_archer",
+      "tier": "divine",
+      "gold": 20000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 15
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 14
+        },
+        {
+          "itemId": "couro",
+          "qty": 12
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 8
+        },
+        {
+          "itemId": "fragment_sniper",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_armor_divine_archer",
+      "result": "armor_divine_archer",
+      "setId": "set_divine_archer",
+      "tier": "divine",
+      "gold": 26000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 20
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 18
+        },
+        {
+          "itemId": "couro",
+          "qty": 16
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 10
+        },
+        {
+          "itemId": "fragment_sniper",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "id": "recipe_garment_divine_archer",
+      "result": "garment_divine_archer",
+      "setId": "set_divine_archer",
+      "tier": "divine",
+      "gold": 20000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 15
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 14
+        },
+        {
+          "itemId": "couro",
+          "qty": 12
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 8
+        },
+        {
+          "itemId": "fragment_sniper",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_footgear_divine_archer",
+      "result": "footgear_divine_archer",
+      "setId": "set_divine_archer",
+      "tier": "divine",
+      "gold": 18000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 14
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 13
+        },
+        {
+          "itemId": "couro",
+          "qty": 11
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 7
+        },
+        {
+          "itemId": "fragment_sniper",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_weapon_divine_archer",
+      "result": "weapon_divine_archer",
+      "setId": "set_divine_archer",
+      "tier": "divine",
+      "gold": 30000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 23
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 21
+        },
+        {
+          "itemId": "couro",
+          "qty": 18
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 12
+        },
+        {
+          "itemId": "fragment_sniper",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "id": "recipe_shield_divine_archer",
+      "result": "shield_divine_archer",
+      "setId": "set_divine_archer",
+      "tier": "divine",
+      "gold": 22000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 17
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 15
+        },
+        {
+          "itemId": "couro",
+          "qty": 13
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 9
+        },
+        {
+          "itemId": "fragment_sniper",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_left_divine_archer",
+      "result": "accessory_left_divine_archer",
+      "setId": "set_divine_archer",
+      "tier": "divine",
+      "gold": 16000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 12
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 11
+        },
+        {
+          "itemId": "couro",
+          "qty": 10
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 6
+        },
+        {
+          "itemId": "fragment_sniper",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_right_divine_archer",
+      "result": "accessory_right_divine_archer",
+      "setId": "set_divine_archer",
+      "tier": "divine",
+      "gold": 16000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 12
+        },
+        {
+          "itemId": "escama-draconica",
+          "qty": 11
+        },
+        {
+          "itemId": "couro",
+          "qty": 10
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 6
+        },
+        {
+          "itemId": "fragment_sniper",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_upper_headgear_normal_assassin",
+      "result": "upper_headgear_normal_assassin",
+      "setId": "set_normal_assassin",
+      "tier": "normal",
+      "gold": 800,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 4
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 10
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 8
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 6
+        }
+      ]
+    },
+    {
+      "id": "recipe_armor_normal_assassin",
+      "result": "armor_normal_assassin",
+      "setId": "set_normal_assassin",
+      "tier": "normal",
+      "gold": 1000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 5
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 13
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 10
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 8
+        }
+      ]
+    },
+    {
+      "id": "recipe_garment_normal_assassin",
+      "result": "garment_normal_assassin",
+      "setId": "set_normal_assassin",
+      "tier": "normal",
+      "gold": 800,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 4
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 10
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 8
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 6
+        }
+      ]
+    },
+    {
+      "id": "recipe_footgear_normal_assassin",
+      "result": "footgear_normal_assassin",
+      "setId": "set_normal_assassin",
+      "tier": "normal",
+      "gold": 700,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 4
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 9
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 7
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "id": "recipe_weapon_normal_assassin",
+      "result": "weapon_normal_assassin",
+      "setId": "set_normal_assassin",
+      "tier": "normal",
+      "gold": 1200,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 6
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 15
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 12
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 9
+        }
+      ]
+    },
+    {
+      "id": "recipe_shield_normal_assassin",
+      "result": "shield_normal_assassin",
+      "setId": "set_normal_assassin",
+      "tier": "normal",
+      "gold": 900,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 4
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 11
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 9
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 7
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_left_normal_assassin",
+      "result": "accessory_left_normal_assassin",
+      "setId": "set_normal_assassin",
+      "tier": "normal",
+      "gold": 600,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 3
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 8
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 6
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_right_normal_assassin",
+      "result": "accessory_right_normal_assassin",
+      "setId": "set_normal_assassin",
+      "tier": "normal",
+      "gold": 600,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 3
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 8
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 6
+        },
+        {
+          "itemId": "garra-afiada",
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "id": "recipe_upper_headgear_legendary_assassin",
+      "result": "upper_headgear_legendary_assassin",
+      "setId": "set_legendary_assassin",
+      "tier": "legendary",
+      "gold": 4000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 8
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 14
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 10
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 5
+        },
+        {
+          "itemId": "veneno-raro",
+          "qty": 4
+        }
+      ]
+    },
+    {
+      "id": "recipe_armor_legendary_assassin",
+      "result": "armor_legendary_assassin",
+      "setId": "set_legendary_assassin",
+      "tier": "legendary",
+      "gold": 5200,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 10
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 18
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 13
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 7
+        },
+        {
+          "itemId": "veneno-raro",
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "id": "recipe_garment_legendary_assassin",
+      "result": "garment_legendary_assassin",
+      "setId": "set_legendary_assassin",
+      "tier": "legendary",
+      "gold": 4000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 8
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 14
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 10
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 5
+        },
+        {
+          "itemId": "veneno-raro",
+          "qty": 4
+        }
+      ]
+    },
+    {
+      "id": "recipe_footgear_legendary_assassin",
+      "result": "footgear_legendary_assassin",
+      "setId": "set_legendary_assassin",
+      "tier": "legendary",
+      "gold": 3600,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 7
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 13
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 9
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 5
+        },
+        {
+          "itemId": "veneno-raro",
+          "qty": 4
+        }
+      ]
+    },
+    {
+      "id": "recipe_weapon_legendary_assassin",
+      "result": "weapon_legendary_assassin",
+      "setId": "set_legendary_assassin",
+      "tier": "legendary",
+      "gold": 6000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 12
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 21
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 15
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 8
+        },
+        {
+          "itemId": "veneno-raro",
+          "qty": 6
+        }
+      ]
+    },
+    {
+      "id": "recipe_shield_legendary_assassin",
+      "result": "shield_legendary_assassin",
+      "setId": "set_legendary_assassin",
+      "tier": "legendary",
+      "gold": 4400,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 9
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 15
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 11
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 6
+        },
+        {
+          "itemId": "veneno-raro",
+          "qty": 4
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_left_legendary_assassin",
+      "result": "accessory_left_legendary_assassin",
+      "setId": "set_legendary_assassin",
+      "tier": "legendary",
+      "gold": 3200,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 6
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 11
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 8
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 4
+        },
+        {
+          "itemId": "veneno-raro",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_right_legendary_assassin",
+      "result": "accessory_right_legendary_assassin",
+      "setId": "set_legendary_assassin",
+      "tier": "legendary",
+      "gold": 3200,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 6
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 11
+        },
+        {
+          "itemId": "ectoplasma",
+          "qty": 8
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 4
+        },
+        {
+          "itemId": "veneno-raro",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "id": "recipe_upper_headgear_divine_assassin",
+      "result": "upper_headgear_divine_assassin",
+      "setId": "set_divine_assassin",
+      "tier": "divine",
+      "gold": 20000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 15
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 14
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 12
+        },
+        {
+          "itemId": "veneno-raro",
+          "qty": 8
+        },
+        {
+          "itemId": "fragment_shadow_assassin",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_armor_divine_assassin",
+      "result": "armor_divine_assassin",
+      "setId": "set_divine_assassin",
+      "tier": "divine",
+      "gold": 26000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 20
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 18
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 16
+        },
+        {
+          "itemId": "veneno-raro",
+          "qty": 10
+        },
+        {
+          "itemId": "fragment_shadow_assassin",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "id": "recipe_garment_divine_assassin",
+      "result": "garment_divine_assassin",
+      "setId": "set_divine_assassin",
+      "tier": "divine",
+      "gold": 20000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 15
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 14
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 12
+        },
+        {
+          "itemId": "veneno-raro",
+          "qty": 8
+        },
+        {
+          "itemId": "fragment_shadow_assassin",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_footgear_divine_assassin",
+      "result": "footgear_divine_assassin",
+      "setId": "set_divine_assassin",
+      "tier": "divine",
+      "gold": 18000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 14
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 13
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 11
+        },
+        {
+          "itemId": "veneno-raro",
+          "qty": 7
+        },
+        {
+          "itemId": "fragment_shadow_assassin",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_weapon_divine_assassin",
+      "result": "weapon_divine_assassin",
+      "setId": "set_divine_assassin",
+      "tier": "divine",
+      "gold": 30000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 23
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 21
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 18
+        },
+        {
+          "itemId": "veneno-raro",
+          "qty": 12
+        },
+        {
+          "itemId": "fragment_shadow_assassin",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "id": "recipe_shield_divine_assassin",
+      "result": "shield_divine_assassin",
+      "setId": "set_divine_assassin",
+      "tier": "divine",
+      "gold": 22000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 17
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 15
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 13
+        },
+        {
+          "itemId": "veneno-raro",
+          "qty": 9
+        },
+        {
+          "itemId": "fragment_shadow_assassin",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_left_divine_assassin",
+      "result": "accessory_left_divine_assassin",
+      "setId": "set_divine_assassin",
+      "tier": "divine",
+      "gold": 16000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 12
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 11
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 10
+        },
+        {
+          "itemId": "veneno-raro",
+          "qty": 6
+        },
+        {
+          "itemId": "fragment_shadow_assassin",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "recipe_accessory_right_divine_assassin",
+      "result": "accessory_right_divine_assassin",
+      "setId": "set_divine_assassin",
+      "tier": "divine",
+      "gold": 16000,
+      "materials": [
+        {
+          "itemId": "minerio",
+          "qty": 12
+        },
+        {
+          "itemId": "essencia-demoniaca",
+          "qty": 11
+        },
+        {
+          "itemId": "pano-velho",
+          "qty": 10
+        },
+        {
+          "itemId": "veneno-raro",
+          "qty": 6
+        },
+        {
+          "itemId": "fragment_shadow_assassin",
+          "qty": 2
+        }
+      ]
+    }
+  ]
+}

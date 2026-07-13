@@ -21,6 +21,7 @@ import * as NPCs     from '../entities/npcs.js';
 import * as Inventory from '../systems/inventory.js';
 import * as Quests    from '../systems/quests.js';
 import * as Refine    from '../systems/refine.js';
+import * as Recipes   from '../systems/recipes.js';
 import * as Cards     from '../systems/cards.js';
 import * as Pets      from '../systems/pets.js';
 import * as World     from '../world/world.js';
@@ -278,6 +279,17 @@ async function _onAssetsReady() {
             console.log('[debugListItems] ' + rows.length + ' itens' + (filter ? ' (filtro: ' + filter + ')' : ''));
             return rows.map(r => r.id);
         };
+        // [DEBUG] Forja: entrega todos os materiais + ouro de uma receita (por result id
+        // ou recipe id) para testar o craft. Ex.: window.debugGiveRecipeMats('weapon_normal_swordman').
+        window.debugGiveRecipeMats = (idOrResult) => {
+            const recipe = Recipes.getRecipeForResult(idOrResult) || Recipes.getRecipe(idOrResult);
+            if (!recipe) { console.warn('[debugGiveRecipeMats] receita nao encontrada:', idOrResult); return false; }
+            for (const m of recipe.materials) Inventory.addItem(m.itemId, m.qty);
+            if (recipe.gold > 0) Inventory.setGold(Inventory.getGold() + recipe.gold);
+            console.log('[debugGiveRecipeMats] ' + recipe.result + ': +' +
+                recipe.materials.map(m => m.qty + 'x ' + m.itemId).join(', ') + ' + ' + recipe.gold + ' ouro');
+            return true;
+        };
     }
     await Inventory.init(_saveData.player.inventory ?? null);
     await Quests.init(_saveData.player.quests ?? null);
@@ -368,6 +380,16 @@ async function _loadSetDefs() {
         Equipment.setCatalogue([]);
     }
 }
+async function _loadRecipeDefs() {
+    try {
+        const res = await fetch('./assets/data/recipes.json');
+        const data = await res.json();
+        Recipes.setRecipes(data.recipes || []);
+    } catch (err) {
+        console.error('[Main] Falha ao carregar recipes.json:', err);
+        Recipes.setRecipes([]);
+    }
+}
 // â”€â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
@@ -394,6 +416,8 @@ export async function init() {
     Equipment.init();
     await _loadSetDefs();
     Refine.init();
+    Recipes.init();
+    await _loadRecipeDefs();
     await Cards.init();
     UI.init();
 
