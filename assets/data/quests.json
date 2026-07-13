@@ -128,7 +128,7 @@
   {
     "id": "quest_evo2_lord_knight",
     "name": "O Lorde das Batalhas",
-    "description": "Para se tornar Lord Knight, colete fragmentos dos Orc Warriors, consulte o Eremita Kael e derrote o Lorde Cavaleiro Corrompido.",
+    "description": "Para se tornar Lord Knight, colete fragmentos dos Goblins, consulte o Eremita Kael e derrote o Lorde Cavaleiro Corrompido.",
     "giver": "mestre_lord_knight",
     "completer": "mestre_lord_knight",
     "reqClass": "knight",
@@ -198,7 +198,7 @@
   {
     "id": "quest_evo2_sniper",
     "name": "O Atirador Fantasma",
-    "description": "Para se tornar Sniper, colete penas dos goblins, consulte o Batedor Thorn e elimine o Atirador Fantasma.",
+    "description": "Para se tornar Sniper, colete penas do Esqueleto Arqueiro, consulte o Batedor Thorn e elimine o Atirador Fantasma.",
     "giver": "mestre_sniper",
     "completer": "mestre_sniper",
     "reqClass": "hunter",
