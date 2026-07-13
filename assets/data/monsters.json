@@ -453,6 +453,10 @@
           "chance": 0.08
         },
         {
+          "itemId": "fragment_sniper",
+          "chance": 0.2
+        },
+        {
           "itemId": "ouro",
           "chance": 0.85,
           "qty": {
