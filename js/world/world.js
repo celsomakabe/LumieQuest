@@ -290,6 +290,20 @@ function _spawnEnclosure(mapConfig) {
     emissive: new THREE.Color(cfg.ceilingColor ?? '#241f2b'), emissiveIntensity: 0.4,
     side: THREE.BackSide, roughness: 1, metalness: 0,
   });
+  // Textura de rocha no teto (opcional via cfg.ceilingTexture): "olhar pra cima e ver rocha".
+  if (cfg.ceilingTexture) {
+    const cLoader = new THREE.TextureLoader();
+    cLoader.load(cfg.ceilingTexture, (tex) => {
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(Math.max(1, Math.round(span / 12)), Math.max(1, Math.round(span / 12)));
+      tex.anisotropy = 8;
+      ceilMat.map = tex;
+      ceilMat.color.set('#ffffff');
+      ceilMat.emissiveIntensity = 0.18;
+      ceilMat.needsUpdate = true;
+    }, undefined, () => { /* mantém cor sólida se falhar */ });
+  }
   const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(span, span), ceilMat);
   ceiling.rotation.x = -Math.PI / 2;
   ceiling.position.y = ceilingH;
@@ -595,7 +609,8 @@ function _spawnProceduralInstancedMesh(modelKey, bucket) {
   const material = new THREE.MeshStandardMaterial({
     color: _getProceduralColor(modelKey),
     roughness: 1,
-    metalness: 0
+    metalness: 0,
+    flatShading: true // facetas (pedra), não superfície lisa
   });
 
   const instanced = new THREE.InstancedMesh(geometry, material, totalCount);
@@ -720,8 +735,23 @@ function _createProceduralGeometry(kind) {
     case 'skull_placeholder':
       return new THREE.SphereGeometry(0.35, 10, 8);
     case 'rock_sphere':
-    default:
-      return new THREE.SphereGeometry(0.7, 10, 8);
+    default: {
+      // Rocha low-poly IRREGULAR (não uma esfera lisa = "domo"): icosaedro com os
+      // vértices perturbados e achatado em Y -> leitura de pedra facetada. Compartilhada
+      // por todas as instâncias (rotateY + scaleRange dão a variação aparente).
+      const geo = new THREE.IcosahedronGeometry(0.9, 1);
+      const pos = geo.attributes.position;
+      const v = new THREE.Vector3();
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i);
+        v.multiplyScalar(0.78 + Math.random() * 0.44); // raio irregular
+        v.y *= 0.72;                                    // achata (boulder, não bola)
+        pos.setXYZ(i, v.x, v.y, v.z);
+      }
+      pos.needsUpdate = true;
+      geo.computeVertexNormals();
+      return geo;
+    }
   }
 }
 
@@ -736,7 +766,7 @@ function _getProceduralColor(kind) {
       return '#b7b0a3';
     case 'rock_sphere':
     default:
-      return '#7b7b82';
+      return '#6e6a62'; // cinza-pedra quente (não o azulado antigo)
   }
 }
 

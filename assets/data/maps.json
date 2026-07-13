@@ -3055,8 +3055,9 @@
                      "enclosure":  {
                        "ambientColor": "#aeb6cc",
                        "ambientIntensity": 3.0,
-                       "ceilingHeight": 22,
-                       "ceilingColor": "#4a4552",
+                       "ceilingHeight": 15,
+                       "ceilingColor": "#5a5560",
+                       "ceilingTexture": "assets/textures/terrain/cave_rock.jpg",
                        "wallRadius": 110,
                        "wallHeight": 28,
                        "wallColor": "#6b6474",
@@ -3123,12 +3124,12 @@
                                         }
                                     ],
                                           "decoration":  [
-                       { "model": "rock_single_A", "instanced": true, "path": "assets/models/nature/rock_single_A.gltf", "count": 22, "area": { "xMin": -62, "xMax": 62, "zMin": -62, "zMax": 62 }, "scaleRange": [1.2, 2.6], "rotateY": true },
+                       { "model": "rock_sphere", "procedural": true, "count": 22, "area": { "xMin": -62, "xMax": 62, "zMin": -62, "zMax": 62 }, "scaleRange": [0.7, 1.6], "rotateY": true },
                        { "model": "pillar_cylinder", "procedural": true, "count": 14, "area": { "xMin": -55, "xMax": 55, "zMin": -55, "zMax": 55 }, "scaleRange": [0.9, 1.6], "rotateY": true },
-                       { "model": "rock_single_B", "instanced": true, "path": "assets/models/nature/rock_single_B.gltf", "count": 20, "area": { "xMin": -80, "xMax": 80, "zMin": 66, "zMax": 82 }, "scaleRange": [3.0, 5.5], "rotateY": true },
-                       { "model": "rock_single_C", "instanced": true, "path": "assets/models/nature/rock_single_C.gltf", "count": 20, "area": { "xMin": -80, "xMax": 80, "zMin": -82, "zMax": -66 }, "scaleRange": [3.0, 5.5], "rotateY": true },
-                       { "model": "rock_single_A", "instanced": true, "path": "assets/models/nature/rock_single_A.gltf", "count": 16, "area": { "xMin": 66, "xMax": 82, "zMin": -66, "zMax": 66 }, "scaleRange": [3.0, 5.5], "rotateY": true },
-                       { "model": "rock_single_B", "instanced": true, "path": "assets/models/nature/rock_single_B.gltf", "count": 16, "area": { "xMin": -82, "xMax": -66, "zMin": -66, "zMax": 66 }, "scaleRange": [3.0, 5.5], "rotateY": true }
+                       { "model": "rock_sphere", "procedural": true, "count": 20, "area": { "xMin": -80, "xMax": 80, "zMin": 66, "zMax": 82 }, "scaleRange": [2.2, 4.2], "rotateY": true },
+                       { "model": "rock_sphere", "procedural": true, "count": 20, "area": { "xMin": -80, "xMax": 80, "zMin": -82, "zMax": -66 }, "scaleRange": [2.2, 4.2], "rotateY": true },
+                       { "model": "rock_sphere", "procedural": true, "count": 16, "area": { "xMin": 66, "xMax": 82, "zMin": -66, "zMax": 66 }, "scaleRange": [2.2, 4.2], "rotateY": true },
+                       { "model": "rock_sphere", "procedural": true, "count": 16, "area": { "xMin": -82, "xMax": -66, "zMin": -66, "zMax": 66 }, "scaleRange": [2.2, 4.2], "rotateY": true }
                      ],
                      "audioProfile":  {
                                           "bgm":  "bgm_caves",
