@@ -3,6 +3,7 @@ import { emit, on }    from '../core/events.js';
 import { playSFX }     from '../core/audio.js';
 import * as Classes    from './classes.js';
 import * as VFX        from './vfx.js'; // R8 exceção: wiring VFX de skill
+import { getFinalStats } from './stats.js'; // fonte única de stats finais (gear/refino/carta/set/pet)
 
 /** URLs dos SFX de combate */
 const SFX = {
@@ -231,7 +232,8 @@ function attack(attacker, target) {
     }
   }
 
-  const str        = attacker.baseStats?.str ?? attacker.str ?? 1;
+  // Stats FINAIS: player soma gear/refino/carta/set/pet; monstro cai no baseStats cru.
+  const str        = getFinalStats(attacker).str || attacker.str || 1;
   const def        = _getDef(target);
   const isCritical = Math.random() < 0.05;
 
@@ -365,7 +367,12 @@ function castSkill(playerState, skillId, target) {
     getEntities: () => Array.from(_targets).filter(t => t.type !== 'player'),
   };
   const _targetPos = target?.position ? { x: target.position.x, y: target.position.y, z: target.position.z } : null;
-  const result = Classes.executeSkill(skillId, playerState, target, ctx);
+  // Injeta os stats FINAIS no caster: todas as fórmulas de skill (classes.js) leem
+  // caster.baseStats — trocar só o baseStats por um objeto final faz as 36 skills usarem
+  // gear/refino/carta/set/pet sem tocar em classes.js. playerState é cópia de getState()
+  // (não muta o _data real); _activeBuffs/position/etc. preservados por spread.
+  const casterFinal = { ...playerState, baseStats: getFinalStats(playerState) };
+  const result = Classes.executeSkill(skillId, casterFinal, target, ctx);
 
   emit('skillCast', {
     skillId,

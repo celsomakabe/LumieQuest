@@ -22,6 +22,7 @@ import * as Inventory from '../systems/inventory.js';
 import * as Quests    from '../systems/quests.js';
 import * as Refine    from '../systems/refine.js';
 import * as Recipes   from '../systems/recipes.js';
+import * as Stats     from '../systems/stats.js';
 import * as Cards     from '../systems/cards.js';
 import * as Pets      from '../systems/pets.js';
 import * as World     from '../world/world.js';
@@ -290,6 +291,65 @@ async function _onAssetsReady() {
                 recipe.materials.map(m => m.qty + 'x ' + m.itemId).join(', ') + ' + ' + recipe.gold + ' ouro');
             return true;
         };
+        // [DEBUG] Stats finais: compara base vs final (gear/refino/carta/set/pet) no objeto
+        // REAL do player. Também mostra type/monsterId (confirma a detecção do stats.js).
+        window.debugStats = () => {
+            const inst = Player.getInstance?.();
+            const st = Player.getState?.();
+            if (!inst) { console.warn('[debugStats] player nao inicializado'); return null; }
+            const KEYS = ['str', 'agi', 'vit', 'int', 'dex', 'luk'];
+
+            console.log('=== debugStats (runtime real) ===');
+
+            // 1) Objeto do player como ele realmente chega ao combate.
+            console.log('1) OBJETO DO PLAYER');
+            console.log('   getInstance().type =', JSON.stringify(inst.type),
+                        '| monsterId =', inst.monsterId ?? '(nenhum)',
+                        '| isBoss =', inst.isBoss ?? '(nenhum)');
+            console.log('   getState().type    =', JSON.stringify(st?.type),
+                        '| mesma ref? (getInstance é o que attack usa)');
+            console.log('   baseStats =', JSON.stringify(inst.baseStats));
+
+            // 2) Equipamento como está AGORA (formato cru).
+            console.log('2) Inventory.getEquipment()');
+            const equip = Inventory.getEquipment();
+            console.table(Object.entries(equip).map(([slot, v]) => ({
+                slot,
+                itemId: v?.itemId ?? (typeof v === 'string' ? v : '(vazio)'),
+                refineLevel: v?.refineLevel ?? '-',
+                formato: v == null ? 'null' : typeof v,
+            })));
+
+            // 3/4) Breakdown que o stats.js realmente enxerga.
+            const bd = Stats.getBreakdown ? Stats.getBreakdown() : null;
+            console.log('3) PECAS EQUIPADAS (def + stats, do stats.js)');
+            if (bd) console.table(bd.pieces); else console.warn('   Stats.getBreakdown indisponível');
+
+            console.log('4) BONUS AGREGADO por fonte (o que o stats.js somou)');
+            if (bd) {
+                console.log('   equipamento+set (getActiveSetBonuses.totalStats) =', JSON.stringify(bd.equipmentTotalStats));
+                console.log('   sets ativos =', JSON.stringify(bd.equipmentSets));
+                console.log('   refino (soma) =', JSON.stringify(bd.refineBonus));
+                console.log('   cartas =', JSON.stringify(bd.cardBonus?.stats ?? bd.cardBonus));
+                console.log('   pet =', JSON.stringify(bd.petBonus));
+                console.log('   TOTAL recomputado =', JSON.stringify(bd.recomputedTotal));
+                console.log('   cache: dirty =', bd.cacheDirty, '| cached =', JSON.stringify(bd.cachedBonus));
+            }
+
+            // 5) base vs final lado a lado.
+            console.log('5) baseStats vs getFinalStats()');
+            const finalS = Stats.getFinalStats(inst);
+            console.table(KEYS.map(k => ({
+                stat: k, base: inst.baseStats?.[k] ?? 0, final: finalS[k] ?? 0,
+                delta: (finalS[k] ?? 0) - (inst.baseStats?.[k] ?? 0),
+            })));
+
+            // 6) o str que attack() de fato usa (mesma expressão do combat.js).
+            console.log('6) STR que attack() usa =', (finalS.str || inst.str || 1),
+                        '  [getFinalStats(inst).str || inst.str || 1]');
+
+            return { instanceType: inst.type, finalS, breakdown: bd };
+        };
     }
     await Inventory.init(_saveData.player.inventory ?? null);
     await Quests.init(_saveData.player.quests ?? null);
@@ -418,6 +478,7 @@ export async function init() {
     Refine.init();
     Recipes.init();
     await _loadRecipeDefs();
+    Stats.init(); // registra invalidação do cache de stats finais (event bus)
     await Cards.init();
     UI.init();
 
