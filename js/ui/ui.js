@@ -661,8 +661,8 @@ export function init() {
         if (gs) gs.textContent = total;
     });
 
-    Events.on('inventoryFull', ({ itemId }) => {
-        showNotification(`Inventário cheio! (${itemId})`, 'warning');
+    Events.on('inventoryFull', ({ itemId, source }) => {
+        showNotification(`Inventário cheio! (${itemId})${source ? ` [${source}]` : ''}`, 'warning');
     });
 
     Events.on('equipBlocked', ({ itemId }) => {

@@ -186,7 +186,9 @@ export function addItem(itemId, qty = 1, meta = null) {
         } else {
             const emptyIdx = _findEmptySlot();
             if (emptyIdx === -1) {
-                emit('inventoryFull', { itemId });
+                console.warn('[inventory] inventoryFull em addItem — bag sem slot livre para', itemId,
+                    '(vem de dar item/pickup/craft, NAO de equipar)');
+                emit('inventoryFull', { itemId, source: 'addItem' });
                 return false;
             }
             const toAdd = Math.min(def.stack, remaining);
@@ -301,7 +303,9 @@ export function equipItem(slotIndex) {
             if (sockets.length > 0) {
                 _slots[slotIndex].sockets = _cloneSockets(sockets);
             }
-            emit('inventoryFull', { itemId: oldItemId });
+            console.warn('[inventory] inventoryFull em equipItem(swap) — nao devolveu a peca antiga', oldItemId,
+                '| peca antiga no catalogo?', !!_catalogue[oldItemId], '| slot liberado?', _slots[slotIndex] == null);
+            emit('inventoryFull', { itemId: oldItemId, source: 'equip-swap' });
             return false;
         }
 
@@ -339,7 +343,8 @@ export function unequipItem(equipmentSlot) {
 
     const addedIndex = addItem(itemId, 1);
     if (addedIndex === false) {
-        emit('inventoryFull', { itemId });
+        console.warn('[inventory] inventoryFull em unequipItem — bag sem espaço para devolver', itemId, 'slot', equipmentSlot);
+        emit('inventoryFull', { itemId, source: 'unequip' });
         return false;
     }
 
