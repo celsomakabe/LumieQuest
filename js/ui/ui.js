@@ -310,7 +310,7 @@ function _buildDOM() {
     deathMessage.style.textShadow = '0 0 8px rgba(0,0,0,0.8)';
 
     const deathButton = document.createElement('button');
-    deathButton.textContent = 'Reviver na Cidade';
+    deathButton.textContent = 'Reviver';
     deathButton.style.padding = '10px 20px';
     deathButton.style.fontSize = '18px';
     deathButton.style.cursor = 'pointer';
@@ -394,11 +394,13 @@ export function init() {
         if (btn) {
             btn.addEventListener('click', () => {
                 import('../entities/player.js').then(mod => {
-                    if (typeof mod.respawn === 'function') {
+                    if (typeof mod.revive === 'function') {
+                        mod.revive();
+                    } else if (typeof mod.respawn === 'function') {
                         mod.respawn();
                     }
                 }).catch(err => {
-                    console.error('[ui] Erro ao importar player.js para respawn:', err);
+                    console.error('[ui] Erro ao importar player.js para revive:', err);
                 });
             });
         }
@@ -1806,6 +1808,7 @@ function _refreshInventoryUI() {
                 e.preventDefault();
                 const d = Inventory.getItemDef(slot.itemId);
                 if (!d) return;
+                if (Player.isDead?.() || (Player.getState?.()?.hp ?? 1) <= 0) return; // morto não usa/equipa item
 
                 if (d.type === 'consumable') {
                     Inventory.useItem(i);
@@ -3262,6 +3265,7 @@ function _triggerSkillSlot(slotIndex) {
 
     const state = Player.getState();
     if (!state || !Array.isArray(state.equippedSkills)) return;
+    if (Player.isDead?.() || state.hp <= 0) return; // morto não conjura
 
     const skillId = state.equippedSkills[slotIndex];
     if (!skillId) return;

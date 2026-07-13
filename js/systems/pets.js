@@ -15,6 +15,10 @@ let _summonedIndex = null;
 let _summonedMesh = null;
 let _abilityCooldowns = {};
 let _initialized = false;
+// Dono morto: o pet continua invocado/visível seguindo o corpo, mas PAUSA todas as
+// ações (ataque/cura/revive) até o dono reviver — evita farm com o player caído e
+// impede o pet-fênix de auto-reviver por cima da tela de morte.
+let _ownerDead = false;
 
 const _followTarget = new THREE.Vector3();
 const _tempPlayerPos = new THREE.Vector3();
@@ -309,6 +313,8 @@ export function init(petDefs) {
 
     if (!_initialized) {
         on('monsterDied', _onMonsterDied);
+        on('playerDied', () => { _ownerDead = true; });
+        on('playerRespawned', () => { _ownerDead = false; });
         _initialized = true;
     }
 }
@@ -580,6 +586,8 @@ export function update(delta) {
 
     _summonedMesh.position.lerp(_followTarget, 0.05);
     _summonedMesh.rotation.y += Math.max(0, Number(delta ?? 0)) * 1.5;
+
+    if (_ownerDead) return; // dono morto: pet segue o corpo mas não age
 
     const nowSec = performance.now() / 1000;
     _applyActiveAbility(nowSec);

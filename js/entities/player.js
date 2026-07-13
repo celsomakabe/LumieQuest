@@ -8,7 +8,7 @@ import * as THREE        from 'three';
 import { emit, on }      from '../core/events.js';
 import { getState as getInput } from '../core/input.js';
 import { getCamera, getSun, add, remove } from '../world/scene.js';
-import { getCollisionBoxes } from '../world/world.js';
+import { getCollisionBoxes, getSpawn } from '../world/world.js';
 import { getGroundHeight }          from '../world/physics.js';
 import { getBaseStats, getJobMeta, getAllSkillsForClass, getAttackRange, isRangedClass } from '../systems/classes.js';
 import * as Audio from '../core/audio.js';
@@ -314,7 +314,13 @@ export function ensureValidSpawn() {
     _validateSpawnPosition();
 }
 
-export function respawn() {
+/**
+ * Revive o player no PONTO DE SPAWN DO MAPA ATUAL (não na cidade), com HP/MP cheios e
+ * SEM penalidade. Sai da pose caída (volta ao idle), destrava input/animação e emite
+ * playerRespawned (os monstros resetam o estado de morte e voltam a agir).
+ * @returns {void}
+ */
+export function revive() {
     if (!_data || !_mesh) return;
 
     _isDead = false;
@@ -324,24 +330,101 @@ export function respawn() {
     }
     _isAttacking = false;
 
-    _data.currentMap = 'city_01';
+    const spawn = getSpawn?.() ?? { x: 0, y: 0, z: 0 };
     _data.hp = _data.maxHp;
     _data.mp = _data.maxMp;
+    _data.position = { x: spawn.x, y: spawn.y ?? 0, z: spawn.z };
 
-    _data.position = { x: 0, y: 0, z: 0 };
-    _mesh.position.set(0, 0, 0);
-
-    _mesh.rotation.set(0, _rotationY, 0);
+    _mesh.position.set(_data.position.x, _data.position.y, _data.position.z);
+    _mesh.rotation.set(0, _rotationY, 0); // desfaz a queda / pose caída
+    _validateSpawnPosition();             // desencaixa de hitbox se o spawn colidir
+    _playAction('idle', 0);               // sai da animação de morte para idle
 
     emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
     emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
-
     emit('playerRespawned', {
-        position: { x: 0, y: 0, z: 0 },
+        position: { ..._data.position },
         currentMap: _data.currentMap,
     });
 
-    console.log('[player] Respawn na cidade_01 (0,0,0)');
+    console.log('[player] Reviveu no spawn do mapa atual', _data.position);
+}
+
+/**
+ * Alias legado — o revive agora ocorre no mapa atual (não mais fixo na cidade).
+ * @returns {void}
+ */
+export function respawn() {
+    revive();
+}
+
+/** Indica se o player está morto (bloqueia movimento, ataque, skills e uso de item). */
+export function isDead() {
+    return _isDead;
+}
+
+/**
+ * Entra no estado de morto: trava ações, toca a animação de queda MANTENDO a pose caída
+ * (não volta a idle) e emite playerDied. NÃO auto-respawna — o player fica caído até o
+ * clique em "Reviver" (ui.js). Idempotente via _isDead.
+ * @param {string} source
+ * @returns {void}
+ */
+function _enterDeathState(source) {
+    if (_isDead || !_data) return;
+    _isDead = true;
+
+    if (_attackResetTimer) {
+        clearTimeout(_attackResetTimer);
+        _attackResetTimer = null;
+    }
+    _isAttacking = false;
+
+    _playDeathAnimation();
+
+    emit('playerDied', {
+        position: { x: _data.position.x, y: _data.position.y, z: _data.position.z },
+        currentMap: _data.currentMap,
+        source: source ?? 'unknown',
+    });
+    console.log(`[player] Morreu (fonte: ${source})`);
+}
+
+/**
+ * Toca o clip de morte (Death_A/Death_B do general.glb) e MANTÉM a pose caída
+ * (LoopOnce + clampWhenFinished). Ignora os clips *_Pose (estáticos). Fallback: tomba
+ * o mesh manualmente (rotação -90° em X) se nenhum clip de morte existir.
+ * @returns {void}
+ */
+function _playDeathAnimation() {
+    if (!_mixer) {
+        if (_mesh) _mesh.rotation.x = -Math.PI / 2;
+        return;
+    }
+
+    let deathClip = null;
+    for (const [name, clip] of _generalClips) {
+        if (/death/i.test(name) && !/pose/i.test(name)) { deathClip = clip; break; }
+    }
+
+    if (!deathClip) {
+        if (_mesh) _mesh.rotation.x = -Math.PI / 2; // fallback sem clip: tomba o mesh
+        return;
+    }
+
+    const action = _mixer.clipAction(deathClip);
+    action.reset();
+    action.enabled = true;
+    action.setLoop(THREE.LoopOnce, 1);
+    action.clampWhenFinished = true;
+
+    const previous = _currentAction;
+    if (previous && previous !== action) {
+        previous.crossFadeTo(action, 0.15, true);
+    }
+
+    _currentAction = action;
+    action.play();
 }
 
 /**
@@ -366,32 +449,8 @@ export function takeDamage(amount, source) {
 
     _data.hp = Math.max(0, _data.hp - dmg);
     emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
-    if (_data.hp <= 0 && !_isDead) {
-        _isDead = true;
-        if (_mesh) {
-            _mesh.rotation.x = -Math.PI / 2;
-        }
-        emit('playerDied', {
-            position: { x: _data.position.x, y: _data.position.y, z: _data.position.z },
-            currentMap: _data.currentMap,
-            source: source ?? 'unknown',
-        });
-        console.log(`[player] Morreu (fonte: ${source})`);
-        setTimeout(() => {
-            _isDead = false;
-            _data.hp = _data.maxHp;
-            _data.mp = _data.maxMp;
-            _data.position = { x: 0, y: 0, z: 0 };
-            if (_mesh) {
-                _mesh.rotation.set(0, _rotationY, 0);
-                _mesh.position.set(0, 0, 0);
-            }
-            _validateSpawnPosition();
-            emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
-            emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
-            emit('playerRespawned', { position: _data.position, currentMap: _data.currentMap });
-            console.log('[player] Auto-respawn no centro do mapa');
-        }, 2000);
+    if (_data.hp <= 0) {
+        _enterDeathState(source);
     }
     }
 
@@ -648,35 +707,8 @@ export function update(delta, inputState) {
 
     if (_isDead) return;
 
-    if (!_isDead && _data.hp <= 0) {
-        _isDead = true;
-        if (_attackResetTimer) {
-            clearTimeout(_attackResetTimer);
-            _attackResetTimer = null;
-        }
-        _isAttacking = false;
-        if (_mesh) _mesh.rotation.x = -Math.PI / 2;
-        emit('playerDied', {
-            position: { x: _data.position.x, y: _data.position.y, z: _data.position.z },
-            currentMap: _data.currentMap,
-            source: 'combat',
-        });
-        console.log('[player] Morreu (detectado no update)');
-        setTimeout(() => {
-            _isDead = false;
-            _data.hp = _data.maxHp;
-            _data.mp = _data.maxMp;
-            _data.position = { x: 0, y: 0, z: 0 };
-            if (_mesh) {
-                _mesh.rotation.set(0, _rotationY, 0);
-                _mesh.position.set(0, 0, 0);
-            }
-            _validateSpawnPosition();
-            emit('playerHpChanged', { current: _data.hp, max: _data.maxHp });
-            emit('playerMpChanged', { current: _data.mp, max: _data.maxMp });
-            emit('playerRespawned', { position: _data.position, currentMap: _data.currentMap });
-            console.log('[player] Auto-respawn no centro do mapa');
-        }, 2000);
+    if (_data.hp <= 0) {
+        _enterDeathState('combat');
         return;
     }
 
@@ -807,6 +839,7 @@ function _findClip(substrings) {
 }
 
 function _playAction(name, fadeDuration = ANIM_FADE_DURATION) {
+    if (_isDead) return; // morto mantém a pose caída (revive zera _isDead antes de chamar)
     const nextAction = _actions[name];
     if (!nextAction) return;
     if (_currentAction === nextAction) return;

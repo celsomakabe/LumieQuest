@@ -153,6 +153,18 @@ export function getMapConfig() {
 }
 
 /**
+ * Retorna o ponto de spawn do mapa ATUAL (campo "spawn" do maps.json). Usado pelo
+ * revive do player. Só city_01 define spawn hoje; demais mapas caem no centro (0,0,0)
+ * do próprio mapa (nunca manda o player de volta para a cidade).
+ * @returns {{ x:number, y:number, z:number }}
+ */
+export function getSpawn() {
+  const s = _currentMapConfig?.spawn;
+  if (s) return { x: Number(s.x ?? 0), y: Number(s.y ?? 0), z: Number(s.z ?? 0) };
+  return { x: 0, y: 0, z: 0 };
+}
+
+/**
  * Retorna estado atual do ciclo dia/noite.
  * @returns {{ phase: 'day'|'night'|'dawn'|'dusk', progress: number }}
  */
